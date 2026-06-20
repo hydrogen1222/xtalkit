@@ -1,12 +1,9 @@
 """Multiwfn-style TUI for xtalkit."""
 
 import os
-import sys
-
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich import print as rprint
 
 from xtalkit.spacegroup import wyckoff_positions, sg_name, default_cell_params
 from xtalkit.marker import mark
@@ -188,7 +185,7 @@ def _skeleton_workflow() -> None:
     console.print(
         f"\n  Default cell for SG #{sg_number}: "
         f"a={defaults['a']} b={defaults['b']} c={defaults['c']} "
-        f"a={defaults['alpha']} b={defaults['beta']} g={defaults['gamma']}"
+        f"α={defaults['alpha']} β={defaults['beta']} γ={defaults['gamma']}"
     )
     while True:
         cell_choice = _prompt("[1] Use default  [2] Enter manually")
@@ -259,7 +256,7 @@ def _info_workflow() -> None:
 
     console.print(f"\n[bold]Space Group #{sg_number}: {name}[/bold]")
     console.print(f"Default cell: a={cell['a']} b={cell['b']} c={cell['c']} "
-                  f"a={cell['alpha']} b={cell['beta']} g={cell['gamma']}")
+                  f"α={cell['alpha']} β={cell['beta']} γ={cell['gamma']}")
 
     table = Table(title=f"Wyckoff Positions ({len(positions)})")
     table.add_column("Letter", style="cyan")

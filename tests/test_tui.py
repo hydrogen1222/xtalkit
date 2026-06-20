@@ -1,7 +1,5 @@
 """Tests for TUI module — unit tests for helper functions + smoke test."""
 
-import io
-import sys
 from unittest.mock import patch
 
 from xtalkit.tui import (
