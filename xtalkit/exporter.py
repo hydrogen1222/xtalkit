@@ -46,9 +46,11 @@ def write_cif(
             f"'{structure.spacegroup_hm}'",
         )
 
-    # Atom site loop (traditional CIF format with fractional coords)
-    loop = block.init_loop("_atom_site_", [
-        "label", "type_symbol", "fract_x", "fract_y", "fract_z",
+    # Atom site loop (mmCIF format with fractional coords)
+    loop = block.init_loop("_atom_site.", [
+        "group_PDB", "id", "type_symbol", "label_atom_id",
+        "Cartn_x", "Cartn_y", "Cartn_z",
+        "fract_x", "fract_y", "fract_z",
     ])
 
     # Original atoms
@@ -58,8 +60,13 @@ def write_cif(
                 for atom in residue:
                     frac = cell.fractionalize(atom.pos)
                     loop.add_row([
+                        "ATOM",
                         atom.name,
                         atom.element.name,
+                        atom.name,
+                        f"{atom.pos.x:.6f}",
+                        f"{atom.pos.y:.6f}",
+                        f"{atom.pos.z:.6f}",
                         f"{frac.x:.6f}",
                         f"{frac.y:.6f}",
                         f"{frac.z:.6f}",
@@ -67,9 +74,16 @@ def write_cif(
 
     # Dummy atoms
     for da in dummy_atoms:
+        frac = gemmi.Fractional(*da.fractional_coords)
+        orth = cell.orthogonalize(frac)
         loop.add_row([
+            "ATOM",
             da.label,
             da.element,
+            da.label,
+            f"{orth.x:.6f}",
+            f"{orth.y:.6f}",
+            f"{orth.z:.6f}",
             f"{da.fractional_coords[0]:.6f}",
             f"{da.fractional_coords[1]:.6f}",
             f"{da.fractional_coords[2]:.6f}",
