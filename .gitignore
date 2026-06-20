@@ -1,0 +1,6 @@
+__pycache__
+*.pyc
+.egg-info/
+*.egg-info/
+.python-version
+1_WYCK.*

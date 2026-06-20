@@ -46,6 +46,16 @@ def write_cif(
             f"'{structure.spacegroup_hm}'",
         )
 
+    # Symmetry operations from the space group
+    try:
+        sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
+    except Exception:
+        sg_obj = None
+    if sg_obj is not None:
+        sym_loop = block.init_loop("_symmetry_equiv_pos_", ["site_id", "as_xyz"])
+        for i, op in enumerate(sg_obj.operations()):
+            sym_loop.add_row([str(i + 1), f"'{op.triplet()}'"])
+
     # Atom site loop (mmCIF format with fractional coords)
     loop = block.init_loop("_atom_site.", [
         "group_PDB", "id", "type_symbol", "label_atom_id",
@@ -128,8 +138,21 @@ def write_vesta(
         "    <structure>",
         f'      <unit_cell a="{cell.a}" b="{cell.b}" c="{cell.c}"',
         f'                 alpha="{cell.alpha}" beta="{cell.beta}" gamma="{cell.gamma}"/>',
-        "      <site_list>",
     ]
+
+    # Space group info
+    if structure.spacegroup_hm:
+        lines.append(f'      <space_group>')
+        lines.append(f'        <hm_symbol>{structure.spacegroup_hm}</hm_symbol>')
+        try:
+            sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
+            for op in sg_obj.operations():
+                lines.append(f'        <symop>{op.triplet()}</symop>')
+        except Exception:
+            pass
+        lines.append(f'      </space_group>')
+
+    lines.append("      <site_list>")
 
     for el, x, y, z, label in site_tuples:
         lines.extend([

@@ -1,6 +1,107 @@
 """Shared utility functions for xtalkit."""
 
+import re
+
+import gemmi
+
 _DUMMY_ELEMENTS = ["Xe", "Kr", "Rn", "Ar", "Ne", "He"]
+
+
+def read_cif_structure(path: str, sg_number: int) -> gemmi.Structure:
+    """Read a CIF file and build a gemmi.Structure with the given space group.
+
+    Uses gemmi.cif.read_file for robust parsing. Handles both standard CIF
+    (_cell_length_a, _atom_site_fract_x) and mmCIF (_cell.length_a,
+    _atom_site.Cartn_x) tag conventions. Falls back to gemmi.read_structure
+    if neither format is detected.
+    """
+    doc = gemmi.cif.read_file(path)
+    block = doc.sole_block()
+
+    # Try standard CIF cell tags first, then mmCIF
+    def _cell_val(*names: str) -> float | None:
+        for name in names:
+            v = block.find_value(name)
+            if v is not None:
+                return float(v)
+        return None
+
+    a = _cell_val("_cell_length_a", "_cell.length_a")
+    b = _cell_val("_cell_length_b", "_cell.length_b")
+    c = _cell_val("_cell_length_c", "_cell.length_c")
+    alpha = _cell_val("_cell_angle_alpha", "_cell.angle_alpha")
+    beta = _cell_val("_cell_angle_beta", "_cell.angle_beta")
+    gamma = _cell_val("_cell_angle_gamma", "_cell.angle_gamma")
+
+    if None in (a, b, c, alpha, beta, gamma):
+        raise ValueError(f"Could not read cell parameters from CIF: {path}")
+
+    cell = gemmi.UnitCell(a, b, c, alpha, beta, gamma)
+
+    # Try to read atoms from standard CIF loop first, then mmCIF
+    labels = list(block.find_values("_atom_site_label"))
+    if not labels:
+        labels = list(block.find_values("_atom_site.label_atom_id"))
+
+    type_col = list(block.find_values("_atom_site_type_symbol"))
+    if not type_col:
+        type_col = list(block.find_values("_atom_site.type_symbol"))
+
+    fx = list(block.find_values("_atom_site_fract_x"))
+    fy = list(block.find_values("_atom_site_fract_y"))
+    fz = list(block.find_values("_atom_site_fract_z"))
+
+    # mmCIF uses Cartesian; convert to fractional
+    cart_x = list(block.find_values("_atom_site.Cartn_x"))
+    cart_y = list(block.find_values("_atom_site.Cartn_y"))
+    cart_z = list(block.find_values("_atom_site.Cartn_z"))
+
+    use_cartesian = False
+    if not fx:
+        fx, fy, fz = cart_x, cart_y, cart_z
+        use_cartesian = True
+
+    n_atoms = len(labels)
+    if n_atoms == 0:
+        raise ValueError("No atom sites found in CIF file")
+
+    # Build structure
+    structure = gemmi.Structure()
+    structure.cell = cell
+    sg = gemmi.SpaceGroup(sg_number)
+    structure.spacegroup_hm = sg.hm
+
+    model = gemmi.Model(0)
+    chain = gemmi.Chain("A")
+    residue = gemmi.Residue()
+    residue.name = "UNK"
+    residue.seqid = gemmi.SeqId("1")
+
+    for i in range(n_atoms):
+        raw_element = type_col[i] if i < len(type_col) else "?"
+        element = re.sub(r"[0-9+\-]", "", raw_element) if raw_element else "?"
+        if not element or element == "?":
+            element = "Xe"
+
+        atom = gemmi.Atom()
+        atom.name = labels[i] if i < len(labels) else f"X{i}"
+        atom.element = gemmi.Element(element)
+
+        if use_cartesian and i < len(fx):
+            atom.pos = gemmi.Position(float(fx[i]), float(fy[i]), float(fz[i]))
+        elif i < len(fx):
+            frac = gemmi.Fractional(float(fx[i]), float(fy[i]), float(fz[i]))
+            atom.pos = cell.orthogonalize(frac)
+        else:
+            atom.pos = gemmi.Position(0.0, 0.0, 0.0)
+
+        residue.add_atom(atom)
+
+    chain.add_residue(residue)
+    model.add_chain(chain)
+    structure.add_model(model)
+
+    return structure
 
 
 def assign_dummy_elements(

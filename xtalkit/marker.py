@@ -6,7 +6,7 @@ import gemmi
 from xtalkit.spacegroup import wyckoff_positions
 from xtalkit.matcher import match_atoms
 from xtalkit.exporter import DummyAtom, write_cif, write_vesta, write_xyz
-from xtalkit.utils import assign_dummy_elements, parse_coord
+from xtalkit.utils import assign_dummy_elements, parse_coord, read_cif_structure
 
 
 def mark(
@@ -32,8 +32,8 @@ def mark(
     if not os.path.exists(resolved):
         raise FileNotFoundError(f"CIF file not found: {resolved}")
 
-    # Read structure
-    structure = gemmi.read_structure(resolved)
+    # Read structure with proper CIF parsing + SG override
+    structure = read_cif_structure(resolved, sg_number)
 
     # Get Wyckoff positions for this SG
     all_wyckoffs = wyckoff_positions(sg_number)
