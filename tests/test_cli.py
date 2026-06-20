@@ -86,9 +86,12 @@ def test_cli_info_help():
 
 
 def test_cli_no_args_enters_tui():
-    """With no args, warn that TUI is not implemented yet (Task 8)."""
-    result = run_xtalkit()
-    # Should not crash
+    """With no args, launches interactive TUI; exit with '0'."""
+    result = subprocess.run(
+        [sys.executable, "-m", "xtalkit.cli"],
+        capture_output=True, text=True,
+        input="0\n",
+    )
     assert result.returncode == 0
     output = result.stdout + result.stderr
     assert "xtalkit" in output.lower() or "menu" in output.lower() or "tui" in output.lower()
