@@ -6,32 +6,7 @@ import gemmi
 from xtalkit.spacegroup import wyckoff_positions
 from xtalkit.matcher import match_atoms
 from xtalkit.exporter import DummyAtom, write_cif, write_vesta, write_xyz
-
-
-_DUMMY_ELEMENTS = ["Xe", "Kr", "Rn", "Ar", "Ne", "He"]
-
-
-def _assign_dummy_elements(
-    wyckoff_letters: list[str],
-    element_map: dict[str, str] | None,
-) -> dict[str, str]:
-    """Assign dummy elements to Wyckoff letters.
-
-    Priority: Xe -> Kr -> Rn -> Ar -> Ne -> He (cycling if needed).
-    """
-    if element_map:
-        for letter in wyckoff_letters:
-            if letter not in element_map:
-                raise ValueError(f"No element assigned for Wyckoff letter {letter}")
-        return dict(element_map)
-
-    assignment = {}
-    for i, letter in enumerate(sorted(
-        wyckoff_letters,
-        key=lambda w: (int("".join(c for c in w if c.isdigit()) or 0), w),
-    )):
-        assignment[letter] = _DUMMY_ELEMENTS[i % len(_DUMMY_ELEMENTS)]
-    return assignment
+from xtalkit.utils import assign_dummy_elements, parse_coord
 
 
 def mark(
@@ -76,7 +51,7 @@ def mark(
     selected = [w for w in all_wyckoffs if w.letter in wyckoff_letters]
 
     # Assign dummy elements
-    assignment = _assign_dummy_elements(wyckoff_letters, element_map)
+    assignment = assign_dummy_elements(wyckoff_letters, element_map)
 
     # Match atoms if needed for replace mode
     atom_mapping = {}
@@ -89,7 +64,7 @@ def mark(
         element = assignment[w.letter]
         # Parse coordinates string to tuple
         parts = w.coordinates.split(",")
-        coords = tuple(_parse_coord(p.strip()) for p in parts)
+        coords = tuple(parse_coord(p.strip()) for p in parts)
         dummy_atoms.append(DummyAtom(f"WYCK_{w.letter}", element, coords))
 
     # Handle replace mode: remove original atoms at matched positions,
@@ -116,18 +91,3 @@ def mark(
             outputs.append(path)
 
     return ", ".join(outputs)
-
-
-def _parse_coord(s: str) -> float:
-    """Parse a coordinate expression like '0', '1/4', '0.25' to float.
-
-    Variable expressions ('x', 'y', 'z') are resolved to a representative
-    value (0.3) for dummy atom placement.
-    """
-    s = s.strip()
-    if s in ("x", "y", "z"):
-        return 0.3
-    if "/" in s:
-        num, den = s.split("/")
-        return float(num) / float(den)
-    return float(s)

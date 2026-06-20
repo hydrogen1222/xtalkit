@@ -103,6 +103,23 @@ def test_generate_multiple_formats():
         assert os.path.exists(out + ".xyz")
 
 
+def test_generate_custom_element_map():
+    """Custom element_map should assign specified elements to Wyckoff letters."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "SG216_skeleton")
+        generate(
+            sg_number=216,
+            wyckoff_letters=["4a", "4c"],
+            cell_params=None,
+            element_map={"4a": "He", "4c": "Ne"},
+            formats=["cif"],
+            output_base=out,
+        )
+        content = open(out + ".cif").read()
+        assert "He" in content
+        assert "Ne" in content
+
+
 def test_generate_invalid_sg():
     with pytest.raises(ValueError):
         generate(

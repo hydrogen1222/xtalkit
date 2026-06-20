@@ -76,7 +76,6 @@ def test_write_vesta_is_valid_xml(cubic_structure, dummy_atoms):
         write_vesta(cubic_structure, dummy_atoms, path)
         content = open(path).read()
         assert content.startswith('<?xml')
-        assert 'VESTA' in content or '<root' in content.lower() or '<?xml' in content
 
 
 def test_write_xyz_creates_file(cubic_structure, dummy_atoms):

@@ -104,19 +104,21 @@ def write_vesta(
     _ensure_dir(output_path)
 
     cell = structure.cell
-    all_atoms: list[tuple[str, float, float, float]] = []
+    # List of (element, x, y, z, label) tuples
+    site_tuples: list[tuple[str, float, float, float, str]] = []
 
-    # Collect original atoms
+    # Collect original atoms (use generic labels)
     for model in structure:
         for chain in model:
             for residue in chain:
                 for atom in residue:
                     frac = cell.fractionalize(atom.pos)
-                    all_atoms.append((atom.element.name, frac.x, frac.y, frac.z))
+                    label = f"{atom.element.name}{len(site_tuples) + 1}"
+                    site_tuples.append((atom.element.name, frac.x, frac.y, frac.z, label))
 
-    # Add dummy atoms
+    # Add dummy atoms (use da.label for meaningful names)
     for da in dummy_atoms:
-        all_atoms.append((da.element, *da.fractional_coords))
+        site_tuples.append((da.element, *da.fractional_coords, da.label))
 
     # Generate VESTA XML
     lines = [
@@ -129,14 +131,14 @@ def write_vesta(
         "      <site_list>",
     ]
 
-    for i, (el, x, y, z) in enumerate(all_atoms):
+    for el, x, y, z, label in site_tuples:
         lines.extend([
             "        <site>",
             f"          <element>{el}</element>",
             f"          <x>{x:.8f}</x>",
             f"          <y>{y:.8f}</y>",
             f"          <z>{z:.8f}</z>",
-            f"          <label>{el}{i+1}</label>",
+            f"          <label>{label}</label>",
             "        </site>",
         ])
 

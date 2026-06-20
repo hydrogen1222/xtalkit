@@ -7,7 +7,7 @@ from xtalkit.spacegroup import WyckoffInfo
 
 
 def _frac_dist(a: gemmi.Fractional, b: gemmi.Fractional) -> float:
-    """Euclidean distance between two fractional coordinates."""
+    """Distance in fractional coordinate space."""
     return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2)
 
 

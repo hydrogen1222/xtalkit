@@ -48,22 +48,17 @@ def test_cli_skeleton():
         assert os.path.exists(out + ".cif")
 
 
-def test_cli_skeleton_no_output_flag(tmp_path):
+def test_cli_skeleton_no_output_flag(tmp_path, monkeypatch):
     """Without -o, output goes to current directory with default name."""
-    import os
-    cwd = os.getcwd()
-    try:
-        os.chdir(tmp_path)
-        result = run_xtalkit(
-            "skeleton", "--sg", "216", "--wyckoff", "4a",
-            "--format", "cif",
-        )
-        # Should succeed and create file
-        assert result.returncode == 0
-        files = list(tmp_path.glob("*.cif"))
-        assert len(files) > 0
-    finally:
-        os.chdir(cwd)
+    monkeypatch.chdir(tmp_path)
+    result = run_xtalkit(
+        "skeleton", "--sg", "216", "--wyckoff", "4a",
+        "--format", "cif",
+    )
+    # Should succeed and create file
+    assert result.returncode == 0
+    files = list(tmp_path.glob("*.cif"))
+    assert len(files) > 0
 
 
 def test_cli_mark_help():
@@ -95,3 +90,11 @@ def test_cli_no_args_enters_tui():
     assert result.returncode == 0
     output = result.stdout + result.stderr
     assert "xtalkit" in output.lower() or "menu" in output.lower() or "tui" in output.lower()
+
+
+def test_cli_fetch():
+    """'fetch' subcommand should run without crashing (data is partial)."""
+    result = run_xtalkit("fetch")
+    # Returns 0 if all data intact, 1 if incomplete (known gap)
+    assert result.returncode in (0, 1)
+    assert "Space group" in result.stdout or "[ERR]" in result.stdout or "[OK]" in result.stdout

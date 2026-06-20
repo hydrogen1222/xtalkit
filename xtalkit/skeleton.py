@@ -5,37 +5,7 @@ import os
 import gemmi
 from xtalkit.spacegroup import wyckoff_positions, default_cell_params
 from xtalkit.exporter import DummyAtom, write_cif, write_vesta, write_xyz
-
-
-_DUMMY_ELEMENTS = ["Xe", "Kr", "Rn", "Ar", "Ne", "He"]
-_VARIABLE_DEFAULT = 0.125
-
-
-def _assign_dummy_elements(
-    wyckoff_letters: list[str],
-    element_map: dict[str, str] | None,
-) -> dict[str, str]:
-    """Assign dummy elements to Wyckoff letters."""
-    if element_map:
-        return dict(element_map)
-    assignment = {}
-    for i, letter in enumerate(sorted(
-        wyckoff_letters,
-        key=lambda w: (int("".join(c for c in w if c.isdigit()) or 0), w),
-    )):
-        assignment[letter] = _DUMMY_ELEMENTS[i % len(_DUMMY_ELEMENTS)]
-    return assignment
-
-
-def _parse_coord(s: str) -> float:
-    """Parse a coordinate expression like '0', '1/4', '0.25', 'x' to float."""
-    s = s.strip()
-    if s in ("x", "y", "z"):
-        return _VARIABLE_DEFAULT
-    if "/" in s:
-        num, den = s.split("/")
-        return float(num) / float(den)
-    return float(s)
+from xtalkit.utils import assign_dummy_elements, parse_coord
 
 
 def generate(
@@ -63,7 +33,7 @@ def generate(
             )
 
     selected = [w for w in all_wyckoffs if w.letter in wyckoff_letters]
-    assignment = _assign_dummy_elements(wyckoff_letters, element_map)
+    assignment = assign_dummy_elements(wyckoff_letters, element_map)
 
     # Cell parameters
     if cell_params is None:
@@ -85,7 +55,7 @@ def generate(
     for w in selected:
         element = assignment[w.letter]
         parts = w.coordinates.split(",")
-        coords = tuple(_parse_coord(p.strip()) for p in parts)
+        coords = tuple(parse_coord(p.strip()) for p in parts)
         dummy_atoms.append(DummyAtom(f"WYCK_{w.letter}", element, coords))
 
     # Place them in structure (as a single model/chain/residue)

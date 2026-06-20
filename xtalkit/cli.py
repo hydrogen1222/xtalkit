@@ -42,71 +42,93 @@ def _parse_elems(value: str) -> dict[str, str]:
 
 def cmd_mark(args) -> int:
     """Run the 'mark' subcommand."""
-    # Build output base name
-    if args.output:
-        output_base = args.output
-    else:
-        base = os.path.splitext(os.path.basename(args.cif))[0]
-        output_base = os.path.join(os.path.dirname(args.cif) or ".", f"{base}_WYCK")
+    try:
+        # Expand "all" to all Wyckoff letters for this SG
+        if args.wyckoff == ["all"]:
+            from xtalkit.spacegroup import wyckoff_positions
+            args.wyckoff = [w.letter for w in wyckoff_positions(args.sg)]
 
-    formats = args.format.split(",")
-    element_map = _parse_elems(args.map) if args.map else None
+        # Build output base name
+        if args.output:
+            output_base = args.output
+        else:
+            base = os.path.splitext(os.path.basename(args.cif))[0]
+            output_base = os.path.join(os.path.dirname(args.cif) or ".", f"{base}_WYCK")
 
-    result = mark(
-        cif_path=args.cif,
-        sg_number=args.sg,
-        wyckoff_letters=args.wyckoff,
-        mode=args.mode,
-        tolerance=args.tol,
-        element_map=element_map,
-        formats=formats,
-        output_base=output_base,
-    )
-    print(f"[OK] Done. Saved to: {result}")
-    return 0
+        formats = args.format.split(",")
+        element_map = _parse_elems(args.map) if args.map else None
+
+        result = mark(
+            cif_path=args.cif,
+            sg_number=args.sg,
+            wyckoff_letters=args.wyckoff,
+            mode=args.mode,
+            tolerance=args.tol,
+            element_map=element_map,
+            formats=formats,
+            output_base=output_base,
+        )
+        print(f"[OK] Done. Saved to: {result}")
+        return 0
+    except (ValueError, FileNotFoundError, NotImplementedError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
 
 
 def cmd_skeleton(args) -> int:
     """Run the 'skeleton' subcommand."""
-    if args.output:
-        output_base = args.output
-    else:
-        output_base = f"SG{args.sg}_skeleton"
+    try:
+        # Expand "all" to all Wyckoff letters for this SG
+        if args.wyckoff == ["all"]:
+            from xtalkit.spacegroup import wyckoff_positions
+            args.wyckoff = [w.letter for w in wyckoff_positions(args.sg)]
 
-    formats = args.format.split(",")
-    element_map = _parse_elems(args.map) if args.map else None
-    cell_params = _parse_cell(args.cell) if args.cell else None
+        if args.output:
+            output_base = args.output
+        else:
+            output_base = f"SG{args.sg}_skeleton"
 
-    result = generate(
-        sg_number=args.sg,
-        wyckoff_letters=args.wyckoff,
-        cell_params=cell_params,
-        element_map=element_map,
-        formats=formats,
-        output_base=output_base,
-    )
-    print(f"[OK] Done. Saved to: {result}")
-    return 0
+        formats = args.format.split(",")
+        element_map = _parse_elems(args.map) if args.map else None
+        cell_params = _parse_cell(args.cell) if args.cell else None
+
+        result = generate(
+            sg_number=args.sg,
+            wyckoff_letters=args.wyckoff,
+            cell_params=cell_params,
+            element_map=element_map,
+            formats=formats,
+            output_base=output_base,
+        )
+        print(f"[OK] Done. Saved to: {result}")
+        return 0
+    except (ValueError, FileNotFoundError, NotImplementedError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
 
 
 def cmd_info(args) -> int:
     """Run the 'info' subcommand."""
-    sg_number = args.sg
-    name = sg_name(sg_number)
-    positions = wyckoff_positions(sg_number)
-    cell = default_cell_params(sg_number)
+    try:
+        sg_number = args.sg
+        name = sg_name(sg_number)
+        positions = wyckoff_positions(sg_number)
+        cell = default_cell_params(sg_number)
 
-    print(f"Space Group #{sg_number}: {name}")
-    print(f"Crystal System: {crystal_system(sg_number)}")
-    print(f"Default cell: a={cell['a']} b={cell['b']} c={cell['c']} "
-          f"α={cell['alpha']} β={cell['beta']} γ={cell['gamma']}")
-    print(f"\nWyckoff Positions ({len(positions)}):")
-    print(f"  {'Letter':<8} {'Mult':<6} {'Site Sym':<10} {'Coordinates'}")
-    print(f"  {'-'*8} {'-'*6} {'-'*10} {'-'*20}")
-    for p in positions:
-        print(f"  {p.letter:<8} {p.multiplicity:<6} {p.site_symmetry:<10} {p.coordinates}")
+        print(f"Space Group #{sg_number}: {name}")
+        print(f"Crystal System: {crystal_system(sg_number)}")
+        print(f"Default cell: a={cell['a']} b={cell['b']} c={cell['c']} "
+              f"α={cell['alpha']} β={cell['beta']} γ={cell['gamma']}")
+        print(f"\nWyckoff Positions ({len(positions)}):")
+        print(f"  {'Letter':<8} {'Mult':<6} {'Site Sym':<10} {'Coordinates'}")
+        print(f"  {'-'*8} {'-'*6} {'-'*10} {'-'*20}")
+        for p in positions:
+            print(f"  {p.letter:<8} {p.multiplicity:<6} {p.site_symmetry:<10} {p.coordinates}")
 
-    return 0
+        return 0
+    except (ValueError, FileNotFoundError, NotImplementedError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
 
 
 def cmd_fetch(args) -> int:
