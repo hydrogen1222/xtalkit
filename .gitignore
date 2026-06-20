@@ -1,6 +1,29 @@
-__pycache__
+# Python
+__pycache__/
 *.pyc
-.egg-info/
+*.pyo
 *.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+
+# uv
 .python-version
-1_WYCK.*
+
+# xtalkit output files
+*_WYCK.cif
+*_WYCK.xyz
+*_WYCK.vesta
+SG*_skeleton.cif
+SG*_skeleton.xyz
+SG*_skeleton.vesta
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
