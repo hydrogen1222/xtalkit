@@ -5,7 +5,7 @@ import os
 import gemmi
 from xtalkit.spacegroup import wyckoff_positions
 from xtalkit.matcher import match_atoms
-from xtalkit.exporter import DummyAtom, write_cif, write_vesta, write_xyz
+from xtalkit.exporter import DummyAtom, write_cif, write_xyz
 from xtalkit.utils import assign_dummy_elements, parse_coord, read_cif_structure
 
 
@@ -87,7 +87,7 @@ def mark(
                         residue.remove_atom(atom.name, ".", atom.element)  # type: ignore
 
     # Export
-    writers = {"cif": write_cif, "vesta": write_vesta, "xyz": write_xyz}
+    writers = {"cif": write_cif, "xyz": write_xyz}
     outputs = []
     for fmt in formats:
         if fmt in writers:

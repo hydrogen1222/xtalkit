@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 import gemmi
-from xtalkit.exporter import write_cif, write_vesta, write_xyz, DummyAtom
+from xtalkit.exporter import write_cif, write_xyz, DummyAtom
 
 
 @pytest.fixture
@@ -61,21 +61,6 @@ def test_write_cif_contains_dummy_atom_label(cubic_structure, dummy_atoms):
         content = open(path).read()
         assert "WYCK_4a" in content
         assert "Xe" in content
-
-
-def test_write_vesta_creates_file(cubic_structure, dummy_atoms):
-    with tempfile.TemporaryDirectory() as tmp:
-        path = os.path.join(tmp, "test.vesta")
-        write_vesta(cubic_structure, dummy_atoms, path)
-        assert os.path.exists(path)
-
-
-def test_write_vesta_is_valid_xml(cubic_structure, dummy_atoms):
-    with tempfile.TemporaryDirectory() as tmp:
-        path = os.path.join(tmp, "test.vesta")
-        write_vesta(cubic_structure, dummy_atoms, path)
-        content = open(path).read()
-        assert content.startswith('<?xml')
 
 
 def test_write_xyz_creates_file(cubic_structure, dummy_atoms):

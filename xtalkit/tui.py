@@ -68,9 +68,9 @@ def select_wyckoff_positions(available: list[str]) -> list[str]:
 
 def select_output_formats() -> list[str]:
     """Prompt for output format selection. Returns list of format strings."""
-    fmt_map = {"1": ["cif"], "2": ["vesta"], "3": ["xyz"], "4": ["cif", "vesta", "xyz"]}
+    fmt_map = {"1": ["cif"], "2": ["xyz"], "3": ["cif", "xyz"]}
     while True:
-        choice = _prompt("Output format: [1] cif  [2] vesta  [3] xyz  [4] all")
+        choice = _prompt("Output format: [1] cif  [2] xyz  [3] all")
         if choice in fmt_map:
             return fmt_map[choice]
         _error("Invalid selection (1-4)")

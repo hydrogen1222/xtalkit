@@ -99,11 +99,10 @@ def test_mark_all_output_formats(simple_cif):
             mode="overlay",
             tolerance=0.5,
             element_map=None,
-            formats=["cif", "vesta", "xyz"],
+            formats=["cif", "xyz"],
             output_base=out,
         )
         assert os.path.exists(out + ".cif")
-        assert os.path.exists(out + ".vesta")
         assert os.path.exists(out + ".xyz")
 
 

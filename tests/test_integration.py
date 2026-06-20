@@ -57,11 +57,11 @@ def test_skeleton_all_formats():
         result = run_xtalkit(
             "skeleton", "--sg", "216",
             "--wyckoff", "4a,4c",
-            "--format", "cif,vesta,xyz",
+            "--format", "cif,xyz",
             "-o", out,
         )
         assert result.returncode == 0
-        for ext in ("cif", "vesta", "xyz"):
+        for ext in ("cif", "xyz"):
             assert os.path.exists(out + f".{ext}")
 
 

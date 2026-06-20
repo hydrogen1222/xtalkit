@@ -95,11 +95,10 @@ def test_generate_multiple_formats():
             wyckoff_letters=["4a"],
             cell_params=None,
             element_map=None,
-            formats=["cif", "vesta", "xyz"],
+            formats=["cif", "xyz"],
             output_base=out,
         )
         assert os.path.exists(out + ".cif")
-        assert os.path.exists(out + ".vesta")
         assert os.path.exists(out + ".xyz")
 
 

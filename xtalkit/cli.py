@@ -172,7 +172,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_mark.add_argument("--map", type=str, default=None,
                         help="Element override, e.g. '4a:Xe,16e:Kr'")
     p_mark.add_argument("--format", type=str, default="cif",
-                        help="Output format(s): cif,vesta,xyz (comma-separated, default: cif)")
+                        help="Output format(s): cif,xyz (comma-separated, default: cif)")
     p_mark.add_argument("-o", "--output", type=str, default=None,
                         help="Output base path (without extension)")
     p_mark.set_defaults(func=cmd_mark)
@@ -187,7 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_skel.add_argument("--map", type=str, default=None,
                         help="Element override, e.g. '4a:Xe,16e:Kr'")
     p_skel.add_argument("--format", type=str, default="cif",
-                        help="Output format(s): cif,vesta,xyz (comma-separated)")
+                        help="Output format(s): cif,xyz (comma-separated)")
     p_skel.add_argument("-o", "--output", type=str, default=None,
                         help="Output base path (without extension)")
     p_skel.set_defaults(func=cmd_skeleton)

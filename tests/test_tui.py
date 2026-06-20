@@ -61,6 +61,6 @@ def test_select_output_formats():
         result = select_output_formats()
         assert result == ["cif"]
 
-    with patch("builtins.input", return_value="4"):
+    with patch("builtins.input", return_value="3"):
         result = select_output_formats()
-        assert result == ["cif", "vesta", "xyz"]
+        assert result == ["cif", "xyz"]

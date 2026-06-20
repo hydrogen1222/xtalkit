@@ -4,7 +4,7 @@ import os
 
 import gemmi
 from xtalkit.spacegroup import wyckoff_positions, default_cell_params
-from xtalkit.exporter import DummyAtom, write_cif, write_vesta, write_xyz
+from xtalkit.exporter import DummyAtom, write_cif, write_xyz
 from xtalkit.utils import assign_dummy_elements, parse_coord
 
 
@@ -80,7 +80,7 @@ def generate(
     structure.add_model(model)
 
     # Export
-    writers = {"cif": write_cif, "vesta": write_vesta, "xyz": write_xyz}
+    writers = {"cif": write_cif, "xyz": write_xyz}
     outputs = []
     for fmt in formats:
         if fmt in writers:

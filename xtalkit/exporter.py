@@ -1,4 +1,4 @@
-"""Output writers for .cif, .vesta, and .xyz formats."""
+"""Output writers for .cif and .xyz formats."""
 
 import os
 from collections import namedtuple
@@ -100,73 +100,6 @@ def write_cif(
         ])
 
     doc.write_file(output_path)
-
-
-def write_vesta(
-    structure: gemmi.Structure,
-    dummy_atoms: list[DummyAtom],
-    output_path: str,
-) -> None:
-    """Write structure with dummy atoms as a VESTA (.vesta) file.
-
-    Uses VESTA-native XML format compatible with VESTA 3.x.
-    """
-    _ensure_dir(output_path)
-
-    cell = structure.cell
-    site_tuples: list[tuple[str, float, float, float, str]] = []
-
-    for model in structure:
-        for chain in model:
-            for residue in chain:
-                for atom in residue:
-                    frac = cell.fractionalize(atom.pos)
-                    label = f"{atom.element.name}{len(site_tuples) + 1}"
-                    site_tuples.append((atom.element.name, frac.x, frac.y, frac.z, label))
-
-    for da in dummy_atoms:
-        site_tuples.append((da.element, *da.fractional_coords, da.label))
-
-    # Use compact notation for VESTA compatibility (F-43m not "F -4 3 m")
-    try:
-        sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
-        space_group_name = sg_obj.short_name()
-    except Exception:
-        space_group_name = structure.spacegroup_hm or "P 1"
-
-    lines = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        '<VESTA version="3.90.1">',
-        "  <data>",
-        "    <structure>",
-        f"      <unit_cell>{cell.a:.6f} {cell.b:.6f} {cell.c:.6f}"
-        f" {cell.alpha:.4f} {cell.beta:.4f} {cell.gamma:.4f}</unit_cell>",
-        "      <space_group>",
-        f"        <name>{space_group_name}</name>",
-        "      </space_group>",
-        "      <site_list>",
-    ]
-
-    for el, x, y, z, label in site_tuples:
-        lines.extend([
-            "        <site>",
-            f"          <symbol>{el}</symbol>",
-            f"          <x>{x:.8f}</x>",
-            f"          <y>{y:.8f}</y>",
-            f"          <z>{z:.8f}</z>",
-            f"          <label>{label}</label>",
-            "        </site>",
-        ])
-
-    lines.extend([
-        "      </site_list>",
-        "    </structure>",
-        "  </data>",
-        "</VESTA>",
-    ])
-
-    with open(output_path, "w") as f:
-        f.write("\n".join(lines))
 
 
 def write_xyz(
