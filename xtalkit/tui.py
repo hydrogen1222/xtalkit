@@ -76,6 +76,25 @@ def select_output_formats() -> list[str]:
         _error("Invalid selection (1-4)")
 
 
+def _show_element_assignments(
+    wyckoff_letters: list[str],
+    element_map: dict[str, str] | None,
+) -> None:
+    """Display which dummy element is assigned to each Wyckoff letter."""
+    from xtalkit.utils import assign_dummy_elements
+    assignment = assign_dummy_elements(wyckoff_letters, element_map)
+    console.print()
+    table = Table(title="Dummy Element Assignments")
+    table.add_column("Wyckoff", style="cyan")
+    table.add_column("Element", style="yellow")
+    for letter in sorted(
+        wyckoff_letters,
+        key=lambda w: (int("".join(c for c in w if c.isdigit()) or 0), w),
+    ):
+        table.add_row(letter, assignment[letter])
+    console.print(table)
+
+
 def _mark_workflow() -> None:
     """Interactive mark workflow."""
     _header("Mark Wyckoff Positions in CIF")
@@ -119,13 +138,6 @@ def _mark_workflow() -> None:
             break
         _error("Invalid selection (1-2)")
 
-    # Output format
-    formats = select_output_formats()
-
-    # Tolerance
-    tol_str = _prompt("Tolerance in A (default 0.5)")
-    tolerance = float(tol_str) if tol_str else 0.5
-
     # Element map
     map_str = _prompt("Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip")
     element_map = None
@@ -134,6 +146,21 @@ def _mark_workflow() -> None:
         for pair in map_str.split(","):
             letter, elem = pair.split(":")
             element_map[letter.strip()] = elem.strip()
+
+    # Show dummy element assignments
+    _show_element_assignments(selected, element_map)
+
+    # Output format
+    formats = select_output_formats()
+
+    # Offset (default 0.02 for visibility in overlay, 0 for replace)
+    default_offset = "0.02" if mode == "overlay" else "0"
+    off_str = _prompt(f"Dummy atom offset in fractional coords (default {default_offset})")
+    offset = float(off_str) if off_str else float(default_offset)
+
+    # Tolerance
+    tol_str = _prompt("Tolerance in A (default 0.5)")
+    tolerance = float(tol_str) if tol_str else 0.5
 
     # Output base
     base = os.path.splitext(resolved)[0]
@@ -151,6 +178,7 @@ def _mark_workflow() -> None:
             element_map=element_map,
             formats=formats,
             output_base=output_base,
+            offset=offset,
         )
         _success(f"Saved to: {result}")
     except Exception as e:

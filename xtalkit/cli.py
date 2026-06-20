@@ -67,6 +67,7 @@ def cmd_mark(args) -> int:
             element_map=element_map,
             formats=formats,
             output_base=output_base,
+            offset=args.offset,
         )
         print(f"[OK] Done. Saved to: {result}")
         return 0
@@ -166,6 +167,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="overlay: add dummies; replace: swap real atoms (default: overlay)")
     p_mark.add_argument("--tol", type=float, default=0.5,
                         help="Matching tolerance in angstrom (default: 0.5)")
+    p_mark.add_argument("--offset", type=float, default=0.02,
+                        help="Fractional offset for dummy atoms (default: 0.02, use 0 for exact positions)")
     p_mark.add_argument("--map", type=str, default=None,
                         help="Element override, e.g. '4a:Xe,16e:Kr'")
     p_mark.add_argument("--format", type=str, default="cif",

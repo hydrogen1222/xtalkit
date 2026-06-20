@@ -18,9 +18,12 @@ def mark(
     element_map: dict[str, str] | None,
     formats: list[str],
     output_base: str,
+    offset: float = 0.02,
 ) -> str:
     """Mark Wyckoff positions in a CIF file with dummy atoms.
 
+    offset: fractional coordinate offset added to dummy atoms (prevents
+            overlap with real atoms in overlay mode). Default 0.02.
     Returns comma-separated output file paths.
     """
     # Validate inputs
@@ -58,13 +61,15 @@ def mark(
     if mode == "replace":
         atom_mapping = match_atoms(structure, all_wyckoffs, tolerance)
 
-    # Build dummy atom list
+    # Build dummy atom list (offset applied so dummies don't overlap real atoms)
     dummy_atoms = []
     for w in selected:
         element = assignment[w.letter]
-        # Parse coordinates string to tuple
         parts = w.coordinates.split(",")
-        coords = tuple(parse_coord(p.strip()) for p in parts)
+        coords = tuple(
+            min(max(parse_coord(p.strip()) + offset, 0.0), 1.0)
+            for p in parts
+        )
         dummy_atoms.append(DummyAtom(f"WYCK_{w.letter}", element, coords))
 
     # Handle replace mode: remove original atoms at matched positions,
