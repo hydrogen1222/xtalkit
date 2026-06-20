@@ -9,6 +9,9 @@ dependencies = [
     "rich>=15.0.0",
 ]
 
+[project.scripts]
+xtalkit = "xtalkit.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
