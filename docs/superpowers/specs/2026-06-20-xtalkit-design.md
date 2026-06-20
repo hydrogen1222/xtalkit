@@ -138,10 +138,10 @@ Two-level menu structure. Main menu:
   ╔══════════════════════════════════════════╗
   ║        xtalkit · Crystal Wyckoff Toolkit║
   ╠══════════════════════════════════════════╣
-  ║  [1] Mark CIF    — 在结构中标记 Wyckoff ║
-  ║  [2] Skeleton    — 生成纯 Wyckoff 骨架  ║
-  ║  [3] Query SG    — 查看空间群信息       ║
-  ║  [4] Fetch DB    — 在线更新数据库       ║
+  ║  [1] Mark CIF    — Mark Wyckoff in a structure    ║
+  ║  [2] Skeleton    — Generate pure Wyckoff skeleton  ║
+  ║  [3] Query SG    — View space group information    ║
+  ║  [4] Fetch DB    — Update database online          ║
   ║  [0] Exit                               ║
   ╚══════════════════════════════════════════╝
 ```
