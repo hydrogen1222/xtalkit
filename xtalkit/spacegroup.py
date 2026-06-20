@@ -325,7 +325,7 @@ def wyckoff_positions(sg_number: int) -> list[WyckoffInfo]:
 
     raw = _WYCKOFF_DB.get(sg_number)
     if raw is None:
-        raise ValueError(
+        raise NotImplementedError(
             f"Wyckoff data not available for space group {sg_number}"
         )
 

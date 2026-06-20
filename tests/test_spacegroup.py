@@ -72,3 +72,11 @@ def test_sg_1_wyckoff():
     positions = wyckoff_positions(1)
     assert len(positions) == 1
     assert positions[0].letter == "1a"
+
+
+def test_sg_2_wyckoff():
+    """SG 2 (P-1) has Wyckoff positions."""
+    positions = wyckoff_positions(2)
+    letters = {p.letter for p in positions}
+    assert len(positions) > 0
+    assert "1a" in letters
