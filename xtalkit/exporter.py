@@ -109,15 +109,13 @@ def write_vesta(
 ) -> None:
     """Write structure with dummy atoms as a VESTA (.vesta) file.
 
-    VESTA format is XML-based. We generate a minimal structure document.
+    Uses VESTA-native XML format compatible with VESTA 3.x.
     """
     _ensure_dir(output_path)
 
     cell = structure.cell
-    # List of (element, x, y, z, label) tuples
     site_tuples: list[tuple[str, float, float, float, str]] = []
 
-    # Collect original atoms (use generic labels)
     for model in structure:
         for chain in model:
             for residue in chain:
@@ -126,38 +124,33 @@ def write_vesta(
                     label = f"{atom.element.name}{len(site_tuples) + 1}"
                     site_tuples.append((atom.element.name, frac.x, frac.y, frac.z, label))
 
-    # Add dummy atoms (use da.label for meaningful names)
     for da in dummy_atoms:
         site_tuples.append((da.element, *da.fractional_coords, da.label))
 
-    # Generate VESTA XML
+    # Use compact notation for VESTA compatibility (F-43m not "F -4 3 m")
+    try:
+        sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
+        space_group_name = sg_obj.short_name()
+    except Exception:
+        space_group_name = structure.spacegroup_hm or "P 1"
+
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<VESTA xmlns="http://www.jp-minerals.org/vesta/">',
+        '<VESTA version="3.90.1">',
         "  <data>",
         "    <structure>",
-        f'      <unit_cell a="{cell.a}" b="{cell.b}" c="{cell.c}"',
-        f'                 alpha="{cell.alpha}" beta="{cell.beta}" gamma="{cell.gamma}"/>',
+        f"      <unit_cell>{cell.a:.6f} {cell.b:.6f} {cell.c:.6f}"
+        f" {cell.alpha:.4f} {cell.beta:.4f} {cell.gamma:.4f}</unit_cell>",
+        "      <space_group>",
+        f"        <name>{space_group_name}</name>",
+        "      </space_group>",
+        "      <site_list>",
     ]
-
-    # Space group info
-    if structure.spacegroup_hm:
-        lines.append(f'      <space_group>')
-        lines.append(f'        <hm_symbol>{structure.spacegroup_hm}</hm_symbol>')
-        try:
-            sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
-            for op in sg_obj.operations():
-                lines.append(f'        <symop>{op.triplet()}</symop>')
-        except Exception:
-            pass
-        lines.append(f'      </space_group>')
-
-    lines.append("      <site_list>")
 
     for el, x, y, z, label in site_tuples:
         lines.extend([
             "        <site>",
-            f"          <element>{el}</element>",
+            f"          <symbol>{el}</symbol>",
             f"          <x>{x:.8f}</x>",
             f"          <y>{y:.8f}</y>",
             f"          <z>{z:.8f}</z>",
