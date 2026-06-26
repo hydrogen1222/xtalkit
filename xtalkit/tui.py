@@ -8,6 +8,7 @@ from rich.panel import Panel
 from xtalkit.spacegroup import wyckoff_positions, sg_name, default_cell_params
 from xtalkit.marker import mark
 from xtalkit.skeleton import generate
+from xtalkit.enumerator import enumerate_structures
 
 console = Console()
 
@@ -309,6 +310,101 @@ def _fetch_workflow() -> None:
         _error(f"Data error: {e}")
 
 
+def _enumerate_workflow() -> None:
+    """Interactive enumeration workflow."""
+    _header("Enumerate Ordered Configurations")
+
+    # Get CIF path
+    while True:
+        path = _prompt("CIF file path (with partial/disordered occupancy)")
+        resolved = resolve_cif_path(path)
+        if resolved:
+            _success(f"found {resolved}")
+            break
+        _error(f"File not found: {path}")
+
+    # Min cell size
+    min_str = _prompt("Min supercell size (default 1)")
+    try:
+        min_cell = int(min_str) if min_str else 1
+    except ValueError:
+        _error("Invalid number, using default 1")
+        min_cell = 1
+
+    # Max cell size
+    max_str = _prompt("Max supercell size (default 2)")
+    try:
+        max_cell = int(max_str) if max_str else 2
+    except ValueError:
+        _error("Invalid number, using default 2")
+        max_cell = 2
+    if max_cell < min_cell:
+        _warn("Max < Min, adjusting max = min")
+        max_cell = min_cell
+
+    # Symmetry precision
+    sp_str = _prompt("Symmetry tolerance (default 0.1)")
+    try:
+        symm_prec = float(sp_str) if sp_str else 0.1
+    except ValueError:
+        symm_prec = 0.1
+
+    # Vacancy symbol
+    vac = _prompt("Vacancy DummySpecies symbol (default X)") or "X"
+
+    # Output dir
+    base = os.path.splitext(os.path.basename(resolved))[0]
+    out_str = _prompt(f"Output directory (default {base}_enum/)")
+    output_dir = out_str if out_str else f"{base}_enum"
+
+    # Max structures
+    ms_str = _prompt("Max structures to write (Enter for unlimited)")
+    try:
+        max_structures = int(ms_str) if ms_str else None
+    except ValueError:
+        max_structures = None
+
+    console.print()
+    console.print("[cyan]Running enumlib... (may take a few minutes)[/cyan]")
+    try:
+        paths = enumerate_structures(
+            cif_path=resolved,
+            min_cell_size=min_cell,
+            max_cell_size=max_cell,
+            symm_prec=symm_prec,
+            vacancy_symbol=vac,
+            output_dir=output_dir,
+            max_structures=max_structures,
+        )
+        _success(f"Enumerated {len(paths)} structure(s)")
+
+        # Try to show summary table
+        try:
+            import gemmi
+            table = Table(title="Enumerated Structures")
+            table.add_column("#", style="cyan")
+            table.add_column("Formula", style="yellow")
+            table.add_column("Atoms", style="green")
+            table.add_column("a (Å)", style="white")
+            for i, p in enumerate(paths):
+                try:
+                    doc = gemmi.cif.read_file(p)
+                    block = doc.sole_block()
+                    a = float(block.find_value("_cell_length_a") or 0)
+                    atoms = list(block.find_values("_atom_site_label"))
+                    table.add_row(str(i), os.path.basename(p), str(len(atoms)), f"{a:.3f}")
+                except Exception:
+                    table.add_row(str(i), os.path.basename(p), "?", "?")
+            console.print(table)
+        except ImportError:
+            for i, p in enumerate(paths):
+                console.print(f"  [{i}] {p}")
+
+        _success(f"Saved to: {output_dir}")
+    except Exception as e:
+        _error(str(e))
+
+
 def _show_main_menu() -> None:
     """Display the main menu."""
     console.clear()
@@ -318,6 +414,7 @@ def _show_main_menu() -> None:
         "  [2] Skeleton    -- Generate pure Wyckoff skeleton\n"
         "  [3] Query SG    -- View space group information\n"
         "  [4] Fetch DB    -- Verify database online\n"
+        "  [5] Enumerate   -- Enumerate ordered configurations (enumlib)\n"
         "  [0] Exit",
         title="xtalkit . Crystal Wyckoff Toolkit",
         border_style="cyan",
@@ -333,6 +430,7 @@ def run_tui() -> int:
         "2": _skeleton_workflow,
         "3": _info_workflow,
         "4": _fetch_workflow,
+        "5": _enumerate_workflow,
     }
 
     while True:
@@ -350,4 +448,4 @@ def run_tui() -> int:
             console.print()
             _prompt("Press Enter to continue...")
         else:
-            _error("Invalid choice (0-4)")
+            _error("Invalid choice (0-5)")

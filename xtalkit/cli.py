@@ -10,6 +10,7 @@ from xtalkit.spacegroup import (
 )
 from xtalkit.marker import mark
 from xtalkit.skeleton import generate
+from xtalkit.enumerator import enumerate_structures
 
 
 def _parse_wyckoff(value: str) -> list[str]:
@@ -148,6 +149,35 @@ def cmd_fetch(args) -> int:
     return 0
 
 
+def cmd_enumerate(args) -> int:
+    """Run the 'enumerate' subcommand."""
+    try:
+        base = os.path.splitext(os.path.basename(args.cif))[0]
+        output_dir = args.output_dir or f"{base}_enum"
+
+        paths = enumerate_structures(
+            cif_path=args.cif,
+            min_cell_size=args.min_cell_size,
+            max_cell_size=args.max_cell_size,
+            symm_prec=args.symm_prec,
+            vacancy_symbol=args.vacancy_symbol,
+            output_dir=output_dir,
+            max_structures=args.max_structures,
+            timeout=args.timeout,
+            format=args.format,
+        )
+        print(f"[OK] Enumerated {len(paths)} structure(s).")
+        print(f"     Output directory: {os.path.dirname(paths[0]) if paths else output_dir}")
+        for p in paths[:10]:
+            print(f"     - {p}")
+        if len(paths) > 10:
+            print(f"     ... and {len(paths) - 10} more")
+        return 0
+    except (RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the full CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -200,6 +230,30 @@ def build_parser() -> argparse.ArgumentParser:
     # fetch
     p_fetch = sub.add_parser("fetch", help="Verify space group database")
     p_fetch.set_defaults(func=cmd_fetch)
+
+    # enumerate
+    p_enum = sub.add_parser(
+        "enumerate",
+        help="Enumerate ordered configurations of a disordered CIF (requires pymatgen + enumlib)",
+    )
+    p_enum.add_argument("cif", help="Path to the input disordered CIF")
+    p_enum.add_argument("--min-cell-size", type=int, default=1,
+                        help="Minimum supercell size to enumerate (default: 1)")
+    p_enum.add_argument("--max-cell-size", type=int, default=2,
+                        help="Maximum supercell size to enumerate (default: 2)")
+    p_enum.add_argument("--symm-prec", type=float, default=0.1,
+                        help="Symmetry tolerance for SpacegroupAnalyzer (default: 0.1)")
+    p_enum.add_argument("--vacancy-symbol", type=str, default="X",
+                        help="DummySpecies symbol for vacancies (default: X)")
+    p_enum.add_argument("--output-dir", type=str, default=None,
+                        help="Output directory (default: <cif_basename>_enum/)")
+    p_enum.add_argument("--max-structures", type=int, default=None,
+                        help="Stop after N structures (default: unlimited)")
+    p_enum.add_argument("--timeout", type=float, default=None,
+                        help="Timeout in minutes (default: none)")
+    p_enum.add_argument("--format", type=str, default="cif", choices=["cif", "xyz"],
+                        help="Output format (default: cif)")
+    p_enum.set_defaults(func=cmd_enumerate)
 
     return parser
 

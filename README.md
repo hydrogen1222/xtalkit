@@ -1,3 +1,5 @@
+**English** | [中文](README.zh-CN.md)
+
 # xtalkit — Crystal Wyckoff Toolkit
 
 Mark Wyckoff positions in crystal structures with dummy atoms for intuitive visualization in [VESTA](https://jp-minerals.org/vesta/en/).
@@ -49,7 +51,7 @@ xtalkit has two interfaces:
 xtalkit <command> [options]
 ```
 
-Four subcommands:
+Five subcommands:
 
 | Command | Purpose |
 |---------|---------|
@@ -57,6 +59,7 @@ Four subcommands:
 | `skeleton` | Generate a pure Wyckoff skeleton (no real atoms) |
 | `info` | Query Wyckoff positions for a space group |
 | `fetch` | Verify space group database integrity |
+| `enumerate` | Enumerate symmetry-inequivalent ordered configurations (requires pymatgen + enumlib) |
 
 ---
 
@@ -212,6 +215,154 @@ Verifies that all space group data is intact. Output:
 
 ---
 
+### `enumerate` — Enumerate Ordered Configurations
+
+Enumerate all symmetry-inequivalent ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). This subcommand is **opt-in** — it requires a separate conda environment with pymatgen and self-compiled enumlib binaries (see [Enumeration setup](#enumeration-setup) below).
+
+```
+xtalkit enumerate <input.cif> [options]
+```
+
+**Required arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `input.cif` | Path to a CIF with partial/disordered occupancy (e.g. Au0.5/Cu0.5) |
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--min-cell-size N` | 1 | Minimum supercell size to enumerate |
+| `--max-cell-size N` | 2 | Maximum supercell size to enumerate |
+| `--symm-prec TOL` | 0.1 | Symmetry tolerance for spacegroup analysis |
+| `--vacancy-symbol S` | `X` | DummySpecies symbol for vacancies |
+| `--output-dir DIR` | `{name}_enum/` | Output directory for enumerated CIFs |
+| `--max-structures N` | unlimited | Cap the number of output files |
+| `--timeout MIN` | none | Timeout in minutes for the enumlib subprocess |
+| `--format F` | cif | Output format (`cif`; `xyz` reserved for future) |
+
+**Examples:**
+
+```bash
+# Enumerate a 50/50 Au/Cu binary in a 1×–2× supercell
+xtalkit enumerate AuCu_disordered.cif --max-cell-size 2
+# Output: AuCu_disordered_enum/AuCu_disordered_000.cif, _001.cif, _002.cif
+
+# Limit to first 5 structures
+xtalkit enumerate disordered.cif --max-cell-size 3 --max-structures 5
+
+# Custom output directory
+xtalkit enumerate parent.cif --output-dir ./runs/exp01/
+```
+
+**How it works:**
+
+1. Reads the CIF via `pymatgen.core.Structure.from_file` (handles partial occupancy + mmCIF natively)
+2. **Converts to the primitive cell** (`Structure.get_primitive_structure()`). This is essential: enumlib does not auto-detect the primitive cell, and a conventional F-centered/I-centered cell can have 2×–4× the candidate sites, enough to overflow enumlib's tree_class array (e.g. F-43m 48h with 48 candidates → C(48,24) overflows; the primitive cell has only 12 candidates → C(12,6) = 924, exactly the regime that reproduces literature results).
+3. Augments any single-species partial-occupancy site with an explicit `DummySpecies(vacancy_symbol)` to represent the vacancy (e.g. `Li0.5` → `Li0.5 + X0.5`)
+4. Calls `pymatgen.command_line.enumlib_caller.EnumlibAdaptor` which shells out to the Fortran `enum.x` and `makestr.x` binaries
+5. Writes each symmetry-inequivalent ordered configuration as `<basename>_<NNN>.cif` (in the primitive cell)
+
+#### How CIF partial occupancy works
+
+In a CIF, the same crystallographic coordinate can be listed on **multiple atom_site rows**, each with its own `_atom_site_occupancy` value. A row whose occupancy < 1 means "this atom is here only that fraction of the time". Two cases:
+
+**Case A — mixed occupancy** (sum of rows at one site = 1.0): describes *occupational disorder* — the site is always occupied, but by different species with given probabilities. The diffraction experiment sees a spatial/time average.
+
+```
+Au1 Au 0.0 0.0 0.0 0.5      ← 50% Au
+Cu1 Cu 0.0 0.0 0.0 0.5      ← 50% Cu  (same coords, sums to 1.0 → site is full)
+```
+
+**Case B — single partial occupancy** (one row, occ < 1.0): describes a *true vacancy*. The remaining (1 − occ) is empty space.
+
+```
+Li1 Li 0.3148 0.018 0.6852 0.56    ← 56% Li, 44% vacancy (implicit)
+```
+
+xtalkit's `enumerate` handles both:
+- **Case A** (multi-species mix): enumlib enumerates which species goes where directly — no augmentation needed.
+- **Case B** (single species + true vacancy): xtalkit auto-augments with an explicit `DummySpecies("X")` at `1 − occ`, turning it into Case A internally (`Li0.56 → Li0.56 + X0.44`), then enumlib enumerates Li-vs-vacancy orderings.
+
+#### Why `Li6PS5Cl_clean.cif` exists (vs `EntryWithCollCode418490.cif`)
+
+The argyrodite CIF from the literature (`EntryWithCollCode418490.cif`) reports Li on the 48h Wyckoff position with occupancy **0.56** (= Li6.72PS5Cl stoichiometry):
+
+```
+Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.56(6) 0
+```
+
+`0.56 = 14/25` cannot be integerized in any practical supercell (would need 25× supercell = 15625 unit cells). enumlib returns 0 structures.
+
+The "clean" version (`Li6PS5Cl_clean.cif`) replaces **only** that one occupancy value, rounding 0.56 → 0.5 (= Li6PS5Cl stoichiometry):
+
+```
+Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.5 0
+```
+
+With 0.5 (= 1/2), a 1× supercell already has integer Li count (12 Li sites in the primitive cell × 0.5 = 6 Li), so enumlib runs cleanly and produces **48 symmetry-inequivalent ordered configurations** — matching the literature's result. Everything else in the CIF (cell, P/S/Cl positions, space group) is unchanged.
+
+This rounding is a standard approximation in the argyrodite literature: the real material is Li6.72PS5Cl with positional Li disorder, but computational studies enumerate Li6PS5Cl (a nearby rational stoichiometry) because it's tractable. If you need the true Li6.72 stoichiometry, you'd need a much larger supercell or a different enumeration approach.
+
+**Known limitations:**
+
+- **Non-integer stoichiometry**: A site with occupancy 0.56 (= 14/25) cannot be integerized in any small supercell. enumlib will return 0 structures; xtalkit surfaces this with a clear error suggesting either a larger `--max-cell-size` or a "clean" parent CIF with rational occupancy (e.g. round 0.56 → 0.5). For Li6.72PS5Cl (Li occ 0.56), prepare a Li6PS5Cl parent CIF with Li occ 0.5 — this reproduces the ~48 Li orderings from the argyrodite literature.
+- **Windows-only setup**: The conda env + binary compilation path below is Windows-specific. macOS/Linux users can use `pip install pymatgen` + system Fortran compiler.
+
+---
+
+#### Enumeration setup
+
+xtalkit's core (`mark`, `skeleton`, `info`, `fetch`) does **not** require pymatgen. Only `enumerate` does. The setup is one-time and lives in a dedicated conda env so it doesn't affect the lightweight `uv` install.
+
+**Step 1 — Create the conda env:**
+
+```bash
+conda create -n xtalkit -c conda-forge --override-channels \
+    python=3.11 m2w64-gcc-fortran make git
+conda activate xtalkit
+conda install -c conda-forge --override-channels pymatgen==2023.5.31
+```
+
+`pymatgen==2023.5.31` is the last conda-forge build that ships `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`.
+
+**Step 2 — Compile enumlib:**
+
+```bash
+git clone https://github.com/msg-byu/enumlib.git
+cd enumlib
+git submodule update --init   # pulls symlib
+# On Windows, if symlib checkout fails (NTFS path issue), download symlib
+# ZIP from GitHub and extract its src/ folder into symlib/src/
+cd src
+make          # produces enum.x and makestr.x
+cp enum.x makestr.x $CONDA_PREFIX/Library/mingw-w64/bin/
+```
+
+**Step 3 — Install xtalkit into the env:**
+
+```bash
+cd /path/to/unnamed_project
+conda install -c conda-forge --override-channels gemmi rich
+pip install -e . --no-deps
+```
+
+**Step 4 — Verify:**
+
+```bash
+conda run -n xtalkit python -m pytest tests/test_enumerator.py -v
+# Expect: 8 passed
+```
+
+xtalkit handles three Windows-specific quirks automatically at runtime (in `xtalkit/_env.py`):
+
+1. Appends `.X` and `.PY` to `PATHEXT` so `shutil.which("enum.x")` finds the binary
+2. Calls `os.add_dll_directory(env/Library/bin)` so scipy's native extension loads
+3. Monkey-patches `shutil.which` to return absolute paths (Windows otherwise returns `.\makestr.x`, which `subprocess.Popen` cannot launch)
+
+---
+
 ## TUI (Interactive Mode)
 
 Launch with no arguments:
@@ -232,6 +383,8 @@ xtalkit
 ║                     information          ║
 ║  [4] Fetch DB    — Verify database       ║
 ║                     online               ║
+║  [5] Enumerate   — Enumerate ordered     ║
+║                     configurations       ║
 ║  [0] Exit                                ║
 ╚═══════════════════════════════════════════╝
 ```
@@ -408,7 +561,7 @@ Unsupported space groups raise `NotImplementedError` with a clear message. Expan
 
 ```bash
 uv sync          # Install dependencies
-uv run pytest    # Run all tests (64 tests)
+uv run pytest    # Run all tests (70 tests; 5 skip without pymatgen)
 ```
 
 ### Project structure
@@ -417,22 +570,26 @@ uv run pytest    # Run all tests (64 tests)
 xtalkit/
 ├── xtalkit/
 │   ├── __init__.py      # Package, version
-│   ├── cli.py           # argparse CLI + 4 subcommands
+│   ├── cli.py           # argparse CLI + 5 subcommands
 │   ├── tui.py           # rich-based interactive TUI
 │   ├── spacegroup.py    # Gemmi space group queries
 │   ├── matcher.py       # Atom → Wyckoff position matching
 │   ├── marker.py        # Core: mark Wyckoff in CIF
 │   ├── skeleton.py      # Pure Wyckoff skeleton generation
 │   ├── exporter.py      # .cif / .vesta / .xyz writers
+│   ├── enumerator.py    # enumlib wrapper (lazy pymatgen import)
+│   ├── _env.py          # Windows env fixes for pymatgen + enumlib
 │   └── utils.py         # Shared helpers
 ├── tests/
 │   ├── fixtures/
-│   │   └── simple.cif   # Test CIF (F-43m, Li + P)
+│   │   ├── simple.cif         # Test CIF (F-43m, Li + P)
+│   │   └── disordered_binary.cif  # Au0.5/Cu0.5 for enumerate tests
 │   ├── test_spacegroup.py
 │   ├── test_matcher.py
 │   ├── test_exporter.py
 │   ├── test_marker.py
 │   ├── test_skeleton.py
+│   ├── test_enumerator.py     # enumlib integration (skips without pymatgen)
 │   ├── test_cli.py
 │   ├── test_tui.py
 │   └── test_integration.py
@@ -447,8 +604,12 @@ xtalkit/
 
 ## Dependencies
 
-| Package | Purpose |
-|---------|---------|
-| [gemmi](https://gemmi.readthedocs.io/) | Space group data, CIF I/O |
-| [rich](https://rich.readthedocs.io/) | TUI formatting (tables, panels, colors) |
-| pytest (dev) | Test framework |
+| Package | Purpose | Required? |
+|---------|---------|-----------|
+| [gemmi](https://gemmi.readthedocs.io/) | Space group data, CIF I/O | Yes |
+| [rich](https://rich.readthedocs.io/) | TUI formatting (tables, panels, colors) | Yes |
+| [pymatgen](https://pymatgen.org/) 2023.5.31 | enumlib wrapper for `enumerate` | Only for `enumerate` |
+| [enumlib](https://github.com/msg-byu/enumlib) | Symmetry-inequivalent configuration enumeration (Fortran) | Only for `enumerate` |
+| pytest (dev) | Test framework | Yes |
+
+The `enumerate` subcommand lazy-imports pymatgen, so the core toolkit works without it. See [Enumeration setup](#enumeration-setup) for the one-time conda env + binary compilation path.

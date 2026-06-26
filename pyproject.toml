@@ -11,6 +11,13 @@ dependencies = [
 [project.scripts]
 xtalkit = "xtalkit.cli:main"
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["xtalkit"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",

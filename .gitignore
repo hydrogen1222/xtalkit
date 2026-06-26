@@ -15,10 +15,21 @@ build/
 # xtalkit output files
 *_WYCK.cif
 *_WYCK.xyz
-*_WYCK.vesta
 SG*_skeleton.cif
 SG*_skeleton.xyz
-SG*_skeleton.vesta
+
+# enumerate (enumlib) output + scratch files
+*_enum/
+enumlib_src/
+struct_enum.in
+struct_enum.out
+readcheck_*.out
+debug_*.out
+
+# User data / examples (root-level CIFs and zips, not test fixtures)
+/*.cif
+/*.zip
+tree.json
 
 # OS
 .DS_Store
