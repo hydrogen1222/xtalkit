@@ -152,6 +152,12 @@ def cmd_fetch(args) -> int:
 def cmd_enumerate(args) -> int:
     """Run the 'enumerate' subcommand."""
     try:
+        if args.min_cell_size > args.max_cell_size:
+            raise ValueError(
+                f"--min-cell-size ({args.min_cell_size}) must be <= "
+                f"--max-cell-size ({args.max_cell_size})."
+            )
+
         base = os.path.splitext(os.path.basename(args.cif))[0]
         output_dir = args.output_dir or f"{base}_enum"
 
@@ -173,7 +179,7 @@ def cmd_enumerate(args) -> int:
         if len(paths) > 10:
             print(f"     ... and {len(paths) - 10} more")
         return 0
-    except (RuntimeError, FileNotFoundError) as e:
+    except (RuntimeError, FileNotFoundError, ValueError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -234,7 +240,8 @@ def build_parser() -> argparse.ArgumentParser:
     # enumerate
     p_enum = sub.add_parser(
         "enumerate",
-        help="Enumerate ordered configurations of a disordered CIF (requires pymatgen + enumlib)",
+        help="Enumerate ordered configurations of a disordered CIF "
+             "(requires the 'enumerate' extra + compiled enumlib)",
     )
     p_enum.add_argument("cif", help="Path to the input disordered CIF")
     p_enum.add_argument("--min-cell-size", type=int, default=1,

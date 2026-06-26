@@ -23,6 +23,7 @@ SG*_skeleton.xyz
 enumlib_src/
 struct_enum.in
 struct_enum.out
+vasp.*
 readcheck_*.out
 debug_*.out
 

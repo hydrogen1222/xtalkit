@@ -113,7 +113,7 @@ def test_enumerate_missing_pymatgen_message(monkeypatch):
         enum_mod.enumerate_structures(cif_path=cif)
     msg = str(exc_info.value)
     assert "pymatgen" in msg.lower()
-    assert "conda" in msg.lower()
+    assert "uv" in msg.lower()
 
 
 @skip_no_pymatgen

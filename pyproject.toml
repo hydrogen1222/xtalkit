@@ -8,6 +8,11 @@ dependencies = [
     "rich>=15.0.0",
 ]
 
+# `enumerate` subcommand only — keeps the core (mark/skeleton/info/fetch)
+# lightweight. Install with:  uv sync --extra enumerate
+[project.optional-dependencies]
+enumerate = ["pymatgen>=2024.5"]
+
 [project.scripts]
 xtalkit = "xtalkit.cli:main"
 

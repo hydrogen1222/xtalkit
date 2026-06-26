@@ -1,24 +1,27 @@
-"""Windows-specific environment fixes for pymatgen + enumlib.
+"""Environment setup for running enumlib through pymatgen.
 
-Three issues need workarounds when running enumlib through pymatgen on Windows:
+``pymatgen.command_line.enumlib_caller`` shells out to the Fortran ``enum.x``
+and ``makestr.x`` binaries, locating them with ``shutil.which`` at *module
+import time*. So before that module is imported we must put the binaries on
+PATH, and on Windows fix a few ``shutil.which`` / native-DLL quirks.
 
-1. ``shutil.which`` ignores files whose extension is not in ``PATHEXT``.
-   ``enum.x`` and ``makestr.x`` have a ``.x`` extension that isn't in the
-   default PATHEXT, so we append ``.X`` (and ``.PY`` for makeStr.py fallback).
+Binaries are found in the first existing location, in priority order:
 
-2. ``scipy.signal`` (transitively imported by pymatgen via
-   ``pymatgen.electronic_structure.dos``) loads a native extension that
-   depends on DLLs in ``Library/bin`` of the conda env. When Python is
-   launched via ``conda run`` the env's ``Library/bin`` is on PATH but
-   not registered with ``os.add_dll_directory`` (which Python 3.8+
-   requires on Windows for native module loading).
+1. ``$XTALKIT_ENUMLIB_BIN`` (a directory holding ``enum.x`` + ``makestr.x``)
+2. a user-local default — ``~/.local/share/xtalkit/bin`` on Linux/macOS,
+   ``%LOCALAPPDATA%/xtalkit/bin`` on Windows — which is where
+   ``scripts/build_enumlib.sh`` installs them
+3. an in-repo ``enumlib_src/enumlib/src`` clone (development; gitignored)
 
-3. ``shutil.which`` returns the first match, which on Windows can be a
-   relative path (``.\\makestr.x``) when the current directory contains
-   the file. ``subprocess.Popen`` cannot launch relative paths without
-   ``shell=True``. We patch ``which`` to return only absolute paths.
+On Windows three extra workarounds are applied: ``PATHEXT`` is extended with
+``.X``/``.PY``; the conda env's ``Library/bin`` DLL directories are registered
+with ``os.add_dll_directory`` (Python 3.8+ requires this for native module
+loading); and ``shutil.which`` is wrapped to return absolute paths only.
 
-The fixes are idempotent and only affect the ``enumerate`` code path.
+Caveat: the ``shutil.which`` absolute-path patch is global and persists for
+the whole process (not only the enumerate path). That is acceptable for the
+one-shot CLI; if you embed xtalkit as a library and depend on ``which``
+returning relative paths, run ``enumerate_structures`` in a subprocess.
 """
 
 from __future__ import annotations
@@ -41,11 +44,58 @@ def _absolute_which(cmd, mode=os.F_OK | os.X_OK, path=None):
     return result
 
 
+def _enumlib_bin_dirs() -> list[str]:
+    """Candidate directories that may contain ``enum.x`` / ``makestr.x``.
+
+    Ordered by priority; the first that exists and holds ``enum.x`` wins.
+    """
+    dirs: list[str] = []
+    env_dir = os.environ.get("XTALKIT_ENUMLIB_BIN")
+    if env_dir:
+        dirs.append(os.path.abspath(os.path.expanduser(env_dir)))
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or os.path.join(
+            os.path.expanduser("~"), "AppData", "Local")
+        dirs.append(os.path.join(base, "xtalkit", "bin"))
+    else:
+        xdg = os.environ.get("XDG_DATA_HOME") or os.path.join(
+            os.path.expanduser("~"), ".local", "share")
+        dirs.append(os.path.join(xdg, "xtalkit", "bin"))
+    # In-repo development clone (covered by .gitignore entry `enumlib_src/`).
+    here = os.path.dirname(os.path.abspath(__file__))
+    dirs.append(os.path.normpath(
+        os.path.join(here, "..", "enumlib_src", "enumlib", "src")))
+    return dirs
+
+
+def _prepend_to_path(directory: str) -> None:
+    """Prepend ``directory`` to PATH (no-op if already present)."""
+    path = os.environ.get("PATH", "")
+    parts = path.split(os.pathsep) if path else []
+    if directory not in parts:
+        os.environ["PATH"] = directory + os.pathsep + path
+
+
 def setup_for_enumlib() -> None:
-    """Apply the three Windows workarounds. Safe to call repeatedly."""
+    """Make enumlib binaries discoverable + apply Windows workarounds.
+
+    The binary-directory lookup runs every call (idempotent, cheap) so that
+    binaries installed after the first call are still picked up. The
+    Windows-only mutations and the ``shutil.which`` patch run once.
+
+    Safe to call repeatedly.
+    """
+    # All platforms: put the compiled binaries on PATH before enumlib_caller's
+    # import-time ``which("enum.x")`` runs.
+    for d in _enumlib_bin_dirs():
+        if os.path.isdir(d) and os.path.exists(os.path.join(d, "enum.x")):
+            _prepend_to_path(d)
+            break
+
     global _ALREADY_SETUP
     if _ALREADY_SETUP:
         return
+    _ALREADY_SETUP = True
 
     if sys.platform == "win32":
         ext = os.environ.get("PATHEXT", "")
@@ -55,8 +105,8 @@ def setup_for_enumlib() -> None:
                 ext = os.environ["PATHEXT"]
 
         # When invoked directly (not via `conda activate`), the env's
-        # Library/bin and Library/mingw-w64/bin may not be on PATH.
-        # Add them so enum.x / makestr.x are discoverable.
+        # Library/bin and Library/mingw-w64/bin may not be on PATH. Add them
+        # so enum.x / makestr.x are discoverable and scipy's DLLs load.
         env_root = sys.prefix
         for sub in (os.path.join("Library", "bin"),
                     os.path.join("Library", "mingw-w64", "bin"),
@@ -68,11 +118,7 @@ def setup_for_enumlib() -> None:
                     os.add_dll_directory(d)
                 except (OSError, AttributeError):
                     pass
-                path_list = os.environ.get("PATH", "").split(os.pathsep)
-                if d not in path_list:
-                    os.environ["PATH"] = d + os.pathsep + os.environ.get("PATH", "")
+                _prepend_to_path(d)
 
     if shutil.which is not _absolute_which:
         shutil.which = _absolute_which
-
-    _ALREADY_SETUP = True

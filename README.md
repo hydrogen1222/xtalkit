@@ -217,7 +217,7 @@ Verifies that all space group data is intact. Output:
 
 ### `enumerate` — Enumerate Ordered Configurations
 
-Enumerate all symmetry-inequivalent ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). This subcommand is **opt-in** — it requires a separate conda environment with pymatgen and self-compiled enumlib binaries (see [Enumeration setup](#enumeration-setup) below).
+Enumerate all symmetry-inequivalent ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). This subcommand is **opt-in** — it requires the `enumerate` uv extra and source-compiled enumlib binaries (see [Enumeration setup](#enumeration-setup) below).
 
 ```
 xtalkit enumerate <input.cif> [options]
@@ -260,7 +260,7 @@ xtalkit enumerate parent.cif --output-dir ./runs/exp01/
 
 1. Reads the CIF via `pymatgen.core.Structure.from_file` (handles partial occupancy + mmCIF natively)
 2. **Converts to the primitive cell** (`Structure.get_primitive_structure()`). This is essential: enumlib does not auto-detect the primitive cell, and a conventional F-centered/I-centered cell can have 2×–4× the candidate sites, enough to overflow enumlib's tree_class array (e.g. F-43m 48h with 48 candidates → C(48,24) overflows; the primitive cell has only 12 candidates → C(12,6) = 924, exactly the regime that reproduces literature results).
-3. Augments any single-species partial-occupancy site with an explicit `DummySpecies(vacancy_symbol)` to represent the vacancy (e.g. `Li0.5` → `Li0.5 + X0.5`)
+3. Augments any partial-occupancy site (single- or multi-species) with an explicit `DummySpecies(vacancy_symbol)` to represent the vacancy (e.g. `Li0.5` → `Li0.5 + X0.5`; `Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`)
 4. Calls `pymatgen.command_line.enumlib_caller.EnumlibAdaptor` which shells out to the Fortran `enum.x` and `makestr.x` binaries
 5. Writes each symmetry-inequivalent ordered configuration as `<basename>_<NNN>.cif` (in the primitive cell)
 
@@ -282,7 +282,7 @@ Li1 Li 0.3148 0.018 0.6852 0.56    ← 56% Li, 44% vacancy (implicit)
 ```
 
 xtalkit's `enumerate` handles both:
-- **Case A** (multi-species mix): enumlib enumerates which species goes where directly — no augmentation needed.
+- **Case A** (multi-species mix, occupancies sum to 1.0): enumlib enumerates which species goes where directly — no augmentation needed. (If a multi-species site sums to < 1, xtalkit adds the shortfall as a vacancy species first.)
 - **Case B** (single species + true vacancy): xtalkit auto-augments with an explicit `DummySpecies("X")` at `1 − occ`, turning it into Case A internally (`Li0.56 → Li0.56 + X0.44`), then enumlib enumerates Li-vs-vacancy orderings.
 
 #### Why `Li6PS5Cl_clean.cif` exists (vs `EntryWithCollCode418490.cif`)
@@ -308,54 +308,42 @@ This rounding is a standard approximation in the argyrodite literature: the real
 **Known limitations:**
 
 - **Non-integer stoichiometry**: A site with occupancy 0.56 (= 14/25) cannot be integerized in any small supercell. enumlib will return 0 structures; xtalkit surfaces this with a clear error suggesting either a larger `--max-cell-size` or a "clean" parent CIF with rational occupancy (e.g. round 0.56 → 0.5). For Li6.72PS5Cl (Li occ 0.56), prepare a Li6PS5Cl parent CIF with Li occ 0.5 — this reproduces the ~48 Li orderings from the argyrodite literature.
-- **Windows-only setup**: The conda env + binary compilation path below is Windows-specific. macOS/Linux users can use `pip install pymatgen` + system Fortran compiler.
+- **Platform note**: `scripts/build_enumlib.sh` targets Linux/macOS (system `gfortran`). Windows users can compile under [WSL](https://learn.microsoft.com/windows/wsl/), or follow the legacy conda + `m2w64-gcc-fortran` path (place `enum.x`/`makestr.x` in the env's `Library/mingw-w64/bin`).
 
 ---
 
 #### Enumeration setup
 
-xtalkit's core (`mark`, `skeleton`, `info`, `fetch`) does **not** require pymatgen. Only `enumerate` does. The setup is one-time and lives in a dedicated conda env so it doesn't affect the lightweight `uv` install.
+xtalkit's core (`mark`, `skeleton`, `info`, `fetch`) does **not** require pymatgen. Only `enumerate` does, and it's an opt-in uv extra — the core stays lightweight (gemmi + rich only). No conda, no root.
 
-**Step 1 — Create the conda env:**
+**Step 1 — Install the `enumerate` extra:**
 
 ```bash
-conda create -n xtalkit -c conda-forge --override-channels \
-    python=3.11 m2w64-gcc-fortran make git
-conda activate xtalkit
-conda install -c conda-forge --override-channels pymatgen==2023.5.31
+uv sync --extra enumerate
 ```
 
-`pymatgen==2023.5.31` is the last conda-forge build that ships `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`.
+This adds `pymatgen` (>=2024.5). Current PyPI builds of pymatgen still ship `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`, so there is no need to pin an old version. (The `2023.5.31` pin seen in older docs was a conda-forge-specific workaround; uv uses PyPI, which is unaffected.)
 
-**Step 2 — Compile enumlib:**
+**Step 2 — Compile the enumlib binaries (one-time, no root):**
 
 ```bash
-git clone https://github.com/msg-byu/enumlib.git
-cd enumlib
-git submodule update --init   # pulls symlib
-# On Windows, if symlib checkout fails (NTFS path issue), download symlib
-# ZIP from GitHub and extract its src/ folder into symlib/src/
-cd src
-make          # produces enum.x and makestr.x
-cp enum.x makestr.x $CONDA_PREFIX/Library/mingw-w64/bin/
+bash scripts/build_enumlib.sh
 ```
 
-**Step 3 — Install xtalkit into the env:**
+This clones [msg-byu/enumlib](https://github.com/msg-byu/enumlib) (plus its `symlib` submodule), compiles `enum.x` and `makestr.x` with the system `gfortran`, and installs them to `~/.local/share/xtalkit/bin/`. Requires `gfortran`, `git`, and `make` (e.g. `sudo apt install gfortran make git`). Override the install location with `XTALKIT_ENUMLIB_BIN`.
+
+xtalkit finds these binaries automatically — **no manual PATH setup needed**. `xtalkit._env.setup_for_enumlib()` prepends the install directory to `PATH` before `enumlib_caller`'s import-time `which("enum.x")` runs. It also checks `$XTALKIT_ENUMLIB_BIN`, and falls back to an in-repo `enumlib_src/enumlib/src/` clone for development.
+
+**Step 3 — Verify:**
 
 ```bash
-cd /path/to/unnamed_project
-conda install -c conda-forge --override-channels gemmi rich
-pip install -e . --no-deps
-```
-
-**Step 4 — Verify:**
-
-```bash
-conda run -n xtalkit python -m pytest tests/test_enumerator.py -v
+uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
+# Expect: 3 ordered CIFs from Au0.5/Cu0.5
+uv run pytest tests/test_enumerator.py -v
 # Expect: 8 passed
 ```
 
-xtalkit handles three Windows-specific quirks automatically at runtime (in `xtalkit/_env.py`):
+On Windows, `xtalkit/_env.py` additionally applies three runtime workarounds (these do not run on Linux/macOS):
 
 1. Appends `.X` and `.PY` to `PATHEXT` so `shutil.which("enum.x")` finds the binary
 2. Calls `os.add_dll_directory(env/Library/bin)` so scipy's native extension loads
@@ -560,8 +548,9 @@ Unsupported space groups raise `NotImplementedError` with a clear message. Expan
 ## Development
 
 ```bash
-uv sync          # Install dependencies
-uv run pytest    # Run all tests (70 tests; 5 skip without pymatgen)
+uv sync                     # Install core dependencies
+uv sync --extra enumerate   # Also enable `enumerate` (pulls pymatgen)
+uv run pytest               # Run all tests (5 skip without the enumerate extra)
 ```
 
 ### Project structure
@@ -578,7 +567,7 @@ xtalkit/
 │   ├── skeleton.py      # Pure Wyckoff skeleton generation
 │   ├── exporter.py      # .cif / .vesta / .xyz writers
 │   ├── enumerator.py    # enumlib wrapper (lazy pymatgen import)
-│   ├── _env.py          # Windows env fixes for pymatgen + enumlib
+│   ├── _env.py          # enumlib binary discovery + Windows env fixes
 │   └── utils.py         # Shared helpers
 ├── tests/
 │   ├── fixtures/
@@ -596,6 +585,8 @@ xtalkit/
 ├── docs/superpowers/
 │   ├── specs/2026-06-20-xtalkit-design.md
 │   └── plans/2026-06-20-xtalkit.md
+├── scripts/
+│   └── build_enumlib.sh    # Compile enumlib (enum.x, makestr.x) from source
 ├── pyproject.toml
 └── README.md
 ```
@@ -608,8 +599,8 @@ xtalkit/
 |---------|---------|-----------|
 | [gemmi](https://gemmi.readthedocs.io/) | Space group data, CIF I/O | Yes |
 | [rich](https://rich.readthedocs.io/) | TUI formatting (tables, panels, colors) | Yes |
-| [pymatgen](https://pymatgen.org/) 2023.5.31 | enumlib wrapper for `enumerate` | Only for `enumerate` |
+| [pymatgen](https://pymatgen.org/) >=2024.5 | enumlib wrapper for `enumerate` | `enumerate` extra only |
 | [enumlib](https://github.com/msg-byu/enumlib) | Symmetry-inequivalent configuration enumeration (Fortran) | Only for `enumerate` |
 | pytest (dev) | Test framework | Yes |
 
-The `enumerate` subcommand lazy-imports pymatgen, so the core toolkit works without it. See [Enumeration setup](#enumeration-setup) for the one-time conda env + binary compilation path.
+The `enumerate` subcommand lazy-imports pymatgen, so the core toolkit works without it. See [Enumeration setup](#enumeration-setup) for the `uv sync --extra enumerate` + `build_enumlib.sh` path.

@@ -217,7 +217,7 @@ xtalkit fetch
 
 ### `enumerate` — 枚举有序构型
 
-使用 [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib)（Hart-Forcade 算法）枚举一个无序 CIF 的所有对称不等价有序构型。该子命令为**可选功能** —— 需要单独配置一个含 pymatgen 与自编译 enumlib 二进制的 conda 环境（见下文 [枚举功能配置](#枚举功能配置)）。
+使用 [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib)（Hart-Forcade 算法）枚举一个无序 CIF 的所有对称不等价有序构型。该子命令为**可选功能** —— 需要 `enumerate` uv extra 与源码编译的 enumlib 二进制（见下文 [枚举功能配置](#枚举功能配置)）。
 
 ```
 xtalkit enumerate <input.cif> [options]
@@ -260,7 +260,7 @@ xtalkit enumerate parent.cif --output-dir ./runs/exp01/
 
 1. 通过 `pymatgen.core.Structure.from_file` 读取 CIF（原生支持部分占位 + mmCIF）
 2. **转换为原胞**（`Structure.get_primitive_structure()`）。这一步至关重要：enumlib 不会自动找原胞，而 F 心/I 心的常规晶胞候选位点数会翻 2×–4× 倍，足以让 enumlib 的 tree_class 数组溢出（如 F-43m 48h 重复度 48，C(48,24) 溢出；原胞里只有 12 个候选位点，C(12,6) = 924，正是能复现文献结果的数量级）。
-3. 对任何单一物种的部分占位位点，自动追加显式 `DummySpecies(vacancy_symbol)` 表示空位（如 `Li0.5` → `Li0.5 + X0.5`）
+3. 对任何部分占位位点（单一或多物种），自动追加显式 `DummySpecies(vacancy_symbol)` 表示空位（如 `Li0.5` → `Li0.5 + X0.5`；`Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`）
 4. 调用 `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`，它会 shell 调用 Fortran 二进制 `enum.x` 与 `makestr.x`
 5. 把每个对称不等价的有序构型写为 `<basename>_<NNN>.cif`（以原胞形式输出）
 
@@ -282,7 +282,7 @@ Li1 Li 0.3148 0.018 0.6852 0.56    ← 56% Li，44% 是空位（隐含）
 ```
 
 xtalkit 的 `enumerate` 两种情况都处理：
-- **情况 A**（多物种混合）：enumlib 直接枚举各物种放在哪里 —— 不需要补充。
+- **情况 A**（多物种混合，占位和为 1.0）：enumlib 直接枚举各物种放在哪里 —— 不需要补充。（若多物种位点占位和 < 1，xtalkit 会先把差额补成空位物种。）
 - **情况 B**（单一物种 + 真空位）：xtalkit 自动追加显式 `DummySpecies("X")`，占位 `1 − 占位`，把它内部变成情况 A（`Li0.56 → Li0.56 + X0.44`），然后 enumlib 枚举 Li 与空位的有序排列。
 
 #### 为什么要造 `Li6PS5Cl_clean.cif`（vs `EntryWithCollCode418490.cif`）
@@ -308,54 +308,42 @@ Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.5 0
 **已知限制：**
 
 - **非整数计量比**：占位 0.56（= 14/25）无法在任何小超胞中整数化。enumlib 将返回 0 个结构；xtalkit 会以清晰错误提示，建议增大 `--max-cell-size` 或改用占位为有理数（如把 0.56 舍入为 0.5）的"干净"母相 CIF。对 Li6.72PS5Cl（Li 占位 0.56），可准备一份 Li6PS5Cl 母相 CIF（Li 占位改为 0.5）—— 这样能复现 argyrodite 文献中 ~48 个 Li 有序构型。
-- **仅 Windows 配置**：下文 conda 环境 + 二进制编译路径针对 Windows。macOS/Linux 用户可用 `pip install pymatgen` + 系统 Fortran 编译器。
+- **平台说明**：`scripts/build_enumlib.sh` 面向 Linux/macOS（系统 `gfortran`）。Windows 用户可在 [WSL](https://learn.microsoft.com/windows/wsl/) 下编译，或沿用旧的 conda + `m2w64-gcc-fortran` 路径（把 `enum.x`/`makestr.x` 放到环境的 `Library/mingw-w64/bin`）。
 
 ---
 
 #### 枚举功能配置
 
-xtalkit 核心（`mark`、`skeleton`、`info`、`fetch`）**不需要** pymatgen，仅 `enumerate` 需要。以下配置是一次性的，建议放在专用 conda 环境中，以免影响轻量级的 `uv` 安装。
+xtalkit 核心（`mark`、`skeleton`、`info`、`fetch`）**不需要** pymatgen，仅 `enumerate` 需要，且它是一个可选 uv extra —— 核心保持轻量（仅 gemmi + rich）。无需 conda，无需 root。
 
-**第 1 步 —— 创建 conda 环境：**
+**第 1 步 —— 安装 `enumerate` extra：**
 
 ```bash
-conda create -n xtalkit -c conda-forge --override-channels \
-    python=3.11 m2w64-gcc-fortran make git
-conda activate xtalkit
-conda install -c conda-forge --override-channels pymatgen==2023.5.31
+uv sync --extra enumerate
 ```
 
-`pymatgen==2023.5.31` 是 conda-forge 上最后一个内置 `pymatgen.command_line.enumlib_caller.EnumlibAdaptor` 的版本。
+这会装上 `pymatgen`（>=2024.5）。PyPI 上现代版本的 pymatgen 仍内置 `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`，所以无需钉死旧版本。（旧文档里的 `2023.5.31` 钉版是 conda-forge 专用 workaround；uv 走 PyPI，不受影响。）
 
-**第 2 步 —— 编译 enumlib：**
+**第 2 步 —— 编译 enumlib 二进制（一次性，无需 root）：**
 
 ```bash
-git clone https://github.com/msg-byu/enumlib.git
-cd enumlib
-git submodule update --init   # 拉取 symlib
-# Windows 上若 symlib 检出失败（NTFS 路径问题），从 GitHub 下载 symlib
-# ZIP 并将其中 src/ 目录解压到 symlib/src/
-cd src
-make          # 生成 enum.x 与 makestr.x
-cp enum.x makestr.x $CONDA_PREFIX/Library/mingw-w64/bin/
+bash scripts/build_enumlib.sh
 ```
 
-**第 3 步 —— 将 xtalkit 安装到该环境：**
+该脚本克隆 [msg-byu/enumlib](https://github.com/msg-byu/enumlib)（含 `symlib` 子模块），用系统 `gfortran` 编译 `enum.x` 与 `makestr.x`，装到 `~/.local/share/xtalkit/bin/`。需要 `gfortran`、`git`、`make`（如 `sudo apt install gfortran make git`）。可用 `XTALKIT_ENUMLIB_BIN` 覆盖安装位置。
+
+xtalkit 会自动发现这些二进制 —— **无需手动配 PATH**。`xtalkit._env.setup_for_enumlib()` 会在 `enumlib_caller` 导入时的 `which("enum.x")` 之前，把安装目录加到 `PATH` 前面。它也会检查 `$XTALKIT_ENUMLIB_BIN`，并为开发用途回退到仓库内 `enumlib_src/enumlib/src/`。
+
+**第 3 步 —— 验证：**
 
 ```bash
-cd /path/to/unnamed_project
-conda install -c conda-forge --override-channels gemmi rich
-pip install -e . --no-deps
-```
-
-**第 4 步 —— 验证：**
-
-```bash
-conda run -n xtalkit python -m pytest tests/test_enumerator.py -v
+uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
+# 预期：Au0.5/Cu0.5 → 3 个有序 CIF
+uv run pytest tests/test_enumerator.py -v
 # 预期：8 passed
 ```
 
-xtalkit 会在运行时自动处理三个 Windows 专属问题（代码在 `xtalkit/_env.py`）：
+在 Windows 上，`xtalkit/_env.py` 还会在运行时应用三个 workaround（Linux/macOS 不执行）：
 
 1. 向 `PATHEXT` 追加 `.X` 和 `.PY`，让 `shutil.which("enum.x")` 能找到二进制
 2. 调用 `os.add_dll_directory(env/Library/bin)`，让 scipy 的原生扩展能加载
@@ -560,8 +548,9 @@ done
 ## 开发
 
 ```bash
-uv sync          # 安装依赖
-uv run pytest    # 运行全部测试（共 70 个；无 pymatgen 时跳过 5 个）
+uv sync                     # 安装核心依赖
+uv sync --extra enumerate   # 同时启用 `enumerate`（拉入 pymatgen）
+uv run pytest               # 运行全部测试（未装 enumerate extra 时跳过 5 个）
 ```
 
 ### 项目结构
@@ -578,7 +567,7 @@ xtalkit/
 │   ├── skeleton.py      # 纯 Wyckoff 骨架生成
 │   ├── exporter.py      # .cif / .vesta / .xyz 写入器
 │   ├── enumerator.py    # enumlib 封装（延迟导入 pymatgen）
-│   ├── _env.py          # pymatgen + enumlib 的 Windows 环境修复
+│   ├── _env.py          # enumlib 二进制发现 + Windows 环境修复
 │   └── utils.py         # 共用工具
 ├── tests/
 │   ├── fixtures/
@@ -596,6 +585,8 @@ xtalkit/
 ├── docs/superpowers/
 │   ├── specs/2026-06-20-xtalkit-design.md
 │   └── plans/2026-06-20-xtalkit.md
+├── scripts/
+│   └── build_enumlib.sh    # 从源码编译 enumlib（enum.x、makestr.x）
 ├── pyproject.toml
 └── README.md
 ```
@@ -608,8 +599,8 @@ xtalkit/
 |----|------|----------|
 | [gemmi](https://gemmi.readthedocs.io/) | 空间群数据、CIF I/O | 是 |
 | [rich](https://rich.readthedocs.io/) | TUI 格式化（表格、面板、颜色） | 是 |
-| [pymatgen](https://pymatgen.org/) 2023.5.31 | `enumerate` 的 enumlib 封装 | 仅 `enumerate` 需要 |
+| [pymatgen](https://pymatgen.org/) >=2024.5 | `enumerate` 的 enumlib 封装 | 仅 `enumerate` extra |
 | [enumlib](https://github.com/msg-byu/enumlib) | 对称不等价构型枚举（Fortran） | 仅 `enumerate` 需要 |
 | pytest（开发） | 测试框架 | 是 |
 
-`enumerate` 子命令延迟导入 pymatgen，因此核心工具箱在没有 pymatgen 时也能正常工作。一次性 conda 环境 + 二进制编译路径见 [枚举功能配置](#枚举功能配置)。
+`enumerate` 子命令延迟导入 pymatgen，因此核心工具箱在没有 pymatgen 时也能正常工作。`uv sync --extra enumerate` + `build_enumlib.sh` 路径见 [枚举功能配置](#枚举功能配置)。
