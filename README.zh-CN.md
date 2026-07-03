@@ -84,7 +84,7 @@ xtalkit mark <input.cif> --sg <N> --wyckoff <letters> [options]
 | `--mode overlay` | overlay | `overlay`：保留真实原子 + 添加虚拟原子。`replace`：将匹配的真实原子替换为虚拟原子 |
 | `--tol 0.5` | 0.5 | 分数坐标匹配容差 |
 | `--map 4a:Xe,16e:Kr` | （自动） | 按 Wyckoff 字母自定义虚拟元素分配 |
-| `--format cif` | cif | 输出格式：`cif`、`vesta`、`xyz`，或逗号分隔如 `cif,vesta,xyz` |
+| `--format cif` | cif | 输出格式：`cif`、`xyz`，或逗号分隔如 `cif,xyz` |
 | `-o base` | `{name}_WYCK` | 输出基础路径（每种格式自动加扩展名） |
 
 **示例：**
@@ -93,8 +93,8 @@ xtalkit mark <input.cif> --sg <N> --wyckoff <letters> [options]
 # 在立方 F-43m 结构中标记 4a 和 24f（overlay 模式）
 xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff 4a,24f
 
-# 标记全部 8 个 Wyckoff 位置，输出三种格式
-xtalkit mark structure.cif --sg 216 --wyckoff all --format cif,vesta,xyz
+# 标记全部 8 个 Wyckoff 位置，输出所有格式
+xtalkit mark structure.cif --sg 216 --wyckoff all --format cif,xyz
 
 # Replace 模式：把 4a 位置的真实原子替换为 Xe 虚拟原子
 xtalkit mark structure.cif --sg 216 --wyckoff 4a --mode replace
@@ -112,7 +112,6 @@ xtalkit mark input.cif --sg 216 --wyckoff 4a -o ./output/marked
 | 格式 | 文件 | 说明 |
 |------|------|------|
 | CIF | `{name}_WYCK.cif` | 完整 CIF，末尾追加虚拟原子。可直接用 VESTA 打开。 |
-| VESTA | `{name}_WYCK.vesta` | VESTA 原生 XML，含晶胞 + 原子位点。 |
 | XYZ | `{name}_WYCK.xyz` | 简单笛卡尔 XYZ（丢失晶胞信息 —— VESTA 打开时会提示输入晶胞）。 |
 
 ---
@@ -138,7 +137,7 @@ xtalkit skeleton --sg <N> --wyckoff <letters> [options]
 |------|--------|------|
 | `--cell "a b c α β γ"` | 按晶系默认 | 自定义晶胞参数 |
 | `--map 4a:Xe,...` | （自动） | 元素覆盖 |
-| `--format cif` | cif | `cif`、`vesta`、`xyz`，或 `cif,vesta,xyz` |
+| `--format cif` | cif | `cif`、`xyz`，或 `cif,xyz` |
 | `-o base` | `SG{N}_skeleton` | 输出基础路径 |
 
 **示例：**
@@ -153,7 +152,7 @@ xtalkit skeleton --sg 216 --wyckoff 4a,4c,16e,24f \
 
 # P2₁/c（单斜）自定义晶胞骨架
 xtalkit skeleton --sg 14 --wyckoff 2a,4e \
-    --cell "5.5 6.3 8.1 90 108.5 90" --format cif,vesta
+    --cell "5.5 6.3 8.1 90 108.5 90" --format cif,xyz
 ```
 
 **按晶系的默认晶胞参数：**
@@ -189,14 +188,14 @@ Default cell: a=5.0 b=5.0 c=5.0 α=90 β=90 γ=90
 
 Wyckoff Positions (8):
   Letter   Mult   Site Sym   Coordinates
-  4a       4      -4         0,0,0
-  4b       4      -4         1/2,1/2,1/2
-  4c       4      -4         1/4,1/4,1/4
-  4d       4      -4         3/4,3/4,3/4
+  4a       4      -43m       0,0,0
+  4b       4      -43m       1/2,1/2,1/2
+  4c       4      -43m       1/4,1/4,1/4
+  4d       4      -43m       3/4,3/4,3/4
   16e      16     .3m        x,x,x
-  24f      24     2..        1/4,0,0
-  24g      24     .2.        1/4,1/4,1/4
-  48h      48     1          1/4,1/4,1/4
+  24f      24     2.mm       x,0,0
+  24g      24     2.mm       x,0,1/2
+  48h      48     ..m        x,x,z
 ```
 
 ---
@@ -207,17 +206,19 @@ Wyckoff Positions (8):
 xtalkit fetch
 ```
 
-校验全部空间群数据是否完整。输出：
+校验全部已内置的空间群数据是否完整。输出：
 
 ```
-✓ Space group data intact (230/230 OK)
+[OK] Space group data intact (38/230 space groups supported).
 ```
 
 ---
 
 ### `enumerate` — 枚举有序构型
 
-使用 [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib)（Hart-Forcade 算法）枚举一个无序 CIF 的所有对称不等价有序构型。该子命令为**可选功能** —— 需要 `enumerate` uv extra 与源码编译的 enumlib 二进制（见下文 [枚举功能配置](#枚举功能配置)）。
+使用 [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib)（Hart-Forcade 算法）枚举一个无序 CIF 的所有**对称不等价**有序构型。母相空间群对称操作相关的结构会自动合并为一个 —— 你拿到的都是真正不同的排列，无需手动去重。
+
+本工具适用于任何**占位无序**（晶体学位点上有部分占位）的材料：二元合金（Au/Cu）、固溶体、掺杂体系，以及存在可动离子无序的电池电解质（如 argyrodite Li₆PS₅Cl、LGPS 等）。该子命令为**可选功能** —— 需要 `enumerate` uv extra 与源码编译的 enumlib 二进制（见下文 [枚举功能配置](#枚举功能配置)）。
 
 ```
 xtalkit enumerate <input.cif> [options]
@@ -227,42 +228,53 @@ xtalkit enumerate <input.cif> [options]
 
 | 参数 | 说明 |
 |------|------|
-| `input.cif` | 含部分占位/无序占位的 CIF 文件路径（如 Au0.5/Cu0.5） |
+| `input.cif` | 含部分占位/无序占位的 CIF 文件路径（如 Au0.5/Cu0.5，或 Li0.5 + 空位） |
 
 **可选参数：**
 
 | 选项 | 默认值 | 说明 |
 |------|--------|------|
 | `--min-cell-size N` | 1 | 枚举的最小超胞尺寸 |
-| `--max-cell-size N` | 2 | 枚举的最大超胞尺寸 |
+| `--max-cell-size N` | 2 | 枚举的最大超胞尺寸（越大→构型越多、越慢，见下文） |
 | `--symm-prec TOL` | 0.1 | 空间群分析的对称容差 |
-| `--vacancy-symbol S` | `X` | 空位的 DummySpecies 符号 |
-| `--output-dir DIR` | `{name}_enum/` | 枚举 CIF 的输出目录 |
+| `--vacancy-symbol S` | `X` | 内部表示空位用的 DummySpecies 符号 |
+| `--output-dir DIR` | `{name}_enum/` | 枚举文件的输出目录 |
 | `--max-structures N` | 不限 | 输出文件数量上限 |
 | `--timeout MIN` | 无 | enumlib 子进程超时（分钟） |
-| `--format F` | cif | 输出格式（`cif`；`xyz` 为预留） |
+| `--format F` | cif | 输出格式：`cif` 或 `xyz` |
 
 **示例：**
 
 ```bash
-# 在 1×–2× 超胞中枚举 50/50 Au/Cu 二元体系
-xtalkit enumerate AuCu_disordered.cif --max-cell-size 2
-# 输出：AuCu_disordered_enum/AuCu_disordered_000.cif, _001.cif, _002.cif
+# 枚举 50/50 Au/Cu 二元体系 —— 先用 1× 超胞快速看一眼
+xtalkit enumerate AuCu_disordered.cif --max-cell-size 1
 
-# 只保留前 5 个结构
-xtalkit enumerate disordered.cif --max-cell-size 3 --max-structures 5
+# 完整 1×–2× 枚举，只保留前 5 个结构
+xtalkit enumerate disordered.cif --max-cell-size 2 --max-structures 5
 
-# 自定义输出目录
-xtalkit enumerate parent.cif --output-dir ./runs/exp01/
+# 枚举一个电池电解质 CIF，自定义输出目录
+xtalkit enumerate Li6PS5Cl.cif --max-cell-size 1 --output-dir ./runs/exp01/
 ```
+
+> **到底枚举什么？** 你不需要在命令里指定枚举哪个元素 —— 没有这个 flag。xtalkit 从 CIF 自动判断，枚举**每一个**占位 < 1（或同一坐标上有多种物种）的位点；占位为 1 的全占位点原样固定。如果 CIF 里有多个无序位点（比如一个 Li/空位位点*外加*一个 Ge/P 混合位点），它们会被**联合**枚举 —— 每个输出结构把所有无序位点同时定死。所以 `enumerate Li6PS5Cl.cif` 枚举的是 Li 位点（Li/空位）；`enumerate AuCu_disordered.cif` 枚举的是 Au/Cu 位点。
+>
+> **如何选择研究对象。** 枚举完全由 CIF 决定，所以你通过"在 CIF 里写什么无序"来选择研究什么 —— 而不是靠命令行参数。只想研究 Li/空位，就把其他位点保持全占（占位 1）；只想研究 Ge/P 混合，就把 Li 保持全占。反过来，一个完全有序的 CIF（所有位点占位都是 1）没有可枚举的内容，会得到 0 个结构 —— 你得先改 CIF、把要研究的无序写进去（见下文*当 enumlib 返回 0 个结构时*）。
 
 **工作流程：**
 
-1. 通过 `pymatgen.core.Structure.from_file` 读取 CIF（原生支持部分占位 + mmCIF）
-2. **转换为原胞**（`Structure.get_primitive_structure()`）。这一步至关重要：enumlib 不会自动找原胞，而 F 心/I 心的常规晶胞候选位点数会翻 2×–4× 倍，足以让 enumlib 的 tree_class 数组溢出（如 F-43m 48h 重复度 48，C(48,24) 溢出；原胞里只有 12 个候选位点，C(12,6) = 924，正是能复现文献结果的数量级）。
-3. 对任何部分占位位点（单一或多物种），自动追加显式 `DummySpecies(vacancy_symbol)` 表示空位（如 `Li0.5` → `Li0.5 + X0.5`；`Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`）
-4. 调用 `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`，它会 shell 调用 Fortran 二进制 `enum.x` 与 `makestr.x`
-5. 把每个对称不等价的有序构型写为 `<basename>_<NNN>.cif`（以原胞形式输出）
+1. 通过 `pymatgen.core.Structure.from_file` 读取 CIF（原生支持部分占位 + mmCIF）。
+2. **转换为原胞**（`Structure.get_primitive_structure()`）。这一步很关键：enumlib 不会自动找原胞，而 F 心/I 心的常规晶胞候选位点数会是原胞的 2×–4× —— 足以让枚举慢得不可行，或让 enumlib 内部数组溢出。在原胞里做候选位点数最小。
+3. 对任何部分占位位点追加显式空位物种（`DummySpecies`），让 enumlib 有具体物种可放，如 `Li0.5` → `Li0.5 + X0.5`；`Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`。**占位为 1 的全占位点原样保留** —— 它们是固定 spectator，只对无序位点做枚举。
+4. 调用 `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`，它会 shell 调用 Fortran 二进制 `enum.x` 与 `makestr.x`。
+5. 把每个不同的有序构型写为 `<basename>_<NNN>.cif`（以原胞形式输出，报告为 P1）。
+
+#### 如何选择 `--max-cell-size`
+
+enumlib 在原胞的**超胞**里枚举有序构型，从 `--min-cell-size` 到 `--max-cell-size`。最大尺寸越大，探索的超胞越大、找到的构型越多 —— 但数量（和耗时）可能爆炸式增长。
+
+- **先用小尺寸。** 第一次看建议 `--max-cell-size 1`。如果母相占位在原胞里已经能整数化（如 1/2、1/3、2/3），1× 超胞就能给出全部不等价构型，几秒就跑完。
+- **确有需要再放大。** 2× 超胞能揭示 1× 装不下的额外构型，但也可能产出上千个结构、跑几分钟到几小时。搭配 `--max-structures` 与 `--timeout` 控制规模。
+- **占位必须可整数化。** 所选超胞里每个物种的总数必须是整数。占位 1/2 至少需要 2 个位点（2 位点原胞的 1× 即可）；1/3 需要 3× 超胞；像 0.56（= 14/25）这种值需要 25× 超胞，不现实。如果你的 CIF 里有这种值，先把它舍入到附近的简单分数（见下文）。
 
 #### CIF 的分数占位是怎么工作的
 
@@ -278,36 +290,54 @@ Cu1 Cu 0.0 0.0 0.0 0.5      ← 50% Cu  (坐标相同，占位和=1.0 → 该位
 **情况 B —— 单一物种部分占位**（只一行，占位 < 1.0）：描述*真正的空位*。剩下的 (1 − 占位) 是真的空着。
 
 ```
-Li1 Li 0.3148 0.018 0.6852 0.56    ← 56% Li，44% 是空位（隐含）
+Li1 Li 0.0 0.0 0.0 0.5      ← 50% Li，50% 是空位（隐含）
 ```
 
 xtalkit 的 `enumerate` 两种情况都处理：
 - **情况 A**（多物种混合，占位和为 1.0）：enumlib 直接枚举各物种放在哪里 —— 不需要补充。（若多物种位点占位和 < 1，xtalkit 会先把差额补成空位物种。）
-- **情况 B**（单一物种 + 真空位）：xtalkit 自动追加显式 `DummySpecies("X")`，占位 `1 − 占位`，把它内部变成情况 A（`Li0.56 → Li0.56 + X0.44`），然后 enumlib 枚举 Li 与空位的有序排列。
+- **情况 B**（单一物种 + 真空位）：xtalkit 自动追加显式 `DummySpecies("X")`，占位 `1 − 占位`，把它内部变成情况 A（`Li0.5 → Li0.5 + X0.5`），然后 enumlib 枚举 Li 与空位的有序排列。
 
-#### 为什么要造 `Li6PS5Cl_clean.cif`（vs `EntryWithCollCode418490.cif`）
+#### 教学案例：往有序 CIF 里引入无序
 
-文献给出的 argyrodite CIF（`EntryWithCollCode418490.cif`）报告 Li 在 48h Wyckoff 位置上的占位是 **0.56**（对应 Li6.72PS5Cl 计量）：
+从数据库（如 Materials Project）下载的 CIF 通常完全有序——所有位点占位都是 1。直接 `xtalkit enumerate` 会得到 0 个结构，因为没有可枚举的无序。要研究无序，得先改 CIF。两种编辑模式覆盖所有情况：
 
-```
-Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.56(6) 0
-```
-
-`0.56 = 14/25` 无法在任何实际可行的超胞中整数化（需要 25× 超胞 = 15625 个原胞）。enumlib 直接返回 0 个结构。
-
-"干净"版（`Li6PS5Cl_clean.cif`）只改了这一处占位值，把 0.56 舍入成 0.5（对应 Li6PS5Cl 计量）：
+**编辑 1 —— 单物种部分占位（Li/空位，情况 B）。** 把该位点占位从 `1` 改成一个分数；xtalkit 自动补空位。
 
 ```
-Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.5 0
+Li  Li0  8  0.229  0.273  0.295  1        →        Li  Li0  8  0.229  0.273  0.295  0.5
 ```
 
-0.5（= 1/2）在 1× 超胞里就有整数 Li 数（原胞中 12 个 Li 位点 × 0.5 = 6 个 Li），enumlib 能跑通，产出 **48 个对称不等价的有序构型** —— 与文献一致。CIF 中其他部分（晶胞、P/S/Cl 坐标、空间群）原样不动。
+**编辑 2 —— 多物种混合占位（Ge/P，情况 A）。** 把单行替换成两行，**坐标完全相同**，占位之和=1（pymatgen 会把同坐标两行合并成一个混合位点）。
 
-这种舍入是 argyrodite 文献里的标准做法：真实材料是 Li6.72PS5Cl（Li 位置无序），但计算研究枚举的是 Li6PS5Cl（附近的有理计量），因为它可行。如果你确实需要 Li6.72 真实计量，要么用大得多的超胞，要么换一种枚举思路。
+```
+Ge  Ge4  2  0.5  0.5  0.301  1        →        Ge  Ge4   2  0.5  0.5  0.301  0.5
+                                               P   P4a   2  0.5  0.5  0.301  0.5
+```
+
+**占位必须可整数化。** 多重度 M 的位点占位 p，`M × p` 必须是整数——这就是 enumlib 实际填充的位点数。M=8 的位点上 p 可取 1/8、1/4、3/8、1/2、…；M=2 的位点只能 1/2（或 1）。`0.5` 只是"在 M=8 和 M=2 上都能整数化"的最简单公共值，**不是唯一选择**。若你想要的 p 在 1× 里无法整数化，就增大 `--max-cell-size`（p=1/3 需 3× 超胞）或换个附近的分数。
+
+**CIF 的占位决定了每个输出结构的成分。** enumlib 只打乱"哪些位点放哪种物种"，总数不变，所以每个输出结构的成分都等于你 CIF 定义的成分。两个推论：
+
+- 引入**反位**无序（如 Ge/P）又要保持计量比，就让 Ge 位点和 P 位点**都**改成混合（各 {Ge:0.5, P:0.5}），Ge、P 总数就不变。
+- **Li/空位无序一定会改变 Li 总数**（Li 位点改 0.5 就少了 Li）。想在**化学计量成分**下研究 Li 无序，需要劈裂 Li 位点（比有序模型更多的 Li 位点、各自部分占位）——有序 MP CIF 没有这些，得用你要复现的论文里的 Li 位点模型。
+
+**LGPS 具体例子。** 从有序 Li10GeP2S12 CIF 出发（P4_2mc，Z=2；Li0/Li1 为 M=8，Li2/Li3/Ge4/P5/P6 为 M=2）：
+
+- 在 Ge4 和 P6 上做 Ge/P 反位（都 → {Ge:0.5, P:0.5}）：成分守恒在 Li10GeP2S12，1× 可整数化。
+- 把 Li0 改成 0.5：该位点变 4 Li + 4 空位（1× 可整数化），但成分掉到 Li8GeP2S12——只有你研究缺锂体系时才这么用。
+
+用 `xtalkit enumerate <改好的>.cif --max-cell-size 1` 跑。改完后务必重新核算成分，确认与你要复现的论文一致，再信任枚举结果。
+
+#### 当 enumlib 返回 0 个结构时
+
+最常见的原因是母相 CIF 的占位在你选的超胞尺寸下**无法整数化**（见上文）。xtalkit 会给出清晰报错。两种修法：
+
+1. **增大 `--max-cell-size`**，让超胞大到能容纳每个物种的整数个数（如占位 1/3 需要 `--max-cell-size 3`）。
+2. **准备一份"干净"母相 CIF**，把占位改成接近真实值的有理数。实验 CIF 常报告别扭的分数（如某 Li 位点占位 0.56 = 14/25）。舍入到附近的简单分数（0.56 → 0.5）就得到可枚举的母相；CIF 其他部分（晶胞、其他原子、空间群）原样不动。把占位舍入到附近的有理计量，是枚举无序晶体时标准且通用的近似做法。
 
 **已知限制：**
 
-- **非整数计量比**：占位 0.56（= 14/25）无法在任何小超胞中整数化。enumlib 将返回 0 个结构；xtalkit 会以清晰错误提示，建议增大 `--max-cell-size` 或改用占位为有理数（如把 0.56 舍入为 0.5）的"干净"母相 CIF。对 Li6.72PS5Cl（Li 占位 0.56），可准备一份 Li6PS5Cl 母相 CIF（Li 占位改为 0.5）—— 这样能复现 argyrodite 文献中 ~48 个 Li 有序构型。
+- **非整数计量比**：如上，不是简单分数的占位（如 0.56）在小超胞里无法整数化，会得到 0 个结构。舍入到附近分数，或增大 `--max-cell-size`。
 - **平台说明**：`scripts/build_enumlib.sh` 面向 Linux/macOS（系统 `gfortran`）。Windows 用户可在 [WSL](https://learn.microsoft.com/windows/wsl/) 下编译，或沿用旧的 conda + `m2w64-gcc-fortran` 路径（把 `enum.x`/`makestr.x` 放到环境的 `Library/mingw-w64/bin`）。
 
 ---
@@ -397,16 +427,15 @@ Input your choice: 1
 
   Mode: [1] Overlay  [2] Replace  > 1
 
-  Output format: [1] cif  [2] vesta  [3] xyz  [4] all  > 4
+  Output format: [1] cif  [2] xyz  [3] all  > 3
 
-  Tolerance in Å (default 0.5): [Enter for default]
+  Tolerance in fractional coords (default 0.5): [Enter for default]
 
   Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip: [Enter]
 
   Output base path [default: D:\structures\Li6PS5Cl_WYCK]: [Enter]
 
   ✓ Saved to: D:\structures\Li6PS5Cl_WYCK.cif,
-               D:\structures\Li6PS5Cl_WYCK.vesta,
                D:\structures\Li6PS5Cl_WYCK.xyz
 
   Press Enter to continue...
@@ -487,10 +516,10 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 # 第 2 步：查看 F-43m 有哪些 Wyckoff 位置
 xtalkit info --sg 216
 
-# 第 3 步：标记全部 Wyckoff 位置，overlay 模式，三种格式
-xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,vesta,xyz
+# 第 3 步：标记全部 Wyckoff 位置，overlay 模式，所有格式
+xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,xyz
 
-# 第 4 步：用 VESTA 打开 Li6PS5Cl_WYCK.vesta
+# 第 4 步：用 VESTA 打开 Li6PS5Cl_WYCK.cif
 # → 全部 8 个 Wyckoff 位置以彩色虚拟原子显示
 # → 真实原子（Li、P、S、Cl）仍然显示
 # → 可以在 VESTA 中切换原子显示以做对比
@@ -502,9 +531,9 @@ xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,vesta,xyz
 # 用真实晶胞参数为 F-43m 生成骨架
 xtalkit skeleton --sg 216 --wyckoff all \
     --cell "9.85 9.85 9.85 90 90 90" \
-    --format vesta
+    --format cif
 
-# 用 VESTA 打开 SG216_skeleton.vesta
+# 用 VESTA 打开 SG216_skeleton.cif
 # → 直观看到每个 Wyckoff 位置在晶胞中的位置
 # → 没有真实原子 —— 纯参考模板
 ```
@@ -565,7 +594,7 @@ xtalkit/
 │   ├── matcher.py       # 原子 → Wyckoff 位置匹配
 │   ├── marker.py        # 核心：在 CIF 中标记 Wyckoff
 │   ├── skeleton.py      # 纯 Wyckoff 骨架生成
-│   ├── exporter.py      # .cif / .vesta / .xyz 写入器
+│   ├── exporter.py      # .cif / .xyz 写入器
 │   ├── enumerator.py    # enumlib 封装（延迟导入 pymatgen）
 │   ├── _env.py          # enumlib 二进制发现 + Windows 环境修复
 │   └── utils.py         # 共用工具

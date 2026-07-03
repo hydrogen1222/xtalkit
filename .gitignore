@@ -31,6 +31,7 @@ debug_*.out
 /*.cif
 /*.zip
 tree.json
+temp/
 
 # OS
 .DS_Store

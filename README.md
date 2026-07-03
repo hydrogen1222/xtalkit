@@ -84,7 +84,7 @@ xtalkit mark <input.cif> --sg <N> --wyckoff <letters> [options]
 | `--mode overlay` | overlay | `overlay`: keep real atoms + add dummies. `replace`: swap matched real atoms with dummies |
 | `--tol 0.5` | 0.5 | Matching tolerance in fractional coordinates |
 | `--map 4a:Xe,16e:Kr` | (auto) | Override dummy element assignment per Wyckoff letter |
-| `--format cif` | cif | Output format(s): `cif`, `vesta`, `xyz`, or comma-separated `cif,vesta,xyz` |
+| `--format cif` | cif | Output format(s): `cif`, `xyz`, or comma-separated `cif,xyz` |
 | `-o base` | `{name}_WYCK` | Output base path (extension added per format) |
 
 **Examples:**
@@ -93,8 +93,8 @@ xtalkit mark <input.cif> --sg <N> --wyckoff <letters> [options]
 # Mark 4a and 24f in a cubic F-43m structure (overlay mode)
 xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff 4a,24f
 
-# Mark all 8 Wyckoff positions in all three output formats
-xtalkit mark structure.cif --sg 216 --wyckoff all --format cif,vesta,xyz
+# Mark all 8 Wyckoff positions in all output formats
+xtalkit mark structure.cif --sg 216 --wyckoff all --format cif,xyz
 
 # Replace mode: swap real atoms at 4a with Xe dummy atoms
 xtalkit mark structure.cif --sg 216 --wyckoff 4a --mode replace
@@ -112,7 +112,6 @@ xtalkit mark input.cif --sg 216 --wyckoff 4a -o ./output/marked
 | Format | File | Notes |
 |--------|------|-------|
 | CIF | `{name}_WYCK.cif` | Full CIF with dummy atoms appended. Open in VESTA directly. |
-| VESTA | `{name}_WYCK.vesta` | VESTA-native XML with cell + atom sites. |
 | XYZ | `{name}_WYCK.xyz` | Simple Cartesian XYZ (loses cell info — VESTA will prompt for cell). |
 
 ---
@@ -138,7 +137,7 @@ xtalkit skeleton --sg <N> --wyckoff <letters> [options]
 |--------|---------|-------------|
 | `--cell "a b c α β γ"` | System-based default | Custom cell parameters |
 | `--map 4a:Xe,...` | (auto) | Element override |
-| `--format cif` | cif | `cif`, `vesta`, `xyz`, or `cif,vesta,xyz` |
+| `--format cif` | cif | `cif`, `xyz`, or `cif,xyz` |
 | `-o base` | `SG{N}_skeleton` | Output base path |
 
 **Examples:**
@@ -153,7 +152,7 @@ xtalkit skeleton --sg 216 --wyckoff 4a,4c,16e,24f \
 
 # Skeleton for P2₁/c (monoclinic) with custom cell
 xtalkit skeleton --sg 14 --wyckoff 2a,4e \
-    --cell "5.5 6.3 8.1 90 108.5 90" --format cif,vesta
+    --cell "5.5 6.3 8.1 90 108.5 90" --format cif,xyz
 ```
 
 **Default cell parameters by crystal system:**
@@ -189,14 +188,14 @@ Default cell: a=5.0 b=5.0 c=5.0 α=90 β=90 γ=90
 
 Wyckoff Positions (8):
   Letter   Mult   Site Sym   Coordinates
-  4a       4      -4         0,0,0
-  4b       4      -4         1/2,1/2,1/2
-  4c       4      -4         1/4,1/4,1/4
-  4d       4      -4         3/4,3/4,3/4
+  4a       4      -43m       0,0,0
+  4b       4      -43m       1/2,1/2,1/2
+  4c       4      -43m       1/4,1/4,1/4
+  4d       4      -43m       3/4,3/4,3/4
   16e      16     .3m        x,x,x
-  24f      24     2..        1/4,0,0
-  24g      24     .2.        1/4,1/4,1/4
-  48h      48     1          1/4,1/4,1/4
+  24f      24     2.mm       x,0,0
+  24g      24     2.mm       x,0,1/2
+  48h      48     ..m        x,x,z
 ```
 
 ---
@@ -207,17 +206,19 @@ Wyckoff Positions (8):
 xtalkit fetch
 ```
 
-Verifies that all space group data is intact. Output:
+Verifies that all bundled space group data is intact. Output:
 
 ```
-✓ Space group data intact (230/230 OK)
+[OK] Space group data intact (38/230 space groups supported).
 ```
 
 ---
 
 ### `enumerate` — Enumerate Ordered Configurations
 
-Enumerate all symmetry-inequivalent ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). This subcommand is **opt-in** — it requires the `enumerate` uv extra and source-compiled enumlib binaries (see [Enumeration setup](#enumeration-setup) below).
+Enumerate all **symmetry-inequivalent** ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). Structures related by a symmetry operation of the parent are automatically collapsed into one — you get only the genuinely distinct orderings, with no manual deduplication.
+
+This works for any material with **occupational disorder** (partial occupancy on crystallographic sites): binary alloys (Au/Cu), solid solutions, doped systems, and battery electrolytes with mobile-ion disorder (e.g. argyrodite Li₆PS₅Cl, LGPS). It is **opt-in** — it requires the `enumerate` uv extra and source-compiled enumlib binaries (see [Enumeration setup](#enumeration-setup)).
 
 ```
 xtalkit enumerate <input.cif> [options]
@@ -227,42 +228,53 @@ xtalkit enumerate <input.cif> [options]
 
 | Argument | Description |
 |----------|-------------|
-| `input.cif` | Path to a CIF with partial/disordered occupancy (e.g. Au0.5/Cu0.5) |
+| `input.cif` | Path to a CIF with partial/disordered occupancy (e.g. Au0.5/Cu0.5, or Li0.5 + vacancy) |
 
 **Options:**
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--min-cell-size N` | 1 | Minimum supercell size to enumerate |
-| `--max-cell-size N` | 2 | Maximum supercell size to enumerate |
+| `--max-cell-size N` | 2 | Maximum supercell size to enumerate (larger = more orderings + slower; see below) |
 | `--symm-prec TOL` | 0.1 | Symmetry tolerance for spacegroup analysis |
-| `--vacancy-symbol S` | `X` | DummySpecies symbol for vacancies |
-| `--output-dir DIR` | `{name}_enum/` | Output directory for enumerated CIFs |
+| `--vacancy-symbol S` | `X` | DummySpecies symbol used internally for vacancies |
+| `--output-dir DIR` | `{name}_enum/` | Output directory for enumerated files |
 | `--max-structures N` | unlimited | Cap the number of output files |
 | `--timeout MIN` | none | Timeout in minutes for the enumlib subprocess |
-| `--format F` | cif | Output format (`cif`; `xyz` reserved for future) |
+| `--format F` | cif | Output format: `cif` or `xyz` |
 
 **Examples:**
 
 ```bash
-# Enumerate a 50/50 Au/Cu binary in a 1×–2× supercell
-xtalkit enumerate AuCu_disordered.cif --max-cell-size 2
-# Output: AuCu_disordered_enum/AuCu_disordered_000.cif, _001.cif, _002.cif
+# Enumerate a 50/50 Au/Cu binary — quick first look with a 1× supercell
+xtalkit enumerate AuCu_disordered.cif --max-cell-size 1
 
-# Limit to first 5 structures
-xtalkit enumerate disordered.cif --max-cell-size 3 --max-structures 5
+# Full 1×–2× enumeration, keep only the first 5 structures
+xtalkit enumerate disordered.cif --max-cell-size 2 --max-structures 5
 
-# Custom output directory
-xtalkit enumerate parent.cif --output-dir ./runs/exp01/
+# Enumerate a battery-electrolyte CIF, writing to a custom directory
+xtalkit enumerate Li6PS5Cl.cif --max-cell-size 1 --output-dir ./runs/exp01/
 ```
+
+> **What gets enumerated?** You never tell xtalkit which element to enumerate — there is no flag for it. xtalkit auto-detects from the CIF and enumerates **every** site whose occupancy is < 1 (or that carries a species mix); sites at full occupancy (1.0) are held fixed. If the CIF has several disordered sites (say a Li/vacancy site *and* a Ge/P mixed site), they are enumerated **jointly** — each output structure fixes all of them at once. So `enumerate Li6PS5Cl.cif` enumerates the Li site (Li/vacancy); `enumerate AuCu_disordered.cif` enumerates the Au/Cu site.
+>
+> **Choosing what to study.** Because enumeration is driven entirely by the CIF, you select the disorder under study by what you put in the CIF — not by a command-line flag. To study only Li/vacancy, leave the other sites fully ordered (occupancy 1); to study only Ge/P mixing, leave Li fully occupied. Conversely, a fully-ordered CIF (every site at occupancy 1) has nothing to enumerate and yields 0 structures — you must edit the CIF to introduce the disorder you want first (see *When enumlib returns 0 structures* below).
 
 **How it works:**
 
-1. Reads the CIF via `pymatgen.core.Structure.from_file` (handles partial occupancy + mmCIF natively)
-2. **Converts to the primitive cell** (`Structure.get_primitive_structure()`). This is essential: enumlib does not auto-detect the primitive cell, and a conventional F-centered/I-centered cell can have 2×–4× the candidate sites, enough to overflow enumlib's tree_class array (e.g. F-43m 48h with 48 candidates → C(48,24) overflows; the primitive cell has only 12 candidates → C(12,6) = 924, exactly the regime that reproduces literature results).
-3. Augments any partial-occupancy site (single- or multi-species) with an explicit `DummySpecies(vacancy_symbol)` to represent the vacancy (e.g. `Li0.5` → `Li0.5 + X0.5`; `Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`)
-4. Calls `pymatgen.command_line.enumlib_caller.EnumlibAdaptor` which shells out to the Fortran `enum.x` and `makestr.x` binaries
-5. Writes each symmetry-inequivalent ordered configuration as `<basename>_<NNN>.cif` (in the primitive cell)
+1. Reads the CIF via `pymatgen.core.Structure.from_file` (handles partial occupancy + mmCIF natively).
+2. **Converts to the primitive cell** (`Structure.get_primitive_structure()`). This matters: enumlib does not auto-detect the primitive cell, and a conventional F-/I-centered cell can have 2×–4× the candidate sites of the primitive cell — enough to make enumeration impractically slow or to overflow enumlib's internal arrays. Working in the primitive cell keeps the candidate count small.
+3. Augments any partial-occupancy site with an explicit vacancy species (`DummySpecies`) so enumlib has a concrete species to place, e.g. `Li0.5` → `Li0.5 + X0.5`; `Au0.3/Cu0.3` → `Au0.3 + Cu0.3 + X0.4`. **Fully-occupied sites (occupancy 1) are left untouched** — they are fixed spectators; only the disordered sites get enumerated.
+4. Calls `pymatgen.command_line.enumlib_caller.EnumlibAdaptor`, which shells out to the Fortran `enum.x` and `makestr.x` binaries.
+5. Writes each distinct ordered configuration as `<basename>_<NNN>.cif` (in the primitive-cell setting, reported as P1).
+
+#### Choosing `--max-cell-size`
+
+enumlib enumerates ordered configurations in **supercells** of the primitive cell, from `--min-cell-size` up to `--max-cell-size`. A larger max size explores bigger supercells and finds more orderings — but the count (and runtime) can grow explosively.
+
+- **Start small.** For a first look, use `--max-cell-size 1`. If the parent's occupancy is already integerizable in the primitive cell (e.g. 1/2, 1/3, 2/3), the 1× cell already yields the full set of distinct orderings and finishes in seconds.
+- **Go bigger only if needed.** A 2× supercell can reveal additional orderings that don't fit in the 1× cell, but it can also produce thousands of structures and run for minutes to hours. Pair it with `--max-structures` and `--timeout` to stay bounded.
+- **Occupancy must be integerizable.** The count of each species in the chosen supercell must come out integer. Occupancy 1/2 needs at least 2 sites (a 1× cell of a 2-site primitive works); 1/3 needs a 3× cell; a value like 0.56 (= 14/25) would need a 25× cell, which is impractical. If your CIF has such a value, round it to a nearby simple fraction first (see below).
 
 #### How CIF partial occupancy works
 
@@ -278,36 +290,54 @@ Cu1 Cu 0.0 0.0 0.0 0.5      ← 50% Cu  (same coords, sums to 1.0 → site is fu
 **Case B — single partial occupancy** (one row, occ < 1.0): describes a *true vacancy*. The remaining (1 − occ) is empty space.
 
 ```
-Li1 Li 0.3148 0.018 0.6852 0.56    ← 56% Li, 44% vacancy (implicit)
+Li1 Li 0.0 0.0 0.0 0.5      ← 50% Li, 50% vacancy (implicit)
 ```
 
 xtalkit's `enumerate` handles both:
 - **Case A** (multi-species mix, occupancies sum to 1.0): enumlib enumerates which species goes where directly — no augmentation needed. (If a multi-species site sums to < 1, xtalkit adds the shortfall as a vacancy species first.)
-- **Case B** (single species + true vacancy): xtalkit auto-augments with an explicit `DummySpecies("X")` at `1 − occ`, turning it into Case A internally (`Li0.56 → Li0.56 + X0.44`), then enumlib enumerates Li-vs-vacancy orderings.
+- **Case B** (single species + true vacancy): xtalkit auto-augments with an explicit `DummySpecies("X")` at `1 − occ`, turning it into Case A internally (`Li0.5 → Li0.5 + X0.5`), then enumlib enumerates Li-vs-vacancy orderings.
 
-#### Why `Li6PS5Cl_clean.cif` exists (vs `EntryWithCollCode418490.cif`)
+#### Worked example: introducing disorder into an ordered CIF
 
-The argyrodite CIF from the literature (`EntryWithCollCode418490.cif`) reports Li on the 48h Wyckoff position with occupancy **0.56** (= Li6.72PS5Cl stoichiometry):
+A CIF from a database (e.g. Materials Project) is usually fully ordered — every site at occupancy 1. `xtalkit enumerate` on such a CIF yields 0 structures, because there is nothing to enumerate. To study disorder you edit the CIF first. Two edit patterns cover every case:
 
-```
-Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.56(6) 0
-```
-
-`0.56 = 14/25` cannot be integerized in any practical supercell (would need 25× supercell = 15625 unit cells). enumlib returns 0 structures.
-
-The "clean" version (`Li6PS5Cl_clean.cif`) replaces **only** that one occupancy value, rounding 0.56 → 0.5 (= Li6PS5Cl stoichiometry):
+**Edit 1 — single-species partial occupancy (Li/vacancy, Case B).** Change that site's occupancy from `1` to a fraction; xtalkit adds the vacancy automatically.
 
 ```
-Li1 Li1+ 48 h 0.3148(19) 0.018(4) 0.6852(19) 0.104(14) 0.5 0
+Li  Li0  8  0.229  0.273  0.295  1        →        Li  Li0  8  0.229  0.273  0.295  0.5
 ```
 
-With 0.5 (= 1/2), a 1× supercell already has integer Li count (12 Li sites in the primitive cell × 0.5 = 6 Li), so enumlib runs cleanly and produces **48 symmetry-inequivalent ordered configurations** — matching the literature's result. Everything else in the CIF (cell, P/S/Cl positions, space group) is unchanged.
+**Edit 2 — multi-species mixed occupancy (Ge/P, Case A).** Replace the single row with two rows at the *same* fractional coordinates, occupancies summing to 1 (pymatgen merges same-coordinate rows into one mixed site).
 
-This rounding is a standard approximation in the argyrodite literature: the real material is Li6.72PS5Cl with positional Li disorder, but computational studies enumerate Li6PS5Cl (a nearby rational stoichiometry) because it's tractable. If you need the true Li6.72 stoichiometry, you'd need a much larger supercell or a different enumeration approach.
+```
+Ge  Ge4  2  0.5  0.5  0.301  1        →        Ge  Ge4   2  0.5  0.5  0.301  0.5
+                                               P   P4a   2  0.5  0.5  0.301  0.5
+```
+
+**The occupancy must be integerizable.** For a site of multiplicity M at occupancy p, the count `M × p` must be an integer — that's how many positions enumlib actually fills. On an M=8 site, valid p are 1/8, 1/4, 3/8, 1/2, …; on an M=2 site, only 1/2 (or 1). `0.5` is just the simplest value that works on both — not the only choice. If your desired p doesn't integerize in 1×, raise `--max-cell-size` (p=1/3 needs a 3× cell) or pick a nearby fraction.
+
+**The CIF's occupancies fix the composition of every output.** enumlib shuffles *which* sites hold each species but keeps the counts fixed, so every enumerated structure has exactly the composition defined by your CIF. Two consequences:
+
+- To preserve stoichiometry while introducing **antisite** disorder (e.g. Ge/P), make *both* the Ge site and a P site mixed (each {Ge:0.5, P:0.5}); the Ge and P totals then come out unchanged.
+- **Li/vacancy disorder necessarily changes the Li count** (a Li site at 0.5 holds fewer Li). Studying Li disorder *at the stoichiometric composition* requires split Li positions (more Li sites than the ordered model, each partial) — an ordered MP CIF doesn't have these, so you need the disordered site model from the paper you're reproducing.
+
+**Concrete LGPS example.** From an ordered Li10GeP2S12 CIF (P4_2mc, Z=2; Li0/Li1 at M=8, Li2/Li3/Ge4/P5/P6 at M=2):
+
+- Ge/P antisite on the Ge4 and P6 sites (both → {Ge:0.5, P:0.5}) keeps the composition at Li10GeP2S12 and is integerizable in 1×.
+- Setting Li0 to 0.5 gives 4 Li + 4 vacancy there (integerizable in 1×) but drops the composition to Li8GeP2S12 — use this only if your target study is Li-deficient.
+
+Run with `xtalkit enumerate <edited>.cif --max-cell-size 1`. After editing, always recompute the composition and confirm it matches the paper you are reproducing before trusting the enumeration.
+
+#### When enumlib returns 0 structures
+
+The most common cause is that the parent CIF's occupancy **can't be integerized** in the supercell size you chose (see above). xtalkit surfaces this with a clear error. Two fixes:
+
+1. **Raise `--max-cell-size`** so the supercell is large enough to hold an integer count of each species (e.g. occupancy 1/3 needs `--max-cell-size 3`).
+2. **Prepare a "clean" parent CIF** with a rational occupancy close to the real value. Experimental CIFs often report awkward fractions (e.g. a Li site at occupancy 0.56 = 14/25). Rounding to a nearby simple fraction (0.56 → 0.5) gives a tractable parent that enumerates cleanly; everything else in the CIF (cell, other atoms, space group) is left unchanged. Rounding to a nearby rational stoichiometry is a standard, widely-used approximation when enumerating disordered crystals.
 
 **Known limitations:**
 
-- **Non-integer stoichiometry**: A site with occupancy 0.56 (= 14/25) cannot be integerized in any small supercell. enumlib will return 0 structures; xtalkit surfaces this with a clear error suggesting either a larger `--max-cell-size` or a "clean" parent CIF with rational occupancy (e.g. round 0.56 → 0.5). For Li6.72PS5Cl (Li occ 0.56), prepare a Li6PS5Cl parent CIF with Li occ 0.5 — this reproduces the ~48 Li orderings from the argyrodite literature.
+- **Non-integer stoichiometry**: as above, an occupancy that isn't a simple fraction (e.g. 0.56) can't be integerized in a small supercell and yields 0 structures. Round to a nearby fraction or raise `--max-cell-size`.
 - **Platform note**: `scripts/build_enumlib.sh` targets Linux/macOS (system `gfortran`). Windows users can compile under [WSL](https://learn.microsoft.com/windows/wsl/), or follow the legacy conda + `m2w64-gcc-fortran` path (place `enum.x`/`makestr.x` in the env's `Library/mingw-w64/bin`).
 
 ---
@@ -397,16 +427,15 @@ Input your choice: 1
 
   Mode: [1] Overlay  [2] Replace  > 1
 
-  Output format: [1] cif  [2] vesta  [3] xyz  [4] all  > 4
+  Output format: [1] cif  [2] xyz  [3] all  > 3
 
-  Tolerance in Å (default 0.5): [Enter for default]
+  Tolerance in fractional coords (default 0.5): [Enter for default]
 
   Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip: [Enter]
 
   Output base path [default: D:\structures\Li6PS5Cl_WYCK]: [Enter]
 
   ✓ Saved to: D:\structures\Li6PS5Cl_WYCK.cif,
-               D:\structures\Li6PS5Cl_WYCK.vesta,
                D:\structures\Li6PS5Cl_WYCK.xyz
 
   Press Enter to continue...
@@ -488,9 +517,9 @@ The tolerance is applied in **fractional coordinate space** (not angstroms). For
 xtalkit info --sg 216
 
 # Step 3: Mark ALL Wyckoff positions, overlay mode, all formats
-xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,vesta,xyz
+xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,xyz
 
-# Step 4: Open Li6PS5Cl_WYCK.vesta in VESTA
+# Step 4: Open Li6PS5Cl_WYCK.cif in VESTA
 # → All 8 Wyckoff positions are now visible as colored dummy atoms
 # → Real atoms (Li, P, S, Cl) are still shown
 # → You can toggle atoms in VESTA to compare
@@ -502,9 +531,9 @@ xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,vesta,xyz
 # Generate a skeleton for F-43m with real cell parameters
 xtalkit skeleton --sg 216 --wyckoff all \
     --cell "9.85 9.85 9.85 90 90 90" \
-    --format vesta
+    --format cif
 
-# Open SG216_skeleton.vesta in VESTA
+# Open SG216_skeleton.cif in VESTA
 # → See exactly where each Wyckoff position sits in the unit cell
 # → No real atoms — pure reference template
 ```
@@ -565,7 +594,7 @@ xtalkit/
 │   ├── matcher.py       # Atom → Wyckoff position matching
 │   ├── marker.py        # Core: mark Wyckoff in CIF
 │   ├── skeleton.py      # Pure Wyckoff skeleton generation
-│   ├── exporter.py      # .cif / .vesta / .xyz writers
+│   ├── exporter.py      # .cif / .xyz writers
 │   ├── enumerator.py    # enumlib wrapper (lazy pymatgen import)
 │   ├── _env.py          # enumlib binary discovery + Windows env fixes
 │   └── utils.py         # Shared helpers
