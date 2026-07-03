@@ -96,6 +96,36 @@ def test_enumerate_max_structures_limits(disordered_cif):
 
 
 @skip_no_pymatgen
+def test_enumerate_xyz_format(disordered_cif):
+    """--format xyz must actually write parseable XYZ files.
+
+    pymatgen's Structure.to() does not support fmt='xyz', so enumerate has
+    to route xyz output through pymatgen.io.xyz.XYZ. This test guards that
+    path (a latent bug: the CLI accepted '--format xyz' but it crashed
+    before the fix).
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = os.path.join(tmp, "out")
+        paths = enumerate_structures(
+            cif_path=disordered_cif,
+            min_cell_size=1,
+            max_cell_size=2,
+            output_dir=out_dir,
+            format="xyz",
+        )
+        assert len(paths) >= 1
+        for p in paths:
+            assert p.endswith(".xyz")
+            assert os.path.exists(p)
+            lines = open(p).read().strip().split("\n")
+            # Line 1: atom count; line 2: comment; line 3+: "el x y z"
+            assert int(lines[0]) > 0
+            for line in lines[2:]:
+                parts = line.split()
+                assert len(parts) == 4
+
+
+@skip_no_pymatgen
 def test_enumerate_nonexistent_cif_raises():
     """Missing CIF should raise FileNotFoundError."""
     with pytest.raises(FileNotFoundError):

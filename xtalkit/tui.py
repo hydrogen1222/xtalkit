@@ -74,7 +74,24 @@ def select_output_formats() -> list[str]:
         choice = _prompt("Output format: [1] cif  [2] xyz  [3] all")
         if choice in fmt_map:
             return fmt_map[choice]
-        _error("Invalid selection (1-4)")
+        _error("Invalid selection (1-3)")
+
+
+def _prompt_element_map() -> dict[str, str] | None:
+    """Prompt for an element override map, validating format.
+
+    Returns None if the user skips (empty input). Re-prompts on malformed
+    input instead of crashing the workflow.
+    """
+    from xtalkit.utils import parse_element_map
+    while True:
+        map_str = _prompt("Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip")
+        if not map_str:
+            return None
+        try:
+            return parse_element_map(map_str)
+        except ValueError as e:
+            _error(str(e))
 
 
 def _show_element_assignments(
@@ -140,13 +157,7 @@ def _mark_workflow() -> None:
         _error("Invalid selection (1-2)")
 
     # Element map
-    map_str = _prompt("Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip")
-    element_map = None
-    if map_str:
-        element_map = {}
-        for pair in map_str.split(","):
-            letter, elem = pair.split(":")
-            element_map[letter.strip()] = elem.strip()
+    element_map = _prompt_element_map()
 
     # Show dummy element assignments
     _show_element_assignments(selected, element_map)
@@ -160,7 +171,7 @@ def _mark_workflow() -> None:
     offset = float(off_str) if off_str else float(default_offset)
 
     # Tolerance
-    tol_str = _prompt("Tolerance in A (default 0.5)")
+    tol_str = _prompt("Tolerance in fractional coords (default 0.5)")
     tolerance = float(tol_str) if tol_str else 0.5
 
     # Output base
@@ -242,13 +253,7 @@ def _skeleton_workflow() -> None:
     output_base = out if out else f"SG{sg_number}_skeleton"
 
     # Element map
-    map_str = _prompt("Element override (e.g. '4a:Xe,16e:Kr') or Enter to skip")
-    element_map = None
-    if map_str:
-        element_map = {}
-        for pair in map_str.split(","):
-            letter, elem = pair.split(":")
-            element_map[letter.strip()] = elem.strip()
+    element_map = _prompt_element_map()
 
     # Run
     try:
@@ -301,11 +306,17 @@ def _info_workflow() -> None:
 
 def _fetch_workflow() -> None:
     """Interactive fetch / verify workflow."""
+    from xtalkit.spacegroup import wyckoff_positions
     _header("Verify Space Group Database")
     try:
+        supported = 0
         for n in range(1, 231):
-            wyckoff_positions(n)
-        _success("Space group data intact (230/230 OK)")
+            try:
+                wyckoff_positions(n)
+                supported += 1
+            except NotImplementedError:
+                continue
+        _success(f"Space group data intact ({supported}/230 supported)")
     except Exception as e:
         _error(f"Data error: {e}")
 
@@ -364,6 +375,19 @@ def _enumerate_workflow() -> None:
     except ValueError:
         max_structures = None
 
+    # Output format
+    fmt_choice = _prompt("Output format: [1] cif  [2] xyz (default cif)")
+    out_format = "xyz" if fmt_choice == "2" else "cif"
+
+    # Timeout (none by default, but expose it so a runaway enumlib run can
+    # be bounded interactively instead of hanging the TUI forever)
+    to_str = _prompt("Timeout in minutes (Enter for none)")
+    try:
+        timeout = float(to_str) if to_str else None
+    except ValueError:
+        _warn("Invalid timeout, using none")
+        timeout = None
+
     console.print()
     console.print("[cyan]Running enumlib... (may take a few minutes)[/cyan]")
     try:
@@ -375,6 +399,8 @@ def _enumerate_workflow() -> None:
             vacancy_symbol=vac,
             output_dir=output_dir,
             max_structures=max_structures,
+            timeout=timeout,
+            format=out_format,
         )
         _success(f"Enumerated {len(paths)} structure(s)")
 
@@ -383,8 +409,9 @@ def _enumerate_workflow() -> None:
             import gemmi
             table = Table(title="Enumerated Structures")
             table.add_column("#", style="cyan")
-            table.add_column("Formula", style="yellow")
-            table.add_column("Atoms", style="green")
+            table.add_column("File", style="yellow")
+            table.add_column("Formula", style="green")
+            table.add_column("Atoms", style="white")
             table.add_column("a (Å)", style="white")
             for i, p in enumerate(paths):
                 try:
@@ -392,9 +419,12 @@ def _enumerate_workflow() -> None:
                     block = doc.sole_block()
                     a = float(block.find_value("_cell_length_a") or 0)
                     atoms = list(block.find_values("_atom_site_label"))
-                    table.add_row(str(i), os.path.basename(p), str(len(atoms)), f"{a:.3f}")
+                    formula = block.find_value("_chemical_formula_sum")
+                    formula = str(formula).strip("'\"") if formula else "?"
+                    table.add_row(str(i), os.path.basename(p), formula,
+                                  str(len(atoms)), f"{a:.3f}")
                 except Exception:
-                    table.add_row(str(i), os.path.basename(p), "?", "?")
+                    table.add_row(str(i), os.path.basename(p), "?", "?", "?")
             console.print(table)
         except ImportError:
             for i, p in enumerate(paths):

@@ -104,6 +104,41 @@ def read_cif_structure(path: str, sg_number: int) -> gemmi.Structure:
     return structure
 
 
+def parse_element_map(value: str) -> dict[str, str]:
+    """Parse an element override map like '4a:Xe,16e:Kr' into a dict.
+
+    Each entry must be '<letter>:<element>'. Entries are validated and a
+    ValueError with a clear, user-facing message is raised on malformed input
+    (missing colon, empty letter/element, etc.) so callers can surface it
+    cleanly instead of crashing on tuple-unpacking.
+    """
+    mapping: dict[str, str] = {}
+    for pair in value.split(","):
+        pair = pair.strip()
+        if not pair:
+            continue
+        if ":" not in pair:
+            raise ValueError(
+                f"Invalid element map entry '{pair}' — expected "
+                f"'<letter>:<element>' (e.g. '4a:Xe,16e:Kr')."
+            )
+        letter, elem = pair.split(":", 1)
+        letter = letter.strip()
+        elem = elem.strip()
+        if not letter or not elem:
+            raise ValueError(
+                f"Invalid element map entry '{pair}' — both Wyckoff letter "
+                f"and element must be non-empty (e.g. '4a:Xe')."
+            )
+        mapping[letter] = elem
+    if not mapping:
+        raise ValueError(
+            "Empty element map — expected '<letter>:<element>' entries "
+            "(e.g. '4a:Xe,16e:Kr')."
+        )
+    return mapping
+
+
 def assign_dummy_elements(
     wyckoff_letters: list[str],
     element_map: dict[str, str] | None,

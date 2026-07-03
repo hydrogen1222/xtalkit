@@ -7,8 +7,19 @@ from xtalkit.spacegroup import WyckoffInfo
 
 
 def _frac_dist(a: gemmi.Fractional, b: gemmi.Fractional) -> float:
-    """Distance in fractional coordinate space."""
-    return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2)
+    """Minimum-image distance in fractional coordinate space.
+
+    Each component is wrapped into [-0.5, 0.5] so that an atom just inside
+    one cell face (e.g. 0.99) is treated as adjacent to a Wyckoff site on
+    the opposite face (e.g. 0.0), which is the same physical point under
+    periodic boundary conditions. Without this, boundary atoms get
+    mis-assigned to the wrong Wyckoff position.
+    """
+    def _wrap(d: float) -> float:
+        return d - round(d)  # nearest image, in [-0.5, 0.5]
+    return math.sqrt(
+        _wrap(a.x - b.x) ** 2 + _wrap(a.y - b.y) ** 2 + _wrap(a.z - b.z) ** 2
+    )
 
 
 def _apply_symmetry(

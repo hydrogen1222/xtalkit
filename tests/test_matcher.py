@@ -48,13 +48,36 @@ def test_match_atoms_near_position():
 
 
 def test_match_atoms_no_match_beyond_tolerance():
-    """Atom at (0.0, 0.0, 0.0) with tiny tolerance 0.01 on a SG with no
-    Wyckoff at exactly (0,0,0) — but SG 216 does have 4a at (0,0,0).
-    Let's use a position far from any Wyckoff: (0.99, 0.99, 0.99)."""
-    structure = _make_cubic_structure([("Li", (0.99, 0.99, 0.99))])
+    """An atom genuinely far from every Wyckoff site must not match.
+
+    (0.1, 0.2, 0.3) sits well away from all F-43m special positions and the
+    representative general-position orbitals, so with a tight 0.01 tolerance
+    it should be left unmatched.
+    """
+    structure = _make_cubic_structure([("Li", (0.1, 0.2, 0.3))])
     wyckoffs = wyckoff_positions(216)
     mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert "Li1" not in mapping
+
+
+def test_match_atoms_minimum_image_boundary():
+    """An atom just inside a cell face should match the Wyckoff site on the
+    opposite face, which is the same physical point under periodic boundary
+    conditions.
+
+    (0.99, 0.0, 0.0) is 0.01 away from 4a (0,0,0) across the boundary; the
+    matcher must use the minimum-image convention so it is assigned to 4a
+    rather than to a more distant site like 24g/4d.
+    """
+    structure = _make_cubic_structure([("Li", (0.99, 0.0, 0.0))])
+    wyckoffs = wyckoff_positions(216)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.05)
+    assert mapping.get("Li1") == "4a"
+
+    # Same check on the 3D corner: (0.99, 0.99, 0.99) ~= (0, 0, 0) = 4a.
+    structure2 = _make_cubic_structure([("Na", (0.99, 0.99, 0.99))])
+    mapping2 = match_atoms(structure2, wyckoffs, tolerance=0.05)
+    assert mapping2.get("Na1") == "4a"
 
 
 def test_match_atoms_multiple_atoms():

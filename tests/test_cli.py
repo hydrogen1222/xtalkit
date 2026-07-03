@@ -93,8 +93,13 @@ def test_cli_no_args_enters_tui():
 
 
 def test_cli_fetch():
-    """'fetch' subcommand should run without crashing (data is partial)."""
+    """'fetch' subcommand verifies supported space group data is intact.
+
+    Only 38 SGs are populated (1-2, 195-230); fetch must succeed (exit 0)
+    and report how many are supported, rather than failing on the first
+    unpopulated SG.
+    """
     result = run_xtalkit("fetch")
-    # Returns 0 if all data intact, 1 if incomplete (known gap)
-    assert result.returncode in (0, 1)
-    assert "Space group" in result.stdout or "[ERR]" in result.stdout or "[OK]" in result.stdout
+    assert result.returncode == 0
+    assert "supported" in result.stdout.lower()
+    assert "/" in result.stdout  # e.g. "38/230"

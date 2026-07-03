@@ -33,12 +33,9 @@ def _parse_cell(value: str) -> dict:
 
 
 def _parse_elems(value: str) -> dict[str, str]:
-    """Parse '4a:Xe,16e:Kr' into a dict."""
-    mapping = {}
-    for pair in value.split(","):
-        letter, elem = pair.split(":")
-        mapping[letter.strip()] = elem.strip()
-    return mapping
+    """Parse '4a:Xe,16e:Kr' into a dict (validated)."""
+    from xtalkit.utils import parse_element_map
+    return parse_element_map(value)
 
 
 def cmd_mark(args) -> int:
@@ -136,13 +133,18 @@ def cmd_info(args) -> int:
 def cmd_fetch(args) -> int:
     """Run the 'fetch' subcommand."""
     from xtalkit.spacegroup import wyckoff_positions
-    # Currently a no-op: Gemmi data is bundled with the library.
-    # Future: could check for Gemmi updates or pull from Bilbao.
+    # Verifies the bundled Wyckoff data is intact. Only 38 space groups are
+    # populated so far (1-2, 195-230); the rest raise NotImplementedError,
+    # which we count as "not yet supported" rather than a data error.
     try:
-        # Validate we can still query all 230 SGs
+        supported = 0
         for n in range(1, 231):
-            wyckoff_positions(n)
-        print("[OK] Space group data is intact (230/230 space groups OK).")
+            try:
+                wyckoff_positions(n)
+                supported += 1
+            except NotImplementedError:
+                continue
+        print(f"[OK] Space group data intact ({supported}/230 space groups supported).")
     except Exception as e:
         print(f"[ERR] Space group data error: {e}")
         return 1
@@ -202,7 +204,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_mark.add_argument("--mode", choices=["overlay", "replace"], default="overlay",
                         help="overlay: add dummies; replace: swap real atoms (default: overlay)")
     p_mark.add_argument("--tol", type=float, default=0.5,
-                        help="Matching tolerance in angstrom (default: 0.5)")
+                        help="Matching tolerance in fractional coordinate units (default: 0.5)")
     p_mark.add_argument("--offset", type=float, default=0.02,
                         help="Fractional offset for dummy atoms (default: 0.02, use 0 for exact positions)")
     p_mark.add_argument("--map", type=str, default=None,

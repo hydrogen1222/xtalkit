@@ -177,7 +177,13 @@ def enumerate_structures(
     paths: list[str] = []
     for i, s in enumerate(structures):
         path = os.path.join(out_dir, f"{basename}_{i:03d}.{format}")
-        s.to(filename=path)
+        if format == "xyz":
+            # pymatgen's Structure.to() does not support fmt='xyz' (only
+            # cif/poscar/json/...), so go through the dedicated XYZ writer.
+            from pymatgen.io.xyz import XYZ
+            XYZ(s).write_file(path)
+        else:
+            s.to(filename=path, fmt="cif")
         paths.append(path)
 
     return paths
