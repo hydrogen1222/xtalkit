@@ -10,9 +10,13 @@
 
 ```bash
 git clone <repo-url> && cd xtalkit
+git checkout feat/enumlib-uv-integration
 uv sync
 uv pip install -e .
 ```
+
+`enumerate`/enumlib 集成目前在 `feat/enumlib-uv-integration` 分支上，
+安装前需要手动切换到该分支。
 
 验证安装：
 
@@ -313,7 +317,7 @@ xtalkit enumerate <input.cif> [options]
 | `--symm-prec TOL` | 0.1 | 空间群分析的对称容差 |
 | `--vacancy-symbol S` | `X` | 内部表示空位用的 DummySpecies 符号 |
 | `--output-dir DIR` | `{name}_enum/` | 枚举文件的输出目录 |
-| `--max-structures N` | 不限 | 输出文件数量上限（同时限制生成量，降低内存） |
+| `--max-structures N` | 不限 | 输出与后续 `makestr.x` 生成上限（不限制 `enum.x` 搜索） |
 | `--timeout MIN` | 无 | enumlib 子进程超时（分钟） |
 | `--format F` | cif | 输出格式：`cif` 或 `xyz` |
 | `--jobs N` | 1 | 结构生成阶段的并行进程数（`0` = 自动/CPU 核数） |
@@ -358,12 +362,12 @@ enumlib 在原胞的**超胞**里枚举有序构型，从 `--min-cell-size` 到 
 
 大规模枚举（上千个结构）会吃大量内存和磁盘。xtalkit 采用**分批流式**处理（不会把所有结构同时留在内存），并提供三个旋钮：
 
-- **`--max-structures N`** 现在限制的是**生成**，不只是输出 —— enumlib 只生成前 `N` 个结构，采样式运行不再为了丢弃而先建上千个中间文件。
+- **`--max-structures N`** 限制的是 `enum.x` 结束之后的 `makestr.x` + 解析 + 写文件阶段，不限制 `enum.x` 搜索本身。它能避免只想采样时仍生成上千个 `vasp.*`/CIF 中间文件，但 `enum.x` 仍必须先完成完整对称搜索。
 - **`--batch-size N`** 每批生成/解析/写入多少个结构。内存峰值随批大小增长，而非总结构数。内存不够就调小（如 `--batch-size 32`）；想少调几次 `makestr.x` 就调大。
 - **`--jobs N`** 多进程并行各批，加速结构生成（makestr + 解析 + 写文件）阶段。`--jobs 0` 自动用满 CPU。**每个 worker 会加载一份 pymatgen（约 200 MB），所以内存随 `--jobs` 增长** —— 按你的内存选合适的值。
 - **`--scratch-dir /dev/shm`** 把 enumlib 的 scratch 文件（`struct_enum.out`、各批 `vasp.*`）放到 tmpfs，避免磁盘 I/O。`/dev/shm` 通常只有内存的一半大小，`struct_enum.out` 装得下再用。
 
-> **`enum.x` 是单线程的。** 枚举核心 `enum.x` 是串行 Fortran 回溯搜索 —— `--jobs` **不能**加速它。`--jobs` 只并行其后的 makestr + 解析 + 写文件阶段。若 `enum.x` 占大头（搜索空间巨大、长时间枚举），`--jobs` 对墙钟时间提升有限；但流式与 `--max-structures` 限额仍能改善内存和磁盘。要并行 `enum.x` 本身需按晶胞大小拆分，暂未实现。
+> **`enum.x` 是单线程的。** 枚举核心 `enum.x` 是串行 Fortran 回溯搜索 —— `--jobs` **不能**加速它。`--jobs` 只并行其后的 makestr + 解析 + 写文件阶段。若 `enum.x` 占大头（搜索空间巨大、长时间枚举），`--jobs` 对墙钟时间提升有限；流式与 `--max-structures` 只在 `enum.x` 产出 `struct_enum.out` 之后生效。要并行 `enum.x` 本身需按晶胞大小拆分，暂未实现。
 
 #### CIF 的分数占位是怎么工作的
 
@@ -439,7 +443,7 @@ Ge  Ge4  2  0.5  0.5  0.301  1        →        Ge  Ge4   2  0.5  0.5  0.301  0
 **已知限制：**
 
 - **非整数计量比**：如上，不是简单分数的占位（如 0.56）在小超胞里无法整数化，会得到 0 个结构。舍入到附近分数，或增大 `--max-cell-size`。
-- **大规模多位点枚举即便占位干净也可能吃光内存。** 原子数多、无序位点多的原胞（如 LGPS——P42/nmc，50 原子，Li 在 16h+4d+8f 上无序、外加 Ge/P 混合）搜索空间巨大：`enum.x` 单线程，可能要好几 GB 内存和好几分钟。若返回 0 / 崩溃：(a) 给够内存 + `--timeout`；(b) **缩小范围**——在母相 CIF 里把不研究的无序位点固定为单一有序（占位 1），一次只枚举一个无序位点；(c) 先用 `--max-cell-size 1` + `--max-structures` 控制规模。
+- **大规模多位点枚举即便占位干净也可能吃光内存。** 原子数多、无序位点多的原胞（如 LGPS——P42/nmc，50 原子，Li 在 16h+4d+8f 上无序、外加 Ge/P 混合）搜索空间巨大：`enum.x` 单线程，可能要好几 GB 内存和好几分钟。若返回 0 / 崩溃：(a) 设置 `--timeout` 让失控搜索被干净杀掉；(b) **缩小范围**——在母相 CIF 里把不研究的无序位点固定为单一有序（占位 1），一次只枚举一个无序位点；(c) 保持 `--max-cell-size 1`；`--max-structures` 只限制 `enum.x` 之后的输出阶段。
 - **平台说明**：`scripts/build_enumlib.sh` 面向 Linux/macOS（系统 `gfortran`）。Windows 用户可在 [WSL](https://learn.microsoft.com/windows/wsl/) 下编译，或沿用旧的 conda + `m2w64-gcc-fortran` 路径（把 `enum.x`/`makestr.x` 放到环境的 `Library/mingw-w64/bin`）。
 
 
@@ -473,7 +477,7 @@ xtalkit 会自动发现这些二进制 —— **无需手动配 PATH**。`xtalki
 uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
 # 预期：Au0.5/Cu0.5 → 3 个有序 CIF
 uv run pytest tests/test_enumerator.py -v
-# 预期：8 passed
+# 预期：enumerator 测试全部通过
 ```
 
 在 Windows 上，`xtalkit/_env.py` 还会在运行时应用三个 workaround（Linux/macOS 不执行）：

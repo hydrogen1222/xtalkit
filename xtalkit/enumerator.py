@@ -19,9 +19,9 @@ improve vs. calling ``EnumlibAdaptor.run()`` directly:
   index ranges), each batch is parsed and written to disk, and the batch's
   ``vasp.*`` intermediates are deleted before the next batch. Memory peaks at
   one batch, not N structures.
-* **Cap at generation** — ``--max-structures`` is passed to the ``makestr.x``
-  range, so the limit actually reduces work (the default wrapper generates all
-  N then slices).
+* **Cap post-enumeration generation** — ``--max-structures`` is passed to the
+  ``makestr.x`` range, so it reduces the number of POSCAR/CIF files generated
+  after ``enum.x`` finishes. It does not cap ``enum.x``'s search itself.
 * **Parallel structure generation** — with ``--jobs > 1``, batches run in
   parallel worker processes (``makestr.x`` + parse + write CIF). This
   parallelises the post-enumeration phase only; ``enum.x`` stays serial.
@@ -37,6 +37,9 @@ they populate; the vasp→Structure parsing is copied faithfully from
 from __future__ import annotations
 
 import glob
+import fractions
+import itertools
+import math
 import os
 import re
 import subprocess
@@ -175,14 +178,21 @@ def _vasp_numeric_key(path: str) -> int:
         return 0
 
 
-def _parse_vasp_to_structure(data: str, index_species, ordered_sites) -> "Structure":
+def _parse_vasp_to_structure(
+    data: str,
+    index_species,
+    ordered_sites,
+    vacancy_symbol: str = "X",
+) -> "Structure":
     """Parse one vasp-format string into a Structure.
 
     Faithful copy of pymatgen's ``EnumlibAdaptor._get_structures`` per-file
     logic: regex-fix the POSCAR, map the enumerated lattice back to the
-    original ordered sites' lattice (supercell construction), drop vacancies
-    (species X). ``index_species`` and ``ordered_sites`` come from the
-    adaptor (set by ``_gen_input_file``).
+    original ordered sites' lattice (supercell construction), drop the
+    configured vacancy species. ``index_species`` and ``ordered_sites`` come
+    from the adaptor (set by ``_gen_input_file``). ``vacancy_symbol`` must
+    match the DummySpecies used during augmentation so custom vacancy markers
+    are removed from the final ordered structures too.
     """
     import numpy as np
     from pymatgen.core import PeriodicSite, Structure
@@ -223,7 +233,7 @@ def _parse_vasp_to_structure(data: str, index_species, ordered_sites) -> "Struct
         super_latt = new_latt
 
     for site in sub_structure:
-        if site.specie.symbol != "X":  # exclude vacancies
+        if site.specie.symbol != vacancy_symbol:  # exclude vacancies
             sites.append(
                 PeriodicSite(
                     site.species,
@@ -236,17 +246,135 @@ def _parse_vasp_to_structure(data: str, index_species, ordered_sites) -> "Struct
     return Structure.from_sites(sorted(sites))
 
 
+def _gen_input_file_preserve_site_constraints(adaptor) -> None:
+    """Generate enumlib input while keeping each disordered orbit's counts.
+
+    pymatgen's default ``_gen_input_file`` deduplicates equal Species objects
+    across different disordered Wyckoff orbits. For cases like LGPS this means
+    Li/vacancy on 16h and Li/vacancy on 8f share one global Li count, so
+    enumlib can move Li between crystallographically distinct refinement
+    sites. Here each disordered equivalent-site group gets its own enumlib
+    labels while ``index_species`` still maps those labels back to the real
+    Species for output.
+    """
+    from pymatgen.core import DummySpecies, Structure
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+    coord_format = "{:.6f} {:.6f} {:.6f}"
+    fitter = SpacegroupAnalyzer(adaptor.structure, adaptor.symm_prec)
+    symmetrized_structure = fitter.get_symmetrized_structure()
+
+    index_species = []
+    index_amounts = []
+    ordered_sites = []
+    disordered_sites = []
+    coord_str: list[str] = []
+
+    for sites in symmetrized_structure.equivalent_sites:
+        if sites[0].is_ordered:
+            ordered_sites.append(sites)
+            continue
+
+        species = dict(sites[0].species.items())
+        if sum(species.values()) < 1 - adaptor.amount_tol:
+            species[DummySpecies("X")] = 1 - sum(species.values())
+
+        sp_labels: list[int] = []
+        for sp, amt in species.items():
+            index_species.append(sp)
+            sp_labels.append(len(index_species) - 1)
+            index_amounts.append(amt * len(sites))
+
+        sp_label = "/".join(f"{i}" for i in sorted(sp_labels))
+        coord_str.extend(
+            f"{coord_format.format(*site.coords)} {sp_label}"
+            for site in sites
+        )
+        disordered_sites.append(sites)
+
+    def get_sg_number(sites) -> int:
+        finder = SpacegroupAnalyzer(Structure.from_sites(sites), adaptor.symm_prec)
+        return finder.get_space_group_number()
+
+    target_sg_num = get_sg_number(list(symmetrized_structure))
+    curr_sites = list(itertools.chain.from_iterable(disordered_sites))
+    sg_num = get_sg_number(curr_sites)
+    ordered_sites = sorted(ordered_sites, key=len)
+    adaptor.ordered_sites = []
+
+    if adaptor.check_ordered_symmetry:
+        while sg_num != target_sg_num and len(ordered_sites) > 0:
+            sites = ordered_sites.pop(0)
+            temp_sites = list(curr_sites) + sites
+            new_sg_num = get_sg_number(temp_sites)
+            if sg_num != new_sg_num:
+                index_species.append(sites[0].specie)
+                index_amounts.append(len(sites))
+                coord_str.extend(
+                    f"{coord_format.format(*site.coords)} {len(index_species) - 1}"
+                    for site in sites
+                )
+                disordered_sites.append(sites)
+                curr_sites = temp_sites
+                sg_num = new_sg_num
+            else:
+                adaptor.ordered_sites.extend(sites)
+
+    for sites in ordered_sites:
+        adaptor.ordered_sites.extend(sites)
+
+    adaptor.index_species = index_species
+
+    lattice = adaptor.structure.lattice
+    output = [adaptor.structure.formula, "bulk"]
+    output.extend(coord_format.format(*vec) for vec in lattice.matrix)
+    output.extend((f"{len(index_species)}", f"{len(coord_str)}"))
+    output.extend(coord_str)
+    output.extend((
+        f"{adaptor.min_cell_size} {adaptor.max_cell_size}",
+        str(adaptor.enum_precision_parameter),
+        "full",
+    ))
+
+    n_disordered = sum(len(sites) for sites in disordered_sites)
+    base = int(
+        n_disordered
+        * math.lcm(
+            *(
+                fraction.limit_denominator(
+                    n_disordered * adaptor.max_cell_size
+                ).denominator
+                for fraction in map(fractions.Fraction, index_amounts)
+            )
+        )
+    )
+    base *= 10
+
+    total_amounts = sum(index_amounts)
+    for amt in index_amounts:
+        conc = amt / total_amounts
+        if abs(conc * base - round(conc * base)) < 1e-5:
+            output.append(f"{round(conc * base)} {round(conc * base)} {base}")
+        else:
+            min_conc = math.floor(conc * base)
+            output.append(f"{min_conc - 1} {min_conc + 1} {base}")
+    output.append("")
+
+    with open("struct_enum.in", mode="w", encoding="utf-8") as file:
+        file.write("\n".join(output))
+
+
 def _process_chunk(args) -> list[tuple[int, str]]:
     """Worker: generate + parse + write one batch of structures.
 
     Args:
         tuple of (struct_enum_out_abs, start, end_exclusive, index_species,
-                  ordered_sites, out_dir, basename, fmt)
+                  ordered_sites, out_dir, basename, fmt, vacancy_symbol)
 
     Returns a list of (global_index, output_path), in index order.
     """
     (struct_enum_out, start, end_exclusive, index_species, ordered_sites,
-     out_dir, basename, fmt) = args
+     out_dir, basename, fmt, vacancy_symbol) = args
 
     paths: list[tuple[int, str]] = []
     # Per-batch temp dir so vasp.* files from parallel batches never collide.
@@ -261,7 +389,8 @@ def _process_chunk(args) -> list[tuple[int, str]]:
         for i, vf in enumerate(vasp_files):
             with open(vf, encoding="utf-8") as f:
                 data = f.read()
-            struct = _parse_vasp_to_structure(data, index_species, ordered_sites)
+            struct = _parse_vasp_to_structure(
+                data, index_species, ordered_sites, vacancy_symbol)
             idx = start + i
             path = os.path.join(out_dir, f"{basename}_{idx:03d}.{fmt}")
             if fmt == "xyz":
@@ -307,6 +436,26 @@ def enumerate_structures(
             temp; ``/dev/shm`` puts them on tmpfs (faster, but limited to
             ~half of RAM).
     """
+    if min_cell_size < 1:
+        raise ValueError("min_cell_size must be >= 1.")
+    if max_cell_size < 1:
+        raise ValueError("max_cell_size must be >= 1.")
+    if min_cell_size > max_cell_size:
+        raise ValueError(
+            f"min_cell_size ({min_cell_size}) must be <= "
+            f"max_cell_size ({max_cell_size})."
+        )
+    if max_structures is not None and max_structures < 1:
+        raise ValueError("max_structures must be >= 1 when provided.")
+    if jobs < 0:
+        raise ValueError("jobs must be >= 0.")
+    if batch_size < 1:
+        raise ValueError("batch_size must be >= 1.")
+    if format not in {"cif", "xyz"}:
+        raise ValueError("format must be 'cif' or 'xyz'.")
+    if not vacancy_symbol:
+        raise ValueError("vacancy_symbol must be non-empty.")
+
     resolved = os.path.abspath(cif_path)
     if not os.path.exists(resolved):
         raise FileNotFoundError(f"CIF not found: {resolved}")
@@ -346,7 +495,9 @@ def enumerate_structures(
     # symmetry-inequivalent Li orderings reported in the argyrodite
     # literature).
     struct = struct.get_primitive_structure()
-    n_augmented = _augment_partial_occupancy(struct, vacancy_symbol)
+    _augment_partial_occupancy(struct, vacancy_symbol)
+    if struct.is_ordered:
+        return []
 
     # Pre-flight: refuse non-integerizable stoichiometry BEFORE running enum.x.
     # enumlib cannot place a non-integer count of a species; without this guard
@@ -400,7 +551,7 @@ def enumerate_structures(
         prev_cwd = os.getcwd()
         os.chdir(scratch.name)
         try:
-            adaptor._gen_input_file()          # writes struct_enum.in
+            _gen_input_file_preserve_site_constraints(adaptor)  # writes struct_enum.in
             num_structs = adaptor._run_multienum()  # runs enum.x -> struct_enum.out
         finally:
             os.chdir(prev_cwd)
@@ -413,7 +564,7 @@ def enumerate_structures(
         index_species = adaptor.index_species
         ordered_sites = adaptor.ordered_sites
 
-        # Cap generation at max_structures (the limit now actually reduces work).
+        # Cap makestr/parse/write work. enum.x has already completed here.
         effective_n = min(num_structs, max_structures) if max_structures else num_structs
 
         # Disjoint [start, end) batches.
@@ -421,7 +572,7 @@ def enumerate_structures(
                   for s in range(0, effective_n, batch_size)]
         chunk_args = [
             (struct_enum_out, s, e, index_species, ordered_sites,
-             out_dir, basename, format)
+             out_dir, basename, format, vacancy_symbol)
             for (s, e) in chunks
         ]
 

@@ -10,9 +10,14 @@ Requires Python 3.10+.
 
 ```bash
 git clone <repo-url> && cd xtalkit
+git checkout feat/enumlib-uv-integration
 uv sync
 uv pip install -e .
 ```
+
+The `enumerate`/enumlib integration currently lives on the
+`feat/enumlib-uv-integration` branch, so switch branches manually before
+installing.
 
 Verify:
 
@@ -313,7 +318,7 @@ xtalkit enumerate <input.cif> [options]
 | `--symm-prec TOL` | 0.1 | Symmetry tolerance for spacegroup analysis |
 | `--vacancy-symbol S` | `X` | DummySpecies symbol used internally for vacancies |
 | `--output-dir DIR` | `{name}_enum/` | Output directory for enumerated files |
-| `--max-structures N` | unlimited | Cap the number of output files (also caps generation, reducing memory) |
+| `--max-structures N` | unlimited | Cap output and post-enumeration `makestr.x` generation (does not cap `enum.x`) |
 | `--timeout MIN` | none | Timeout in minutes for the enumlib subprocess |
 | `--format F` | cif | Output format: `cif` or `xyz` |
 | `--jobs N` | 1 | Parallel workers for structure generation (`0` = auto/cpu_count) |
@@ -358,12 +363,12 @@ enumlib enumerates ordered configurations in **supercells** of the primitive cel
 
 A large enumeration (thousands of structures) can use a lot of memory and disk. xtalkit processes structures in **streamed batches** rather than holding them all in memory, and exposes three knobs:
 
-- **`--max-structures N`** now caps *generation*, not just output — enumlib only produces the first `N` structures, so a sample run no longer builds thousands of intermediate files only to discard them.
+- **`--max-structures N`** caps the post-enumeration `makestr.x` + parse + write phase, not the `enum.x` search itself. It avoids generating thousands of intermediate `vasp.*`/CIF files when you only need a sample, but `enum.x` must still finish the full symmetry search first.
 - **`--batch-size N`** sets how many structures are generated, parsed, and written per batch. Peak memory scales with the batch size, not the total count. Lower it (e.g. `--batch-size 32`) if you run out of memory; raise it for slightly fewer `makestr.x` invocations.
 - **`--jobs N`** runs batches in parallel worker processes, speeding up the structure-generation (makestr + parse + write) phase. `--jobs 0` auto-uses all CPUs. **Each worker loads its own copy of pymatgen (~200 MB), so memory scales with `--jobs`** — pick a value that fits your RAM.
 - **`--scratch-dir /dev/shm`** puts enumlib's scratch files (`struct_enum.out`, per-batch `vasp.*`) on tmpfs, avoiding disk I/O. `/dev/shm` is usually capped at ~half of RAM, so only use it if `struct_enum.out` fits.
 
-> **`enum.x` is single-threaded.** The enumeration core (`enum.x`) is a serial Fortran backtracking search — `--jobs` does **not** speed it up. `--jobs` parallelises only the makestr + parse + write phase that follows. If `enum.x` dominates (long enumeration of a huge search space), the wall-clock improvement from `--jobs` will be modest; the streaming and `--max-structures` cap still help memory and disk. Parallelising `enum.x` itself would require splitting by cell size, which is not implemented.
+> **`enum.x` is single-threaded.** The enumeration core (`enum.x`) is a serial Fortran backtracking search — `--jobs` does **not** speed it up. `--jobs` parallelises only the makestr + parse + write phase that follows. If `enum.x` dominates (long enumeration of a huge search space), the wall-clock improvement from `--jobs` will be modest; streaming and `--max-structures` only help after `enum.x` has produced `struct_enum.out`. Parallelising `enum.x` itself would require splitting by cell size, which is not implemented.
 
 #### How CIF partial occupancy works
 
@@ -439,7 +444,7 @@ This guard exists because **`enumlib` does not fail cleanly on non-integer stoic
 **Known limitations:**
 
 - **Non-integer stoichiometry**: as above, an occupancy that isn't a simple fraction (e.g. 0.56) can't be integerized in a small supercell and yields 0 structures. Round to a nearby fraction or raise `--max-cell-size`.
-- **Large multi-site enumerations can exhaust memory even with clean fractions.** A primitive cell with many atoms and several disordered sites (e.g. LGPS — P42/nmc, 50 atoms, Li on 16h+4d+8f plus Ge/P mixing) is a big search space: `enum.x` is single-threaded and can need multiple GB and many minutes. If it returns 0 / crashes: (a) give it enough RAM + `--timeout`, (b) **reduce scope** — fix the disorder you don't need by setting those sites to a single ordering (occupancy 1) in the parent CIF and enumerate one disordered site at a time, (c) start with `--max-cell-size 1` and `--max-structures` to bound the run.
+- **Large multi-site enumerations can exhaust memory even with clean fractions.** A primitive cell with many atoms and several disordered sites (e.g. LGPS — P42/nmc, 50 atoms, Li on 16h+4d+8f plus Ge/P mixing) is a big search space: `enum.x` is single-threaded and can need multiple GB and many minutes. If it returns 0 / crashes: (a) set `--timeout` so runaway searches are killed cleanly, (b) **reduce scope** — fix the disorder you don't need by setting those sites to a single ordering (occupancy 1) in the parent CIF and enumerate one disordered site at a time, (c) keep `--max-cell-size 1`; `--max-structures` limits only the post-`enum.x` output stage.
 - **Platform note**: `scripts/build_enumlib.sh` targets Linux/macOS (system `gfortran`). Windows users can compile under [WSL](https://learn.microsoft.com/windows/wsl/), or follow the legacy conda + `m2w64-gcc-fortran` path (place `enum.x`/`makestr.x` in the env's `Library/mingw-w64/bin`).
 
 
@@ -473,7 +478,7 @@ xtalkit finds these binaries automatically — **no manual PATH setup needed**. 
 uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
 # Expect: 3 ordered CIFs from Au0.5/Cu0.5
 uv run pytest tests/test_enumerator.py -v
-# Expect: 8 passed
+# Expect: all enumerator tests passed
 ```
 
 On Windows, `xtalkit/_env.py` additionally applies three runtime workarounds (these do not run on Linux/macOS):

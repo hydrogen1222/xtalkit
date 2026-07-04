@@ -126,10 +126,126 @@ def test_enumerate_xyz_format(disordered_cif):
 
 
 @skip_no_pymatgen
+def test_enumerate_custom_vacancy_symbol_is_removed(tmp_path):
+    """A non-default vacancy symbol should not leak into output structures."""
+    from pymatgen.core import Structure
+    from xtalkit.builder import build_structure_frac, FracAtom
+    from xtalkit.exporter import write_structure_cif
+
+    cell = {"a": 4.0, "b": 4.0, "c": 4.0,
+            "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
+    s = build_structure_frac(225, cell, [FracAtom("Li", 0, 0, 0, 0.5)])
+    cif = str(tmp_path / "li_vacancy.cif")
+    write_structure_cif(s, cif)
+
+    paths = enumerate_structures(
+        cif_path=cif,
+        max_cell_size=2,
+        output_dir=str(tmp_path / "out"),
+        vacancy_symbol="Xa",
+    )
+
+    assert paths
+    for path in paths:
+        symbols = {sp.symbol for sp in Structure.from_file(path).composition}
+        assert "Xa" not in symbols
+
+
+@skip_no_pymatgen
+def test_enum_input_keeps_distinct_li_vacancy_orbits_separate(tmp_path):
+    """Same-species disorder on different Wyckoff orbits needs distinct labels."""
+    from pymatgen.core import Structure
+    from xtalkit.builder import build_structure_frac, FracAtom
+    from xtalkit.exporter import write_structure_cif
+    from xtalkit.enumerator import (
+        _augment_partial_occupancy,
+        _gen_input_file_preserve_site_constraints,
+    )
+
+    cell = {"a": 8.69407, "b": 8.69407, "c": 12.5994,
+            "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
+    built = build_structure_frac(137, cell, [
+        FracAtom("Li", 0.2563, 0.2718, 0.1832, 0.6875),  # 16h: 11 Li + 5 X
+        FracAtom("Li", 0.0, 0.5, 0.9446, 1.0),
+        FracAtom("Li", 0.2463, 0.2463, 0.0, 0.625),     # 8f: 5 Li + 3 X
+        FracAtom("Ge", 0.0, 0.5, 0.6907, 0.5),
+        FracAtom("P", 0.0, 0.5, 0.6907, 0.5),
+        FracAtom("P", 0.0, 0.0, 0.5, 1.0),
+        FracAtom("S", 0.0, 0.1843, 0.4103, 1.0),
+        FracAtom("S", 0.0, 0.2991, 0.0950, 1.0),
+        FracAtom("S", 0.0, 0.6990, 0.7914, 1.0),
+    ])
+    cif = str(tmp_path / "two_li_orbits.cif")
+    write_structure_cif(built, cif)
+    struct = Structure.from_file(cif).get_primitive_structure()
+    _augment_partial_occupancy(struct, "X")
+
+    setup_for_enumlib()
+    from pymatgen.command_line.enumlib_caller import EnumlibAdaptor
+    adaptor = EnumlibAdaptor(struct, min_cell_size=1, max_cell_size=1, symm_prec=0.1)
+
+    prev = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        _gen_input_file_preserve_site_constraints(adaptor)
+        text = (tmp_path / "struct_enum.in").read_text()
+    finally:
+        os.chdir(prev)
+
+    assert [str(sp) for sp in adaptor.index_species] == [
+        "Li", "X0+", "Li", "X0+", "Ge", "P",
+    ]
+    assert text.count(" 0/1") == 16
+    assert text.count(" 2/3") == 8
+    assert text.count(" 4/5") == 4
+    assert "110 110 280" in text  # 11 Li on the 16h orbit
+    assert "50 50 280" in text    # 5 vacancies on 16h and 5 Li on 8f
+    assert "30 30 280" in text    # 3 vacancies on the 8f orbit
+    assert "20 20 280" in text    # 2 Ge and 2 P on the 4d orbit
+
+
+@skip_no_pymatgen
 def test_enumerate_nonexistent_cif_raises():
     """Missing CIF should raise FileNotFoundError."""
     with pytest.raises(FileNotFoundError):
         enumerate_structures(cif_path="/nonexistent/path.cif")
+
+
+@skip_no_pymatgen
+def test_enumerate_fully_ordered_cif_returns_empty(tmp_path):
+    """A fully ordered CIF has no occupational disorder to enumerate."""
+    from xtalkit.builder import build_structure_frac, FracAtom
+    from xtalkit.exporter import write_structure_cif
+
+    cell = {"a": 5.64, "b": 5.64, "c": 5.64,
+            "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
+    nacl = build_structure_frac(225, cell, [
+        FracAtom("Na", 0.0, 0.0, 0.0, 1.0),
+        FracAtom("Cl", 0.5, 0.5, 0.5, 1.0),
+    ])
+    cif = str(tmp_path / "nacl.cif")
+    write_structure_cif(nacl, cif)
+
+    assert enumerate_structures(
+        cif_path=cif,
+        output_dir=str(tmp_path / "out"),
+    ) == []
+
+
+def test_enumerate_rejects_invalid_parameters(disordered_cif):
+    """Bad API parameters should fail before enumlib is launched."""
+    bad_kwargs = [
+        {"min_cell_size": 0},
+        {"min_cell_size": 3, "max_cell_size": 2},
+        {"max_structures": 0},
+        {"jobs": -1},
+        {"batch_size": 0},
+        {"format": "poscar"},
+        {"vacancy_symbol": ""},
+    ]
+    for kwargs in bad_kwargs:
+        with pytest.raises(ValueError):
+            enumerate_structures(cif_path=disordered_cif, **kwargs)
 
 
 def test_enumerate_missing_pymatgen_message(monkeypatch):
