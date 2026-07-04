@@ -71,17 +71,26 @@ def matrix_args(matrix: list[list[int]]) -> list[str]:
 
 
 def parse_count_output(stdout: str, stderr: str = "") -> int:
-    """Extract SHRY count-only result from common CLI output forms."""
+    """Extract SHRY count-only result from common CLI output forms.
+
+    SHRY 1.1.x prints two numbers: the raw combination count
+    ("Total number of combinations is N") and the symmetry-inequivalent count
+    ("Expected unique patterns is M"). We want the latter — it is the number of
+    structures `shry enum` will actually write. The earlier regexes are kept as
+    fallbacks for other SHRY builds / mocked output.
+    """
     text = stdout + "\n" + stderr
     patterns = [
+        r"Expected\s+unique\s+patterns\s+is\s+(\d+)",
+        r"unique\s+patterns\s+is\s+(\d+)",
         r"inequivalent(?:\s+structures?)?\s*[:=]\s*(\d+)",
         r"count(?:-only)?(?:\s+result)?\s*[:=]\s*(\d+)",
-        r"total(?:\s+structures?)?\s*[:=]\s*(\d+)",
     ]
     for pat in patterns:
         m = re.search(pat, text, flags=re.IGNORECASE)
         if m:
             return int(m.group(1))
+    # Ambiguous fallback: only trust a lone integer (e.g. mocked "7").
     numbers = re.findall(r"\b\d+\b", text)
     if len(numbers) == 1:
         return int(numbers[0])

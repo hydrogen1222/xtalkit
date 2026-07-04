@@ -35,6 +35,7 @@ def count_shry_structures(
         str(angle_tolerance),
         "--atol",
         str(atol),
+        "--disable-progressbar",
     ]
     if symmetrize:
         args.append("--symmetrize")

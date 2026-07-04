@@ -622,7 +622,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_prepare.add_argument("--symprec", type=float, default=0.01)
     p_shry_prepare.add_argument("--angle-tolerance", type=float, default=5.0)
     p_shry_prepare.add_argument("--symmetrize", action="store_true", default=False)
-    p_shry_prepare.add_argument("--strict", action="store_true", default=True)
+    p_shry_prepare.add_argument(
+        "--strict", action=argparse.BooleanOptionalAction, default=True,
+        help="Strict audited workflow (default on). Use --no-strict to relax "
+             "count/audit gating for exploratory runs.")
     p_shry_prepare.set_defaults(func=cmd_shry_prepare)
 
     p_shry_count = shry_sub.add_parser("count", help="Run SHRY count-only")
@@ -634,7 +637,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_count.add_argument("--atol", type=float, default=1e-5)
     p_shry_count.add_argument("--symmetrize", action="store_true", default=False)
     p_shry_count.add_argument("--out", default="count.json")
-    p_shry_count.add_argument("--strict", action="store_true", default=True)
+    p_shry_count.add_argument(
+        "--strict", action=argparse.BooleanOptionalAction, default=True,
+        help="Strict audited workflow (default on). Use --no-strict to relax.")
     p_shry_count.set_defaults(func=cmd_shry_count)
 
     p_shry_enum = shry_sub.add_parser("enum", help="Run strict SHRY enumeration")
@@ -653,7 +658,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_enum.add_argument("--write-degeneracy", action="store_true", default=False)
     p_shry_enum.add_argument("--dir-size", type=int, default=10000)
     p_shry_enum.add_argument("--symmetrize", action="store_true", default=False)
-    p_shry_enum.add_argument("--strict", action="store_true", default=True)
+    p_shry_enum.add_argument(
+        "--strict", action=argparse.BooleanOptionalAction, default=True,
+        help="Strict audited workflow (default on). Use --no-strict to relax "
+             "the expect-count/mod-only gating.")
     p_shry_enum.set_defaults(func=cmd_shry_enum)
 
     p_shry_verify = shry_sub.add_parser("verify", help="Verify SHRY outputs")

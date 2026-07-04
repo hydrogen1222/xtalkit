@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-import difflib
+import glob
 import os
+import tempfile
+from dataclasses import replace
+from fractions import Fraction
+from functools import reduce
+from math import gcd, lcm
 
 from xtalkit.enumeration.cif_io import CifData, copy_file, read_cif, write_cif
 from xtalkit.enumeration.degeneracy import compute_degeneracy
-from xtalkit.enumeration.formula import assert_formula
+from xtalkit.enumeration.formula import assert_formula, element_symbol
 from xtalkit.enumeration.manifest import (
     append_jsonl,
     base_manifest,
@@ -15,6 +20,7 @@ from xtalkit.enumeration.manifest import (
     sha256_file,
     write_json,
 )
+from xtalkit.enumeration.occupancy import parse_fraction
 from xtalkit.enumeration.shry_backend import ShryBackend, matrix_args
 
 
@@ -57,7 +63,7 @@ def enumerate_with_shry(
         atol, symmetrize=symmetrize, strict=strict)
 
     args = [
-        cif_path,
+        os.path.abspath(cif_path),
         "--scaling-matrix",
         *matrix_args(matrix),
         "--symprec",
@@ -68,18 +74,15 @@ def enumerate_with_shry(
         str(atol),
         "--dir-size",
         str(dir_size),
-        "--output-dir",
-        paths["raw"],
         "--disable-progressbar",
     ]
-    if write_cif_output:
-        args.append("--write-cif")
-    if write_poscar:
-        args.append("--write-poscar")
     if symmetrize:
         args.append("--symmetrize")
-
-    result = backend.run(args)
+    # SHRY has no --output-dir/--write-cif/--write-poscar flags. It always
+    # writes CIFs (to shry-<basename>-<timestamp>/slice*/ in the CWD) and has
+    # no POSCAR writer at all. We run it with cwd=raw so its output lands in
+    # paths["raw"], then build clean CIFs/POSCARs ourselves in post-processing.
+    result = backend.run(args, cwd=paths["raw"])
     with open(os.path.join(paths["input"], "command.txt"), "w", encoding="utf-8") as f:
         f.write(" ".join(result.command) + "\n")
 
@@ -121,9 +124,18 @@ def enumerate_with_shry(
 
 
 def iter_shry_outputs(raw_dir: str):
-    """Yield SHRY-generated CIF files in stable order."""
+    """Yield SHRY-generated ordered-configuration CIFs in stable order.
+
+    SHRY writes ``shry-<basename>-<timestamp>/sliceN/<formula>_<i>_<w>.cif``
+    plus a top-level ``<basename>-<scaling>.cif`` that is the *disordered*
+    modified parent (still partial occupancy). Only the ``slice*/`` CIFs are
+    ordered configurations — the parent CIF must be skipped or post-processing
+    crashes on its residual partial occupancy.
+    """
     for root, dirs, files in os.walk(raw_dir):
         dirs.sort()
+        if not os.path.basename(root).startswith("slice"):
+            continue
         for name in sorted(files):
             if name.lower().endswith(".cif"):
                 yield os.path.join(root, name)
@@ -154,8 +166,18 @@ def _run_mod_only_audit(
     symmetrize: bool,
     strict: bool,
 ) -> dict:
+    """Run ``shry --mod-only`` and verify SHRY did not alter the input chemistry.
+
+    SHRY writes the modified structure to ``shry-<basename>-<ts>/<basename>-<scaling>.cif``
+    in its CWD (never to stdout), so we run it in a throwaway directory, locate
+    that file, and compare its reduced composition to the prepared input. A
+    text/coordinate diff is too fragile — SHRY re-symmetrizes (e.g. P1 -> Pm-3m)
+    and re-emits via pymatgen, so even an unchanged structure rarely matches
+    byte-for-byte. Composition catches the real danger: SHRY snapping
+    occupancies or dropping/adding a species.
+    """
     args = [
-        cif_path,
+        os.path.abspath(cif_path),
         "--mod-only",
         "--scaling-matrix",
         *matrix_args(matrix),
@@ -169,21 +191,59 @@ def _run_mod_only_audit(
     ]
     if symmetrize:
         args.append("--symmetrize")
-    result = backend.run(args)
-    mod_path = os.path.join(input_dir, "shry_mod_only.cif")
-    if "data_" in result.stdout:
-        with open(mod_path, "w", encoding="utf-8") as f:
-            f.write(result.stdout)
-        diff = _text_diff(cif_path, mod_path)
-        if strict and diff:
-            raise ValueError(
-                "SHRY --mod-only changed the prepared CIF; inspect "
-                f"{mod_path} before enumerating."
+    with tempfile.TemporaryDirectory(prefix="xtalkit_modonly_") as tmp:
+        result = backend.run(args, cwd=tmp)
+        candidates = sorted(glob.glob(os.path.join(tmp, "shry-*", "*.cif")))
+        if not candidates:
+            raise RuntimeError(
+                "SHRY --mod-only did not write a modified CIF.\n"
+                f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
             )
-        return {"command": " ".join(result.command), "mod_only_cif": mod_path,
-                "diff": diff}
-    return {"command": " ".join(result.command), "mod_only_cif": None,
-            "diff": []}
+        mod_path = os.path.join(input_dir, "shry_mod_only.cif")
+        copy_file(candidates[0], mod_path)
+    diff = _composition_diff(cif_path, mod_path)
+    if strict and diff:
+        raise ValueError(
+            "SHRY --mod-only altered the prepared CIF chemistry "
+            f"({diff}). Inspect {mod_path} before enumerating."
+        )
+    return {"command": " ".join(result.command), "mod_only_cif": mod_path,
+            "diff": diff}
+
+
+def _reduced_composition(rows) -> dict[str, int]:
+    """Reduce atom rows to a GCD-normalized {element: count} for comparison.
+
+    Robust to cell choice (conventional vs primitive) and to whether a partial
+    site is split into two rows (Li 0.5 + X 0.5) or kept as one: it sums
+    occupancies per species, clears denominators, and divides by the GCD.
+    Species labels are normalized to bare element symbols so that ``Li1+``
+    (refinement-style oxidation notation in the input) and ``Li+`` (pymatgen's
+    normalized form in SHRY's modified CIF) compare equal — the audit checks
+    chemistry, not notation.
+    """
+    comp: dict[str, Fraction] = {}
+    for r in rows:
+        occ = parse_fraction(r.occupancy)
+        el = element_symbol(r.type_symbol)
+        comp[el] = comp.get(el, Fraction(0)) + occ
+    if not comp:
+        return {}
+    denom_lcm = reduce(lcm, (v.denominator for v in comp.values()))
+    ints = {k: int(v * denom_lcm) for k, v in comp.items() if v != 0}
+    if not ints:
+        return {}
+    g = reduce(gcd, ints.values())
+    return {k: v // g for k, v in ints.items()}
+
+
+def _composition_diff(input_cif: str, modified_cif: str) -> str:
+    """Return '' if chemistries match, else a one-line description."""
+    a = _reduced_composition(read_cif(input_cif).atoms)
+    b = _reduced_composition(read_cif(modified_cif).atoms)
+    if a == b:
+        return ""
+    return f"input {a} != modified {b}"
 
 
 def _postprocess_raw_outputs(
@@ -200,13 +260,22 @@ def _postprocess_raw_outputs(
     for raw_file in iter_shry_outputs(paths["raw"]):
         count += 1
         raw = read_cif(raw_file)
+        # SHRY emits type_symbols carrying oxidation states (Li+, S2-, ...).
+        # Normalize to bare element symbols and drop the vacancy species so
+        # clean CIFs/POSCARs and formula checks use plain chemistry.
+        vac = element_symbol(remove_vacancy)
+        clean_atoms = [
+            replace(a, type_symbol=element_symbol(a.type_symbol))
+            for a in raw.atoms
+            if element_symbol(a.type_symbol) != vac
+        ]
         clean = CifData(
             raw.block_name,
             raw.cell,
             raw.spacegroup_name,
             raw.spacegroup_number,
             raw.symops,
-            [a for a in raw.atoms if a.type_symbol != remove_vacancy],
+            clean_atoms,
         )
         formula = assert_formula(clean.atoms, target_formula, remove_vacancy)
         clean_path = os.path.join(paths["clean"], f"conf_{count:06d}.cif")
@@ -254,10 +323,3 @@ def _write_poscar(data: CifData, path: str) -> None:
         for sp in species_order:
             for atom in grouped[sp]:
                 f.write(f"{float(atom.x):.10f} {float(atom.y):.10f} {float(atom.z):.10f}\n")
-
-
-def _text_diff(a: str, b: str) -> list[str]:
-    with open(a, encoding="utf-8") as fa, open(b, encoding="utf-8") as fb:
-        left = [line.rstrip() for line in fa]
-        right = [line.rstrip() for line in fb]
-    return list(difflib.unified_diff(left, right, fromfile=a, tofile=b, lineterm=""))

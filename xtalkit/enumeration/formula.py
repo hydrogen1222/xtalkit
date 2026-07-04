@@ -37,10 +37,16 @@ def formula_from_counts(counts: dict[str, int | Fraction | float]) -> str:
 
 
 def counts_from_atom_rows(rows, vacancy_symbol: str = "X") -> OrderedDict[str, int]:
-    """Count integer atoms in an ordered atom-row list, skipping vacancies."""
+    """Count integer atoms in an ordered atom-row list, skipping vacancies.
+
+    Species labels are normalized to bare element symbols so that
+    ``Li1+``/``Li+``/``Li`` (refinement vs pymatgen notation) all count as Li.
+    """
     counts: OrderedDict[str, int] = OrderedDict()
+    vac = element_symbol(vacancy_symbol)
     for row in rows:
-        if row.type_symbol == vacancy_symbol:
+        el = element_symbol(row.type_symbol)
+        if el == vac:
             continue
         occ = Fraction(str(row.occupancy))
         if occ != 1:
@@ -48,8 +54,19 @@ def counts_from_atom_rows(rows, vacancy_symbol: str = "X") -> OrderedDict[str, i
                 f"ordered output still has partial occupancy: {row.label} "
                 f"{row.type_symbol} occ={row.occupancy}"
             )
-        counts[row.type_symbol] = counts.get(row.type_symbol, 0) + 1
+        counts[el] = counts.get(el, 0) + 1
     return counts
+
+
+def element_symbol(type_symbol: str) -> str:
+    """Extract the leading element symbol from a CIF type_symbol.
+
+    Handles ``Li``, ``Li1+``, ``Li+``, ``S2-``, ``Cl1-``, ``X`` (vacancy),
+    and pymatgen composite tokens like ``Li0.5X0.5`` (takes the first element).
+    """
+    s = str(type_symbol).strip()
+    m = re.match(r"[A-Z][a-z]?", s)
+    return m.group(0) if m else s
 
 
 def assert_formula(rows, target_formula: str | None,

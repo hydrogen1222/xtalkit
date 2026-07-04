@@ -67,6 +67,14 @@ X1 X 0.5 0.5 0.5 1
 
 
 class FakeShryBackend:
+    """Mimics real SHRY 1.1.x CLI behaviour for unit tests.
+
+    Real SHRY has no --output-dir/--write-cif flags: it writes
+    ``shry-<base>-<ts>/sliceN/*.cif`` (ordered configs) and
+    ``shry-<base>-<ts>/<base>-<scaling>.cif`` (modified parent) into its CWD.
+    --mod-only writes only the modified parent; --count-only writes nothing.
+    """
+
     def __init__(self, tmp_path=None):
         self.tmp_path = tmp_path
         self.commands = []
@@ -75,18 +83,22 @@ class FakeShryBackend:
         self.commands.append(args)
         if "--count-only" in args:
             return ShryResult(["shry", *args], 0, "inequivalent structures: 7\n", "")
-        if "--mod-only" in args:
-            return ShryResult(["shry", *args], 0, "ok\n", "")
         if "--version" in args:
             return ShryResult(["shry", *args], 0, "SHRY 1.1.8\n", "")
-        if "--output-dir" in args:
-            out = args[args.index("--output-dir") + 1]
-            raw = os.path.join(out, "slice000")
+        if "--mod-only" in args:
+            if cwd:
+                d = os.path.join(cwd, "shry-fake")
+                os.makedirs(d, exist_ok=True)
+                with open(os.path.join(d, "fake-1-1-1.cif"), "w", encoding="utf-8") as f:
+                    f.write(P1_PARTIAL)
+            return ShryResult(["shry", *args], 0, "ok\n", "")
+        # Full enum: write one ordered config into slice0/.
+        if cwd:
+            raw = os.path.join(cwd, "shry-fake", "slice0")
             os.makedirs(raw, exist_ok=True)
             with open(os.path.join(raw, "conf_000001.cif"), "w", encoding="utf-8") as f:
                 f.write(P1_ORDERED_WITH_X)
-            return ShryResult(["shry", *args], 0, "generated 1\n", "")
-        return ShryResult(["shry", *args], 0, "", "")
+        return ShryResult(["shry", *args], 0, "generated 1\n", "")
 
     def version(self):
         return "SHRY 1.1.8"

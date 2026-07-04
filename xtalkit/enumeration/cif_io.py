@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from dataclasses import dataclass, replace
 from fractions import Fraction
@@ -42,12 +43,12 @@ def read_cif(path: str) -> CifData:
     doc = gemmi.cif.read_file(path)
     block = doc.sole_block()
     cell = {
-        "a": _required(block, "_cell_length_a"),
-        "b": _required(block, "_cell_length_b"),
-        "c": _required(block, "_cell_length_c"),
-        "alpha": _required(block, "_cell_angle_alpha"),
-        "beta": _required(block, "_cell_angle_beta"),
-        "gamma": _required(block, "_cell_angle_gamma"),
+        "a": _strip_esd(_required(block, "_cell_length_a")),
+        "b": _strip_esd(_required(block, "_cell_length_b")),
+        "c": _strip_esd(_required(block, "_cell_length_c")),
+        "alpha": _strip_esd(_required(block, "_cell_angle_alpha")),
+        "beta": _strip_esd(_required(block, "_cell_angle_beta")),
+        "gamma": _strip_esd(_required(block, "_cell_angle_gamma")),
     }
     sg_name = block.find_value("_symmetry_space_group_name_H-M")
     sg_number_raw = block.find_value("_symmetry_Int_Tables_number")
@@ -68,7 +69,13 @@ def read_cif(path: str) -> CifData:
     ])
     if len(table) == 0:
         raise ValueError("CIF has no _atom_site_ rows with fractional coordinates")
-    atoms = [AtomRow(*[str(v) for v in row]) for row in table]
+    atoms = []
+    for row in table:
+        label, type_symbol, x, y, z, occ = (str(v) for v in row)
+        atoms.append(AtomRow(
+            label, type_symbol,
+            _strip_esd(x), _strip_esd(y), _strip_esd(z), _strip_esd(occ),
+        ))
     return CifData(block.name, cell, sg_name, sg_number, symops, atoms)
 
 
@@ -105,7 +112,7 @@ def write_cif(data: CifData, path: str) -> None:
             atom.x,
             atom.y,
             atom.z,
-            atom.occupancy,
+            _occupancy_decimal(atom.occupancy),
         ])
     doc.write_file(path)
 
@@ -135,5 +142,33 @@ def _norm_coord(value: str) -> str:
     return f"{float(value) % 1.0:.6f}"
 
 
+_ESD_RE = re.compile(r"\(\d+\)$")
+
+
+def _strip_esd(value: str) -> str:
+    """Strip a trailing CIF standard uncertainty, e.g. ``0.3148(19)`` -> ``0.3148``.
+
+    Real-world CIFs from refinements (ICSD, VESTA exports) carry esds on cell
+    lengths and fractional coordinates; ``float()`` chokes on them. Labels and
+    type symbols are passed through unchanged.
+    """
+    s = str(value).strip()
+    m = _ESD_RE.search(s)
+    if m:
+        return s[: m.start()]
+    return s
+
+
 def _format_fraction_decimal(value: Fraction) -> str:
     return f"{float(value):.8f}".rstrip("0").rstrip(".")
+
+
+def _occupancy_decimal(value: str) -> str:
+    """Normalize an occupancy string to a CIF-safe decimal.
+
+    SHRY parses CIFs with pymatgen, whose ``float()``-based occupancy reader
+    rejects fraction strings like ``1/2``. Inputs may carry fractions (from
+    :func:`fraction_string`), decimals (``0.5``), or ``1``; emit a plain
+    decimal so downstream parsers stay happy.
+    """
+    return _format_fraction_decimal(Fraction(str(value).strip()))
