@@ -5,10 +5,15 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
-from xtalkit.spacegroup import wyckoff_positions, sg_name, default_cell_params
+from xtalkit.spacegroup import wyckoff_positions, sg_name, default_cell_params, crystal_system
 from xtalkit.marker import mark
 from xtalkit.skeleton import generate
 from xtalkit.enumerator import enumerate_structures
+from xtalkit.builder import (
+    AtomSite, find_wyckoff, free_params, build_structure,
+    stoichiometry, format_formula, validate_cell, validate_atoms,
+)
+from xtalkit.exporter import write_structure_cif, write_structure_xyz
 
 console = Console()
 
@@ -321,6 +326,125 @@ def _fetch_workflow() -> None:
         _error(f"Data error: {e}")
 
 
+def _build_workflow() -> None:
+    """Interactive build workflow: assemble a CIF from refinement parameters."""
+    _header("Build CIF from Refinement Parameters")
+
+    # Space group
+    while True:
+        try:
+            sg_str = _prompt("Space group number")
+            sg_number = int(sg_str)
+            if 1 <= sg_number <= 230:
+                break
+            _error("Space group number must be 1-230")
+        except ValueError:
+            _error("Please enter a number")
+
+    # Wyckoff menu
+    positions = wyckoff_positions(sg_number)
+    console.print(f"\n  Space Group #{sg_number}: [cyan]{sg_name(sg_number)}[/cyan] "
+                  f"({crystal_system(sg_number)})")
+    table = Table(title=f"Wyckoff Positions ({len(positions)})")
+    table.add_column("Label", style="cyan")
+    table.add_column("Mult", style="yellow")
+    table.add_column("Site Sym", style="green")
+    table.add_column("Coordinates", style="white")
+    for p in positions:
+        table.add_row(p.letter, str(p.multiplicity), p.site_symmetry, p.coordinates)
+    console.print(table)
+    valid_labels = {p.letter for p in positions}
+
+    # Cell parameters
+    defaults = default_cell_params(sg_number)
+    console.print(
+        f"\n  Crystal system: {crystal_system(sg_number)}. Default cell: "
+        f"a={defaults['a']} b={defaults['b']} c={defaults['c']} "
+        f"α={defaults['alpha']} β={defaults['beta']} γ={defaults['gamma']}"
+    )
+    while True:
+        cell_choice = _prompt("[1] Use default  [2] Enter manually")
+        if cell_choice == "1":
+            cell_params = defaults
+            break
+        elif cell_choice == "2":
+            cell_str = _prompt("Enter: a b c alpha beta gamma")
+            parts = cell_str.split()
+            if len(parts) == 6:
+                cell_params = dict(zip(
+                    ["a", "b", "c", "alpha", "beta", "gamma"],
+                    [float(x) for x in parts]))
+                break
+            _error("Need 6 values: a b c alpha beta gamma")
+        else:
+            _error("Invalid selection (1-2)")
+    for w in validate_cell(sg_number, cell_params):
+        _warn(w)
+
+    # Add atoms
+    atoms: list[AtomSite] = []
+    while True:
+        console.print()
+        element = _prompt("Element symbol (e.g. Li, Na, Fe)")
+        while True:
+            label = _prompt("Wyckoff label (e.g. 4a, 16e)")
+            if label in valid_labels:
+                break
+            _error(f"Invalid label. Valid: {', '.join(sorted(valid_labels))}")
+        wp = find_wyckoff(sg_number, label)
+        fp = free_params(wp.coordinates)
+        free_vals: list[float] = []
+        if fp:
+            console.print(f"  {label} coordinates: [white]{wp.coordinates}[/white] "
+                          f"— free parameters: {', '.join(fp)}")
+            for var in fp:
+                while True:
+                    v = _prompt(f"  value for {var}")
+                    try:
+                        free_vals.append(float(v))
+                        break
+                    except ValueError:
+                        _error("Please enter a number")
+        else:
+            console.print(f"  {label}: [white]{wp.coordinates}[/white] "
+                          f"(no free parameters)")
+        occ_str = _prompt("Occupancy (default 1.0)")
+        try:
+            occ = float(occ_str) if occ_str else 1.0
+        except ValueError:
+            _warn("Invalid occupancy, using 1.0")
+            occ = 1.0
+        atoms.append(AtomSite(element, label, free_vals, occ))
+        _success(f"Added {element} on {label} (occ {occ}). Composition so far: "
+                 f"{format_formula(stoichiometry(sg_number, atoms))}")
+        for w in validate_atoms(sg_number, atoms):
+            _warn(w)
+        if _prompt("Add another atom? [y/N]").lower() != "y":
+            break
+
+    if not atoms:
+        _error("No atoms added; nothing to build.")
+        return
+
+    # Output
+    formats = select_output_formats()
+    out = _prompt(f"Output base path [default: SG{sg_number}_built]")
+    output_base = out if out else f"SG{sg_number}_built"
+
+    try:
+        structure = build_structure(sg_number, cell_params, atoms)
+        _success(f"Formula: {format_formula(stoichiometry(sg_number, atoms))}")
+        for fmt in formats:
+            path = f"{output_base}.{fmt}"
+            if fmt == "cif":
+                write_structure_cif(structure, path)
+            elif fmt == "xyz":
+                write_structure_xyz(structure, sg_number, path)
+            _success(f"Saved: {path}")
+    except Exception as e:  # noqa: BLE001
+        _error(str(e))
+
+
 def _enumerate_workflow() -> None:
     """Interactive enumeration workflow."""
     _header("Enumerate Ordered Configurations")
@@ -388,6 +512,28 @@ def _enumerate_workflow() -> None:
         _warn("Invalid timeout, using none")
         timeout = None
 
+    # Performance options (memory + parallelism for the structure-generation
+    # phase; enum.x itself stays single-threaded regardless).
+    console.print(
+        "\n  [dim]Performance: --jobs parallelises structure generation "
+        "(not enum.x); --batch-size caps memory; --scratch-dir /dev/shm "
+        "avoids disk I/O.[/dim]"
+    )
+    jobs_str = _prompt("Parallel jobs (default 1 = serial; 0 = auto)")
+    try:
+        jobs = int(jobs_str) if jobs_str else 1
+    except ValueError:
+        _warn("Invalid jobs, using 1 (serial)")
+        jobs = 1
+    bs_str = _prompt("Batch size (default 256; smaller = less memory)")
+    try:
+        batch_size = int(bs_str) if bs_str else 256
+    except ValueError:
+        _warn("Invalid batch size, using 256")
+        batch_size = 256
+    scratch = _prompt("Scratch dir for enumlib (Enter for system temp; try /dev/shm)")
+    scratch_dir = scratch if scratch else None
+
     console.print()
     console.print("[cyan]Running enumlib... (may take a few minutes)[/cyan]")
     try:
@@ -401,6 +547,9 @@ def _enumerate_workflow() -> None:
             max_structures=max_structures,
             timeout=timeout,
             format=out_format,
+            jobs=jobs,
+            batch_size=batch_size,
+            scratch_dir=scratch_dir,
         )
         _success(f"Enumerated {len(paths)} structure(s)")
 
@@ -445,6 +594,7 @@ def _show_main_menu() -> None:
         "  [3] Query SG    -- View space group information\n"
         "  [4] Fetch DB    -- Verify database online\n"
         "  [5] Enumerate   -- Enumerate ordered configurations (enumlib)\n"
+        "  [6] Build       -- Build CIF from refinement params (SG+cell+sites)\n"
         "  [0] Exit",
         title="xtalkit . Crystal Wyckoff Toolkit",
         border_style="cyan",
@@ -461,6 +611,7 @@ def run_tui() -> int:
         "3": _info_workflow,
         "4": _fetch_workflow,
         "5": _enumerate_workflow,
+        "6": _build_workflow,
     }
 
     while True:
@@ -478,4 +629,4 @@ def run_tui() -> int:
             console.print()
             _prompt("Press Enter to continue...")
         else:
-            _error("Invalid choice (0-5)")
+            _error("Invalid choice (0-6)")

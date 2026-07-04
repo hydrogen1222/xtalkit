@@ -169,3 +169,156 @@ def test_partial_occupancy_augmentation():
     site = struct2[0]
     assert len(site.species) == 2
     assert DummySpecies("X") in site.species
+
+
+def _reduced_formulas(out_dir):
+    """Sorted reduced formulas of every CIF in out_dir (set comparison helper)."""
+    import glob
+    from pymatgen.core import Structure
+    formulas = []
+    for p in sorted(glob.glob(os.path.join(out_dir, "*.cif"))):
+        formulas.append(Structure.from_file(p).composition.reduced_formula)
+    return sorted(formulas)
+
+
+def _pymatgen_reference_formulas(cif_path, min_cell=1, max_cell=2):
+    """Run pymatgen's EnumlibAdaptor.run() path directly for comparison."""
+    from pymatgen.core import Structure
+    from pymatgen.command_line.enumlib_caller import EnumlibAdaptor
+    from xtalkit._env import setup_for_enumlib
+    from xtalkit.enumerator import _augment_partial_occupancy
+    setup_for_enumlib()
+    struct = Structure.from_file(cif_path).get_primitive_structure()
+    _augment_partial_occupancy(struct, "X")
+    adaptor = EnumlibAdaptor(struct, min_cell_size=min_cell,
+                             max_cell_size=max_cell, symm_prec=0.1)
+    with tempfile.TemporaryDirectory() as scratch:
+        prev = os.getcwd()
+        os.chdir(scratch)
+        try:
+            adaptor._gen_input_file()
+            n = adaptor._run_multienum()
+            ref = adaptor._get_structures(n) if n > 0 else []
+        finally:
+            os.chdir(prev)
+    return sorted(s.composition.reduced_formula for s in ref)
+
+
+@skip_no_pymatgen
+def test_streaming_matches_pymatgen_adaptor(disordered_cif):
+    """Streamed batched output is the same SET of structures as pymatgen's
+    EnumlibAdaptor. This validates the vasp->Structure parsing replication."""
+    ref = _pymatgen_reference_formulas(disordered_cif, max_cell=2)
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = os.path.join(tmp, "out")
+        enumerate_structures(
+            cif_path=disordered_cif, min_cell_size=1, max_cell_size=2,
+            output_dir=out_dir, batch_size=1,  # force many small batches
+        )
+        assert _reduced_formulas(out_dir) == ref
+
+
+@skip_no_pymatgen
+def test_batch_size_does_not_change_result(disordered_cif):
+    """The set of structures is independent of batch_size."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out_a = os.path.join(tmp, "a")
+        out_b = os.path.join(tmp, "b")
+        enumerate_structures(cif_path=disordered_cif, max_cell_size=2,
+                             output_dir=out_a, batch_size=1)
+        enumerate_structures(cif_path=disordered_cif, max_cell_size=2,
+                             output_dir=out_b, batch_size=256)
+        assert _reduced_formulas(out_a) == _reduced_formulas(out_b)
+
+
+@skip_no_pymatgen
+def test_parallel_matches_serial(disordered_cif):
+    """--jobs=2 produces the same set of structures as --jobs=1."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out_s = os.path.join(tmp, "serial")
+        out_p = os.path.join(tmp, "parallel")
+        enumerate_structures(cif_path=disordered_cif, max_cell_size=2,
+                             output_dir=out_s, jobs=1)
+        enumerate_structures(cif_path=disordered_cif, max_cell_size=2,
+                             output_dir=out_p, jobs=2)
+        assert _reduced_formulas(out_s) == _reduced_formulas(out_p)
+
+
+@skip_no_pymatgen
+def test_max_structures_does_not_exceed_nor_invent(disordered_cif):
+    """--max-structures caps output; a cap larger than the natural count
+    returns the natural count (no padding, no truncation beyond the cap)."""
+    ref_count = len(_pymatgen_reference_formulas(disordered_cif, max_cell=2))
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = os.path.join(tmp, "out")
+        paths = enumerate_structures(
+            cif_path=disordered_cif, max_cell_size=2,
+            output_dir=out_dir, max_structures=ref_count + 100,
+        )
+        assert len(paths) == ref_count
+
+
+@skip_no_pymatgen
+def test_non_integerizable_species_flags_bad_occupancy():
+    """_non_integerizable_species flags 0.56 (1*0.56=0.56, never integer)."""
+    from pymatgen.core import Structure, Lattice
+    from xtalkit.enumerator import _non_integerizable_species, _augment_partial_occupancy
+    struct = Structure(Lattice.cubic(4.0), ["Li"], [[0, 0, 0]])
+    struct[0] = {"Li": 0.56}
+    _augment_partial_occupancy(struct, "X")
+    bad = _non_integerizable_species(struct, 0.1, 1, 2)
+    assert len(bad) == 1
+    assert bad[0]["species"] == "Li"
+    assert bad[0]["count"] == 0.56
+
+
+@skip_no_pymatgen
+def test_non_integerizable_species_passes_clean_occupancy():
+    """0.5 on a mult-1 site is integerizable at cell_size 2 (2*0.5=1)."""
+    from pymatgen.core import Structure, Lattice
+    from xtalkit.enumerator import _non_integerizable_species, _augment_partial_occupancy
+    struct = Structure(Lattice.cubic(4.0), ["Li"], [[0, 0, 0]])
+    struct[0] = {"Li": 0.5}
+    _augment_partial_occupancy(struct, "X")
+    assert _non_integerizable_species(struct, 0.1, 1, 2) == []
+
+
+@skip_no_pymatgen
+def test_enumerate_refuses_non_integer_occupancy(tmp_path):
+    """enumerate_structures refuses a non-integer-occupancy CIF before enum.x
+    runs (instead of letting enumlib exhaust memory and crash)."""
+    from xtalkit.builder import build_structure_frac, FracAtom
+    from xtalkit.exporter import write_structure_cif
+    cell = {"a": 4.0, "b": 4.0, "c": 4.0,
+            "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
+    s = build_structure_frac(225, cell, [FracAtom("Li", 0, 0, 0, 0.56)])
+    bad_cif = str(tmp_path / "bad.cif")
+    write_structure_cif(s, bad_cif)
+    with pytest.raises(RuntimeError, match="non-integer stoichiometry"):
+        enumerate_structures(
+            cif_path=bad_cif, max_cell_size=1,
+            output_dir=str(tmp_path / "out"),
+        )
+
+
+@skip_no_pymatgen
+def test_enumerate_skip_preflight_bypasses_check(disordered_cif, tmp_path):
+    """--skip-preflight bypasses the integerizability check (escape hatch)."""
+    # A clean CIF passes the check anyway; this just confirms the flag is wired
+    # through and doesn't raise for a non-integer case when skipped. Use a bad
+    # CIF and confirm skip_preflight lets enumlib run (returns 0 cleanly here
+    # because 0.56 can't integerize, but the pre-flight is what we're skipping).
+    from xtalkit.builder import build_structure_frac, FracAtom
+    from xtalkit.exporter import write_structure_cif
+    cell = {"a": 4.0, "b": 4.0, "c": 4.0,
+            "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
+    s = build_structure_frac(225, cell, [FracAtom("Li", 0, 0, 0, 0.56)])
+    bad_cif = str(tmp_path / "bad.cif")
+    write_structure_cif(s, bad_cif)
+    # With skip_preflight, the pre-flight RuntimeError is NOT raised; enumlib
+    # then runs and returns 0 (caught as RuntimeError "0 structures").
+    with pytest.raises(RuntimeError, match="0 structures"):
+        enumerate_structures(
+            cif_path=bad_cif, max_cell_size=1,
+            output_dir=str(tmp_path / "out"), skip_preflight=True,
+        )

@@ -51,7 +51,7 @@ xtalkit has two interfaces:
 xtalkit <command> [options]
 ```
 
-Five subcommands:
+Six subcommands:
 
 | Command | Purpose |
 |---------|---------|
@@ -60,6 +60,7 @@ Five subcommands:
 | `info` | Query Wyckoff positions for a space group |
 | `fetch` | Verify space group database integrity |
 | `enumerate` | Enumerate symmetry-inequivalent ordered configurations (requires pymatgen + enumlib) |
+| `build` | Build a CIF from refinement parameters (SG + cell + Wyckoff sites + occupancy) |
 
 ---
 
@@ -171,6 +172,79 @@ xtalkit skeleton --sg 14 --wyckoff 2a,4e \
 
 ---
 
+### `build` — Build a CIF from Refinement Parameters
+
+```
+xtalkit build --sg <N> --cell "<a b c α β γ>" --atom "<spec>" [--atom ...] [options]
+```
+
+Assemble a standards-compliant CIF from XRD-refinement results: a space group, a unit cell, and a list of atomic sites. Each site is an element on a Wyckoff position (e.g. `16e`) with its free-coordinate values and an optional occupancy. The crystal system is **derived** from the space group (not asked separately) and used only to sanity-check the cell. Occupancy defaults to 1.0; partial/mixed occupancy is supported and produces a disordered CIF that `xtalkit enumerate` can later order.
+
+All 230 space groups are supported (the bundled Wyckoff dataset, derived from International Tables via pyxtal and verified against gemmi).
+
+**Required arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `--sg N` | Space group number, 1–230 |
+| `--cell "a b c α β γ"` | Unit-cell parameters |
+| `--atom SPEC` | Atom spec (repeatable): `element wyckoff [free...] [occ]` |
+| `--spec FILE` | JSON spec file (alternative to `--sg`/`--cell`/`--atom`) |
+
+**Atom spec format:** `element wyckoff [free-coordinate values] [occupancy]`. The free values are entered in the order the variables appear in the position's coordinate template; the parser knows how many each Wyckoff site expects. The last number is taken as occupancy iff one extra is given.
+
+| Spec | Meaning |
+|------|---------|
+| `Na 4a` | Na on 4a (no free params), occupancy 1.0 |
+| `Li 16e 0.3` | Li on 16e `(x,x,x)` with x=0.3, occupancy 1.0 |
+| `Li 16e 0.3 0.5` | Li on 16e with x=0.3, occupancy 0.5 |
+| `S 48h 0.25 0.3` | S on 48h `(x,x,z)` with x=0.25, z=0.3, occupancy 1.0 |
+| `Li 4a 0.5` + `Cu 4a 0.5` | Mixed Li/Cu occupancy on 4a (disorder) |
+
+**Options:** `--format cif[,xyz]` (default `cif`), `-o/--output` (base path; default `SG{N}_built`).
+
+**Fractional-coordinate mode (`--atom-frac`)** — easier when you have a refinement table. Instead of Wyckoff letters + free parameters, give each atom's final fractional coordinates directly: `element x y z [occ]`. The tool auto-detects which Wyckoff orbit each atom sits on (and reports it), so non-canonical representatives (e.g. `(0, 1/2, z)` instead of the canonical `(1/2, 0, 1/4+z)` for SG 137 4d — related by a 4-fold rotation) work as-is, with no offset arithmetic. Atoms with occupancy 0 are skipped.
+
+```bash
+xtalkit build --sg 137 --cell "8.694 8.694 12.599 90 90 90" \
+    --atom-frac "Li 0.2563 0.2718 0.1832 0.691" \
+    --atom-frac "Li 0 0.5 0.9446 1" \
+    --atom-frac "S 0 0.1843 0.4103 1" \
+    ...
+```
+
+**Example — build NaCl (Fm-3m, 225):**
+
+```bash
+xtalkit build --sg 225 --cell "5.64 5.64 5.64 90 90 90" \
+    --atom "Na 4a" --atom "Cl 4b" -o NaCl
+# [OK] SG #225 (Fm-3m), crystal system: cubic, formula: NaCl
+#      Saved to: NaCl.cif
+```
+
+**Example — build a disordered Li/Cu site, then enumerate its orderings:**
+
+```bash
+xtalkit build --sg 225 --cell "4 4 4 90 90 90" \
+    --atom "Li 4a 0.5" --atom "Cu 4a 0.5" -o AuCu_disordered
+xtalkit enumerate AuCu_disordered.cif --max-cell-size 2
+```
+
+The CIF lists only the asymmetric-unit representatives plus the space group's symmetry operations; VESTA, gemmi, and pymatgen expand them to the full unit cell. After writing, xtalkit prints the formula (e.g. `NaCl`, `Li6PS5Cl`) computed from multiplicity × occupancy — compare it against your refinement to confirm the input.
+
+**JSON spec** (`--spec`) for reproducible/scriptable builds:
+
+```json
+{"sg": 225,
+ "cell": {"a": 5.64, "b": 5.64, "c": 5.64, "alpha": 90, "beta": 90, "gamma": 90},
+ "atoms": [
+   {"element": "Na", "wyckoff": "4a", "occ": 1.0},
+   {"element": "Cl", "wyckoff": "4b", "occ": 1.0}
+ ]}
+```
+
+---
+
 ### `info` — Query Space Group Information
 
 ```
@@ -209,7 +283,7 @@ xtalkit fetch
 Verifies that all bundled space group data is intact. Output:
 
 ```
-[OK] Space group data intact (38/230 space groups supported).
+[OK] Space group data intact (230/230 space groups supported).
 ```
 
 ---
@@ -239,9 +313,13 @@ xtalkit enumerate <input.cif> [options]
 | `--symm-prec TOL` | 0.1 | Symmetry tolerance for spacegroup analysis |
 | `--vacancy-symbol S` | `X` | DummySpecies symbol used internally for vacancies |
 | `--output-dir DIR` | `{name}_enum/` | Output directory for enumerated files |
-| `--max-structures N` | unlimited | Cap the number of output files |
+| `--max-structures N` | unlimited | Cap the number of output files (also caps generation, reducing memory) |
 | `--timeout MIN` | none | Timeout in minutes for the enumlib subprocess |
 | `--format F` | cif | Output format: `cif` or `xyz` |
+| `--jobs N` | 1 | Parallel workers for structure generation (`0` = auto/cpu_count) |
+| `--batch-size N` | 256 | Structures per batch — caps peak memory |
+| `--scratch-dir DIR` | system temp | Directory for enumlib scratch files (try `/dev/shm` for tmpfs) |
+| `--skip-preflight` | off | Skip the non-integer-stoichiometry pre-check (dangerous — can OOM) |
 
 **Examples:**
 
@@ -275,6 +353,17 @@ enumlib enumerates ordered configurations in **supercells** of the primitive cel
 - **Start small.** For a first look, use `--max-cell-size 1`. If the parent's occupancy is already integerizable in the primitive cell (e.g. 1/2, 1/3, 2/3), the 1× cell already yields the full set of distinct orderings and finishes in seconds.
 - **Go bigger only if needed.** A 2× supercell can reveal additional orderings that don't fit in the 1× cell, but it can also produce thousands of structures and run for minutes to hours. Pair it with `--max-structures` and `--timeout` to stay bounded.
 - **Occupancy must be integerizable.** The count of each species in the chosen supercell must come out integer. Occupancy 1/2 needs at least 2 sites (a 1× cell of a 2-site primitive works); 1/3 needs a 3× cell; a value like 0.56 (= 14/25) would need a 25× cell, which is impractical. If your CIF has such a value, round it to a nearby simple fraction first (see below).
+
+#### Memory, disk, and parallelism
+
+A large enumeration (thousands of structures) can use a lot of memory and disk. xtalkit processes structures in **streamed batches** rather than holding them all in memory, and exposes three knobs:
+
+- **`--max-structures N`** now caps *generation*, not just output — enumlib only produces the first `N` structures, so a sample run no longer builds thousands of intermediate files only to discard them.
+- **`--batch-size N`** sets how many structures are generated, parsed, and written per batch. Peak memory scales with the batch size, not the total count. Lower it (e.g. `--batch-size 32`) if you run out of memory; raise it for slightly fewer `makestr.x` invocations.
+- **`--jobs N`** runs batches in parallel worker processes, speeding up the structure-generation (makestr + parse + write) phase. `--jobs 0` auto-uses all CPUs. **Each worker loads its own copy of pymatgen (~200 MB), so memory scales with `--jobs`** — pick a value that fits your RAM.
+- **`--scratch-dir /dev/shm`** puts enumlib's scratch files (`struct_enum.out`, per-batch `vasp.*`) on tmpfs, avoiding disk I/O. `/dev/shm` is usually capped at ~half of RAM, so only use it if `struct_enum.out` fits.
+
+> **`enum.x` is single-threaded.** The enumeration core (`enum.x`) is a serial Fortran backtracking search — `--jobs` does **not** speed it up. `--jobs` parallelises only the makestr + parse + write phase that follows. If `enum.x` dominates (long enumeration of a huge search space), the wall-clock improvement from `--jobs` will be modest; the streaming and `--max-structures` cap still help memory and disk. Parallelising `enum.x` itself would require splitting by cell size, which is not implemented.
 
 #### How CIF partial occupancy works
 
@@ -335,16 +424,30 @@ The most common cause is that the parent CIF's occupancy **can't be integerized*
 1. **Raise `--max-cell-size`** so the supercell is large enough to hold an integer count of each species (e.g. occupancy 1/3 needs `--max-cell-size 3`).
 2. **Prepare a "clean" parent CIF** with a rational occupancy close to the real value. Experimental CIFs often report awkward fractions (e.g. a Li site at occupancy 0.56 = 14/25). Rounding to a nearby simple fraction (0.56 → 0.5) gives a tractable parent that enumerates cleanly; everything else in the CIF (cell, other atoms, space group) is left unchanged. Rounding to a nearby rational stoichiometry is a standard, widely-used approximation when enumerating disordered crystals.
 
+**Non-integer stoichiometry pre-flight check.** Before running `enum.x`, xtalkit checks that every species' count (`multiplicity × occupancy × cell_size`) is an integer for some `cell_size` in your `[--min-cell-size, --max-cell-size]` range. If not, it refuses with a table showing each offending species and the nearest valid fraction — e.g.:
+
+```
+[ERR] Cannot enumerate: non-integer stoichiometry (enumlib would likely run away and exhaust memory).
+  species  mult  occ      mult*occ   nearest valid (at cell_size 1)
+  Li      16    0.6910   11.0560    -> 0.6875
+  Li      8     0.6430   5.1440     -> 0.6250
+  ...
+```
+
+This guard exists because **`enumlib` does not fail cleanly on non-integer stoichiometry** — given the chance it tends to allocate memory until the kernel kills it (which can crash WSL/low-memory systems rather than producing an error). Rebuild the CIF with the rounded occupancies (`xtalkit build --atom-frac ...` using the suggested values) and re-run. `--skip-preflight` bypasses the check (dangerous — only if you are sure enumlib can handle your stoichiometry).
+
 **Known limitations:**
 
 - **Non-integer stoichiometry**: as above, an occupancy that isn't a simple fraction (e.g. 0.56) can't be integerized in a small supercell and yields 0 structures. Round to a nearby fraction or raise `--max-cell-size`.
+- **Large multi-site enumerations can exhaust memory even with clean fractions.** A primitive cell with many atoms and several disordered sites (e.g. LGPS — P42/nmc, 50 atoms, Li on 16h+4d+8f plus Ge/P mixing) is a big search space: `enum.x` is single-threaded and can need multiple GB and many minutes. If it returns 0 / crashes: (a) give it enough RAM + `--timeout`, (b) **reduce scope** — fix the disorder you don't need by setting those sites to a single ordering (occupancy 1) in the parent CIF and enumerate one disordered site at a time, (c) start with `--max-cell-size 1` and `--max-structures` to bound the run.
 - **Platform note**: `scripts/build_enumlib.sh` targets Linux/macOS (system `gfortran`). Windows users can compile under [WSL](https://learn.microsoft.com/windows/wsl/), or follow the legacy conda + `m2w64-gcc-fortran` path (place `enum.x`/`makestr.x` in the env's `Library/mingw-w64/bin`).
+
 
 ---
 
 #### Enumeration setup
 
-xtalkit's core (`mark`, `skeleton`, `info`, `fetch`) does **not** require pymatgen. Only `enumerate` does, and it's an opt-in uv extra — the core stays lightweight (gemmi + rich only). No conda, no root.
+xtalkit's core (`mark`, `skeleton`, `info`, `fetch`, `build`) does **not** require pymatgen. Only `enumerate` does, and it's an opt-in uv extra — the core stays lightweight (gemmi + rich only). No conda, no root.
 
 **Step 1 — Install the `enumerate` extra:**
 
@@ -403,6 +506,8 @@ xtalkit
 ║                     online               ║
 ║  [5] Enumerate   — Enumerate ordered     ║
 ║                     configurations       ║
+║  [6] Build       — Build CIF from        ║
+║                     refinement params    ║
 ║  [0] Exit                                ║
 ╚═══════════════════════════════════════════╝
 ```
@@ -561,16 +666,9 @@ done
 
 ## Supported Space Groups
 
-Wyckoff position data is currently available for 38 space groups:
+Wyckoff position data is available for **all 230 space groups**. The bundled dataset (`xtalkit/data/wyckoff.json`) is derived from International Tables for Crystallography Vol. A via [pyxtal](https://pyxtal.readthedocs.io) (MIT) and verified against gemmi's symmetry operations — see `scripts/build_wyckoff_db.py` to regenerate it.
 
-| Range | Crystal System | Count |
-|-------|---------------|-------|
-| 1–2 | Triclinic | 2 |
-| 195–230 | Cubic | 36 |
-
-Unsupported space groups raise `NotImplementedError` with a clear message. Expanding to all 230 space groups is planned.
-
-**Most common battery materials (cubic SGs) are fully supported.**
+`xtalkit fetch` confirms the dataset is intact (230/230).
 
 ---
 

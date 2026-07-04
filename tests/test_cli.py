@@ -95,11 +95,127 @@ def test_cli_no_args_enters_tui():
 def test_cli_fetch():
     """'fetch' subcommand verifies supported space group data is intact.
 
-    Only 38 SGs are populated (1-2, 195-230); fetch must succeed (exit 0)
-    and report how many are supported, rather than failing on the first
-    unpopulated SG.
+    All 230 SGs are populated from the bundled dataset; fetch must succeed
+    (exit 0) and report 230/230.
     """
     result = run_xtalkit("fetch")
     assert result.returncode == 0
     assert "supported" in result.stdout.lower()
-    assert "/" in result.stdout  # e.g. "38/230"
+    assert "230/230" in result.stdout
+
+
+def test_cli_build_nacl():
+    """Build NaCl (Fm-3m) from refinement parameters via flags."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "NaCl")
+        result = run_xtalkit(
+            "build", "--sg", "225",
+            "--cell", "5.64 5.64 5.64 90 90 90",
+            "--atom", "Na 4a", "--atom", "Cl 4b",
+            "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "NaCl" in result.stdout
+        assert os.path.exists(out + ".cif")
+
+
+def test_cli_build_free_param_and_xyz():
+    """Build with a free coordinate + xyz output."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "li")
+        result = run_xtalkit(
+            "build", "--sg", "216",
+            "--cell", "5.9 5.9 5.9 90 90 90",
+            "--atom", "Li 16e 0.3",
+            "--format", "cif,xyz", "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert os.path.exists(out + ".cif")
+        assert os.path.exists(out + ".xyz")
+
+
+def test_cli_build_partial_occupancy():
+    """Partial occupancy is accepted and reported."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "dis")
+        result = run_xtalkit(
+            "build", "--sg", "225", "--cell", "4 4 4 90 90 90",
+            "--atom", "Li 4a 0.5", "--atom", "Cu 4a 0.5",
+            "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "LiCu" in result.stdout
+
+
+def test_cli_build_spec_json(tmp_path):
+    """Build from a JSON spec file."""
+    spec = tmp_path / "spec.json"
+    spec.write_text(
+        '{"sg":225,"cell":{"a":5.64,"b":5.64,"c":5.64,'
+        '"alpha":90,"beta":90,"gamma":90},'
+        '"atoms":[{"element":"Na","wyckoff":"4a","occ":1.0},'
+        '{"element":"Cl","wyckoff":"4b","occ":1.0}]}'
+    )
+    out = str(tmp_path / "fromspec")
+    result = run_xtalkit("build", "--spec", str(spec), "-o", out)
+    assert result.returncode == 0, result.stderr
+    assert os.path.exists(out + ".cif")
+
+
+def test_cli_build_bad_free_count():
+    """Wrong number of free values is a clean error (exit 1)."""
+    result = run_xtalkit(
+        "build", "--sg", "216", "--cell", "5 5 5 90 90 90",
+        "--atom", "Li 16e 0.3 0.4 0.5",
+    )
+    assert result.returncode != 0
+    assert "expects" in result.stderr
+
+
+def test_cli_build_help():
+    result = run_xtalkit("build", "--help")
+    assert result.returncode == 0
+    assert "--sg" in result.stdout
+    assert "--atom" in result.stdout
+    assert "--spec" in result.stdout
+
+
+def test_cli_build_atom_frac_mode():
+    """Build from direct fractional coordinates (--atom-frac)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "NaCl")
+        result = run_xtalkit(
+            "build", "--sg", "225", "--cell", "5.64 5.64 5.64 90 90 90",
+            "--atom-frac", "Na 0 0 0", "--atom-frac", "Cl 0.5 0.5 0.5",
+            "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "NaCl" in result.stdout
+        # detect_wyckoff reports the orbit label
+        assert "4a" in result.stdout and "4b" in result.stdout
+        assert os.path.exists(out + ".cif")
+
+
+def test_cli_build_atom_frac_noncanonical_rep():
+    """Non-canonical fractional coords are accepted (SG 137 4d via 4-fold)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "li")
+        result = run_xtalkit(
+            "build", "--sg", "137", "--cell", "8.69 8.69 12.6 90 90 90",
+            "--atom-frac", "Li 0 0.5 0.9446 1", "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "4d" in result.stdout  # detected despite non-canonical (0,1/2,z)
+
+
+def test_cli_build_atom_frac_skips_zero_occupancy():
+    """occ=0 atoms (absent) are skipped with a note, not an error."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "x")
+        result = run_xtalkit(
+            "build", "--sg", "225", "--cell", "4 4 4 90 90 90",
+            "--atom-frac", "Li 0 0 0 0.5", "--atom-frac", "Cu 0 0 0 0",
+            "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "skipping" in result.stderr

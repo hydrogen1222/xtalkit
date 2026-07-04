@@ -1,6 +1,7 @@
 """CLI entry point for xtalkit."""
 
 import argparse
+import json
 import os
 import sys
 
@@ -11,6 +12,13 @@ from xtalkit.spacegroup import (
 from xtalkit.marker import mark
 from xtalkit.skeleton import generate
 from xtalkit.enumerator import enumerate_structures
+from xtalkit.builder import (
+    AtomSite, FracAtom, find_wyckoff, free_params, build_structure,
+    build_structure_frac, stoichiometry, stoichiometry_frac,
+    format_formula, validate_cell, validate_atoms, validate_atoms_frac,
+    detect_wyckoff,
+)
+from xtalkit.exporter import write_structure_cif, write_structure_xyz
 
 
 def _parse_wyckoff(value: str) -> list[str]:
@@ -151,6 +159,154 @@ def cmd_fetch(args) -> int:
     return 0
 
 
+def _parse_atom_raw(value: str) -> tuple[str, str, list[float]]:
+    """Parse 'Li 16e 0.25' or 'Li 16e 0.25 1.0' into (element, wyckoff, numbers).
+
+    The trailing numbers are free-coordinate values in template order, with an
+    optional occupancy as the last value (resolved against the position's
+    degree of freedom in ``cmd_build``).
+    """
+    parts = value.split()
+    if len(parts) < 2:
+        raise ValueError(
+            f"--atom expects 'element wyckoff [free...] [occ]', got {value!r}"
+        )
+    element, wyckoff = parts[0], parts[1]
+    try:
+        numbers = [float(p) for p in parts[2:]]
+    except ValueError as e:
+        raise ValueError(f"--atom numeric parse error in {value!r}: {e}") from e
+    return element, wyckoff, numbers
+
+
+def _parse_atom_frac_raw(value: str) -> tuple[str, float, float, float, float]:
+    """Parse 'Li 0.2563 0.2718 0.1832' or '... 0.6875' (with occupancy).
+
+    Format: element x y z [occ]. Occupancy defaults to 1.0.
+    """
+    parts = value.split()
+    if len(parts) < 4:
+        raise ValueError(
+            f"--atom-frac expects 'element x y z [occ]', got {value!r}"
+        )
+    element = parts[0]
+    try:
+        coords = [float(p) for p in parts[1:4]]
+        occ = float(parts[4]) if len(parts) >= 5 else 1.0
+    except ValueError as e:
+        raise ValueError(f"--atom-frac numeric parse error in {value!r}: {e}") from e
+    if not (0.0 <= occ <= 1.0 + 1e-6):
+        raise ValueError(f"--atom-frac occupancy {occ} out of range [0, 1] in {value!r}")
+    return element, coords[0], coords[1], coords[2], occ
+
+
+def cmd_build(args) -> int:
+    """Run the 'build' subcommand: assemble a CIF from refinement parameters."""
+    try:
+        if args.spec:
+            with open(args.spec, encoding="utf-8") as f:
+                spec = json.load(f)
+            sg_number = int(spec["sg"])
+            cell_params = spec["cell"]
+            atoms = [
+                AtomSite(
+                    a["element"], a["wyckoff"],
+                    a.get("free", []), float(a.get("occ", 1.0)),
+                )
+                for a in spec["atoms"]
+            ]
+            if not atoms:
+                raise ValueError("No atoms specified.")
+            for w in validate_cell(sg_number, cell_params) + \
+                    validate_atoms(sg_number, atoms):
+                print(f"[warn] {w}", file=sys.stderr)
+            structure = build_structure(sg_number, cell_params, atoms)
+            formula = format_formula(stoichiometry(sg_number, atoms))
+        else:
+            if args.sg is None:
+                raise ValueError("--sg is required (or use --spec).")
+            if args.cell is None:
+                raise ValueError("--cell is required (or use --spec).")
+            sg_number = args.sg
+            cell_params = _parse_cell(args.cell)
+
+            if args.atom_frac:
+                # Fractional-coordinate mode: element x y z [occ] per atom.
+                parsed = [_parse_atom_frac_raw(raw) for raw in args.atom_frac]
+                # Drop occ==0 atoms (absent from the structure); the refinement
+                # table may list them (e.g. a split site fully occupied by the
+                # other species), so tolerate them with a note.
+                frac_atoms = []
+                for fa in parsed:
+                    if fa[4] == 0.0:
+                        print(f"[info] skipping {fa[0]} at "
+                              f"({fa[1]},{fa[2]},{fa[3]}) — occupancy 0",
+                              file=sys.stderr)
+                    else:
+                        frac_atoms.append(FracAtom(*fa))
+                if not frac_atoms:
+                    raise ValueError("at least one --atom-frac with occ > 0 is required.")
+                for w in validate_cell(sg_number, cell_params) + \
+                        validate_atoms_frac(sg_number, frac_atoms):
+                    print(f"[warn] {w}", file=sys.stderr)
+                # Report detected Wyckoff sites (helps catch input errors).
+                print(f"[info] SG #{sg_number} ({sg_name(sg_number)}), "
+                      f"{crystal_system(sg_number)} — detected Wyckoff sites:")
+                for fa in frac_atoms:
+                    label, mult = detect_wyckoff(sg_number, fa.x, fa.y, fa.z)
+                    print(f"        {fa.element:<3} at ({fa.x:.4f},{fa.y:.4f},"
+                          f"{fa.z:.4f}) occ={fa.occ:<5} -> {label} (mult {mult})")
+                structure = build_structure_frac(sg_number, cell_params, frac_atoms)
+                formula = format_formula(stoichiometry_frac(sg_number, frac_atoms))
+            else:
+                if not args.atom:
+                    raise ValueError(
+                        "at least one --atom or --atom-frac is required.")
+                atoms = []
+                for raw in args.atom:
+                    element, wyckoff, numbers = _parse_atom_raw(raw)
+                    wp = find_wyckoff(sg_number, wyckoff)
+                    n_free = len(free_params(wp.coordinates))
+                    if len(numbers) == n_free:
+                        free, occ = numbers, 1.0
+                    elif len(numbers) == n_free + 1:
+                        free, occ = numbers[:-1], numbers[-1]
+                    else:
+                        raise ValueError(
+                            f"--atom {raw!r}: {wyckoff} ({wp.coordinates!r}) "
+                            f"expects {n_free} free value(s) plus optional occ, "
+                            f"got {len(numbers)} number(s)."
+                        )
+                    atoms.append(AtomSite(element, wyckoff, free, occ))
+                if not atoms:
+                    raise ValueError("No atoms specified.")
+                for w in validate_cell(sg_number, cell_params) + \
+                        validate_atoms(sg_number, atoms):
+                    print(f"[warn] {w}", file=sys.stderr)
+                structure = build_structure(sg_number, cell_params, atoms)
+                formula = format_formula(stoichiometry(sg_number, atoms))
+
+        print(f"[OK] SG #{sg_number} ({sg_name(sg_number)}), "
+              f"crystal system: {crystal_system(sg_number)}, formula: {formula}")
+        output_base = args.output or f"SG{sg_number}_built"
+        formats = [f.strip() for f in args.format.split(",") if f.strip()]
+        paths = []
+        for fmt in formats:
+            path = f"{output_base}.{fmt}"
+            if fmt == "cif":
+                write_structure_cif(structure, path)
+            elif fmt == "xyz":
+                write_structure_xyz(structure, sg_number, path)
+            else:
+                raise ValueError(f"Unknown format {fmt!r} (use 'cif' and/or 'xyz').")
+            paths.append(path)
+        print(f"     Saved to: {', '.join(paths)}")
+        return 0
+    except (ValueError, FileNotFoundError, KeyError, NotImplementedError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_enumerate(args) -> int:
     """Run the 'enumerate' subcommand."""
     try:
@@ -173,6 +329,10 @@ def cmd_enumerate(args) -> int:
             max_structures=args.max_structures,
             timeout=args.timeout,
             format=args.format,
+            jobs=args.jobs,
+            batch_size=args.batch_size,
+            scratch_dir=args.scratch_dir,
+            skip_preflight=args.skip_preflight,
         )
         print(f"[OK] Enumerated {len(paths)} structure(s).")
         print(f"     Output directory: {os.path.dirname(paths[0]) if paths else output_dir}")
@@ -262,7 +422,46 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Timeout in minutes (default: none)")
     p_enum.add_argument("--format", type=str, default="cif", choices=["cif", "xyz"],
                         help="Output format (default: cif)")
+    p_enum.add_argument("--jobs", type=int, default=1,
+                        help="Parallel workers for structure generation (default: 1 = "
+                             "serial streaming; 0 = auto/cpu_count). Note: enum.x itself "
+                             "is single-threaded and not sped up by this.")
+    p_enum.add_argument("--batch-size", type=int, default=256,
+                        help="Structures per batch — caps peak memory (default: 256). "
+                             "Larger = fewer makestr.x calls but more memory.")
+    p_enum.add_argument("--scratch-dir", type=str, default=None,
+                        help="Directory for enumlib scratch files (default: system temp). "
+                             "/dev/shm puts them on tmpfs (faster, limited to ~half RAM).")
+    p_enum.add_argument("--skip-preflight", action="store_true", default=False,
+                        help="Skip the non-integer-stoichiometry pre-check. DANGEROUS: "
+                             "non-integer occupancy can make enumlib exhaust memory and "
+                             "crash the system instead of failing cleanly.")
     p_enum.set_defaults(func=cmd_enumerate)
+
+    # build
+    p_build = sub.add_parser(
+        "build",
+        help="Build a CIF from refinement parameters (SG + cell + Wyckoff sites)",
+    )
+    p_build.add_argument("--sg", type=int, default=None,
+                         help="Space group number (1-230)")
+    p_build.add_argument("--cell", type=str, default=None,
+                         help="Cell params: 'a b c alpha beta gamma'")
+    p_build.add_argument("--atom", action="append", default=None, metavar="SPEC",
+                         help="Atom (Wyckoff-letter mode): 'element wyckoff [free...] [occ]' "
+                              "(repeatable), e.g. 'Li 16e 0.25' or 'Li 16e 0.25 1.0'")
+    p_build.add_argument("--atom-frac", action="append", default=None, metavar="SPEC",
+                         dest="atom_frac",
+                         help="Atom (fractional-coord mode): 'element x y z [occ]' "
+                              "(repeatable) — give refinement fractional coords directly, "
+                              "e.g. 'Li 0.2563 0.2718 0.1832 0.6875'. Wyckoff orbit auto-detected.")
+    p_build.add_argument("--spec", type=str, default=None,
+                         help="JSON spec file (alternative to --sg/--cell/--atom)")
+    p_build.add_argument("--format", type=str, default="cif",
+                         help="Output format(s): cif,xyz (comma-separated, default: cif)")
+    p_build.add_argument("-o", "--output", type=str, default=None,
+                         help="Output base path (without extension)")
+    p_build.set_defaults(func=cmd_build)
 
     return parser
 

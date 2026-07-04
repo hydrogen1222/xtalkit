@@ -51,7 +51,7 @@ xtalkit 提供两种界面：
 xtalkit <command> [options]
 ```
 
-共五个子命令：
+共六个子命令：
 
 | 命令 | 功能 |
 |------|------|
@@ -60,6 +60,7 @@ xtalkit <command> [options]
 | `info` | 查询某个空间群的 Wyckoff 位置信息 |
 | `fetch` | 校验空间群数据库完整性 |
 | `enumerate` | 枚举对称不等价的有序构型（需 pymatgen + enumlib） |
+| `build` | 由精修参数生成 CIF（空间群 + 晶胞 + Wyckoff 位点 + 占据率） |
 
 ---
 
@@ -171,6 +172,79 @@ xtalkit skeleton --sg 14 --wyckoff 2a,4e \
 
 ---
 
+### `build` — 由精修参数生成 CIF
+
+```
+xtalkit build --sg <N> --cell "<a b c α β γ>" --atom "<spec>" [--atom ...] [选项]
+```
+
+由 XRD 精修结果拼装标准 CIF：一个空间群、一个晶胞、一组原子位点。每个位点是一个元素落在某 Wyckoff 位置（如 `16e`）上，附带自由坐标值与可选占据率。**晶系由空间群自动推导**（不单独输入），仅用来校验晶胞参数。占据率默认 1.0；支持部分占据/混合占据，产出的无序 CIF 可再交给 `xtalkit enumerate` 枚举有序构型。
+
+支持全部 230 个空间群（内置 Wyckoff 数据集，源自国际晶体学表 via pyxtal，并已用 gemmi 校验）。
+
+**必选参数：**
+
+| 参数 | 说明 |
+|------|------|
+| `--sg N` | 空间群号，1–230 |
+| `--cell "a b c α β γ"` | 晶胞参数 |
+| `--atom SPEC` | 原子规格（可重复）：`元素 wyckoff [自由坐标...] [占据率]` |
+| `--spec FILE` | JSON 规格文件（替代 `--sg`/`--cell`/`--atom`） |
+
+**原子规格格式：** `元素 wyckoff [自由坐标值] [占据率]`。自由坐标按其在位点坐标模板中出现的顺序输入；解析器知道每个 Wyckoff 位点需要几个自由值。仅当多给一个数字时，末位才被当作占据率。
+
+| 规格 | 含义 |
+|------|------|
+| `Na 4a` | Na 在 4a（无自由参数），占据率 1.0 |
+| `Li 16e 0.3` | Li 在 16e `(x,x,x)`，x=0.3，占据率 1.0 |
+| `Li 16e 0.3 0.5` | Li 在 16e，x=0.3，占据率 0.5 |
+| `S 48h 0.25 0.3` | S 在 48h `(x,x,z)`，x=0.25、z=0.3，占据率 1.0 |
+| `Li 4a 0.5` + `Cu 4a 0.5` | 4a 上 Li/Cu 混合占据（无序） |
+
+**选项：** `--format cif[,xyz]`（默认 `cif`）、`-o/--output`（输出基名；默认 `SG{N}_built`）。
+
+**分数坐标直输模式（`--atom-frac`）** —— 手里有精修表时更省事。不用写 Wyckoff 字母 + 自由参数，直接给每个原子的最终分数坐标：`元素 x y z [占据率]`。工具自动识别每个原子落在哪条 Wyckoff 轨道（并打印出来），所以非规范代表（如 SG 137 4d 写成 `(0, 1/2, z)` 而非规范的 `(1/2, 0, 1/4+z)`，两者差一个 4 重旋转）也能直接用，无需手动算偏移。占据率为 0 的原子自动跳过。
+
+```bash
+xtalkit build --sg 137 --cell "8.694 8.694 12.599 90 90 90" \
+    --atom-frac "Li 0.2563 0.2718 0.1832 0.691" \
+    --atom-frac "Li 0 0.5 0.9446 1" \
+    --atom-frac "S 0 0.1843 0.4103 1" \
+    ...
+```
+
+**示例 —— 生成 NaCl（Fm-3m，225）：**
+
+```bash
+xtalkit build --sg 225 --cell "5.64 5.64 5.64 90 90 90" \
+    --atom "Na 4a" --atom "Cl 4b" -o NaCl
+# [OK] SG #225 (Fm-3m), crystal system: cubic, formula: NaCl
+#      Saved to: NaCl.cif
+```
+
+**示例 —— 生成无序 Li/Cu 位点，再枚举其有序构型：**
+
+```bash
+xtalkit build --sg 225 --cell "4 4 4 90 90 90" \
+    --atom "Li 4a 0.5" --atom "Cu 4a 0.5" -o AuCu_disordered
+xtalkit enumerate AuCu_disordered.cif --max-cell-size 2
+```
+
+CIF 中只写不对称单元代表原子 + 空间群对称操作；VESTA、gemmi、pymatgen 会自动展开为完整晶胞。生成后 xtalkit 会打印由「多重性 × 占据率」算出的化学式（如 `NaCl`、`Li6PS5Cl`）—— 与你的精修结果对照以确认输入无误。
+
+**JSON 规格**（`--spec`）便于复现/脚本化：
+
+```json
+{"sg": 225,
+ "cell": {"a": 5.64, "b": 5.64, "c": 5.64, "alpha": 90, "beta": 90, "gamma": 90},
+ "atoms": [
+   {"element": "Na", "wyckoff": "4a", "occ": 1.0},
+   {"element": "Cl", "wyckoff": "4b", "occ": 1.0}
+ ]}
+```
+
+---
+
 ### `info` — 查询空间群信息
 
 ```
@@ -209,7 +283,7 @@ xtalkit fetch
 校验全部已内置的空间群数据是否完整。输出：
 
 ```
-[OK] Space group data intact (38/230 space groups supported).
+[OK] Space group data intact (230/230 space groups supported).
 ```
 
 ---
@@ -239,9 +313,13 @@ xtalkit enumerate <input.cif> [options]
 | `--symm-prec TOL` | 0.1 | 空间群分析的对称容差 |
 | `--vacancy-symbol S` | `X` | 内部表示空位用的 DummySpecies 符号 |
 | `--output-dir DIR` | `{name}_enum/` | 枚举文件的输出目录 |
-| `--max-structures N` | 不限 | 输出文件数量上限 |
+| `--max-structures N` | 不限 | 输出文件数量上限（同时限制生成量，降低内存） |
 | `--timeout MIN` | 无 | enumlib 子进程超时（分钟） |
 | `--format F` | cif | 输出格式：`cif` 或 `xyz` |
+| `--jobs N` | 1 | 结构生成阶段的并行进程数（`0` = 自动/CPU 核数） |
+| `--batch-size N` | 256 | 每批结构数 —— 限制内存峰值 |
+| `--scratch-dir DIR` | 系统 temp | enumlib scratch 目录（用 `/dev/shm` 走 tmpfs） |
+| `--skip-preflight` | 关 | 跳过非整数计量比预检（危险——可能 OOM） |
 
 **示例：**
 
@@ -275,6 +353,17 @@ enumlib 在原胞的**超胞**里枚举有序构型，从 `--min-cell-size` 到 
 - **先用小尺寸。** 第一次看建议 `--max-cell-size 1`。如果母相占位在原胞里已经能整数化（如 1/2、1/3、2/3），1× 超胞就能给出全部不等价构型，几秒就跑完。
 - **确有需要再放大。** 2× 超胞能揭示 1× 装不下的额外构型，但也可能产出上千个结构、跑几分钟到几小时。搭配 `--max-structures` 与 `--timeout` 控制规模。
 - **占位必须可整数化。** 所选超胞里每个物种的总数必须是整数。占位 1/2 至少需要 2 个位点（2 位点原胞的 1× 即可）；1/3 需要 3× 超胞；像 0.56（= 14/25）这种值需要 25× 超胞，不现实。如果你的 CIF 里有这种值，先把它舍入到附近的简单分数（见下文）。
+
+#### 内存、磁盘与并行
+
+大规模枚举（上千个结构）会吃大量内存和磁盘。xtalkit 采用**分批流式**处理（不会把所有结构同时留在内存），并提供三个旋钮：
+
+- **`--max-structures N`** 现在限制的是**生成**，不只是输出 —— enumlib 只生成前 `N` 个结构，采样式运行不再为了丢弃而先建上千个中间文件。
+- **`--batch-size N`** 每批生成/解析/写入多少个结构。内存峰值随批大小增长，而非总结构数。内存不够就调小（如 `--batch-size 32`）；想少调几次 `makestr.x` 就调大。
+- **`--jobs N`** 多进程并行各批，加速结构生成（makestr + 解析 + 写文件）阶段。`--jobs 0` 自动用满 CPU。**每个 worker 会加载一份 pymatgen（约 200 MB），所以内存随 `--jobs` 增长** —— 按你的内存选合适的值。
+- **`--scratch-dir /dev/shm`** 把 enumlib 的 scratch 文件（`struct_enum.out`、各批 `vasp.*`）放到 tmpfs，避免磁盘 I/O。`/dev/shm` 通常只有内存的一半大小，`struct_enum.out` 装得下再用。
+
+> **`enum.x` 是单线程的。** 枚举核心 `enum.x` 是串行 Fortran 回溯搜索 —— `--jobs` **不能**加速它。`--jobs` 只并行其后的 makestr + 解析 + 写文件阶段。若 `enum.x` 占大头（搜索空间巨大、长时间枚举），`--jobs` 对墙钟时间提升有限；但流式与 `--max-structures` 限额仍能改善内存和磁盘。要并行 `enum.x` 本身需按晶胞大小拆分，暂未实现。
 
 #### CIF 的分数占位是怎么工作的
 
@@ -335,16 +424,30 @@ Ge  Ge4  2  0.5  0.5  0.301  1        →        Ge  Ge4   2  0.5  0.5  0.301  0
 1. **增大 `--max-cell-size`**，让超胞大到能容纳每个物种的整数个数（如占位 1/3 需要 `--max-cell-size 3`）。
 2. **准备一份"干净"母相 CIF**，把占位改成接近真实值的有理数。实验 CIF 常报告别扭的分数（如某 Li 位点占位 0.56 = 14/25）。舍入到附近的简单分数（0.56 → 0.5）就得到可枚举的母相；CIF 其他部分（晶胞、其他原子、空间群）原样不动。把占位舍入到附近的有理计量，是枚举无序晶体时标准且通用的近似做法。
 
+**非整数计量比预检。** 跑 `enum.x` 之前，xtalkit 会检查每个物种在 `[--min-cell-size, --max-cell-size]` 范围内是否存在某个 `cell_size` 使其计数（`多重度 × 占位 × cell_size`）为整数。若不存在，直接拒绝并列出每个违规物种及最近的合法分数，例如：
+
+```
+[ERR] Cannot enumerate: non-integer stoichiometry (enumlib would likely run away and exhaust memory).
+  species  mult  occ      mult*occ   nearest valid (at cell_size 1)
+  Li      16    0.6910   11.0560    -> 0.6875
+  Li      8     0.6430   5.1440     -> 0.6250
+  ...
+```
+
+加这道护栏是因为 **enumlib 遇到非整数计量比不会干净失败** —— 它倾向于一直申请内存直到内核杀进程（可能搞崩 WSL/小内存系统，而不是报错）。用建议的舍入值重建 CIF（`xtalkit build --atom-frac ...`）再重跑即可。`--skip-preflight` 可跳过此检查（危险——仅在你确信 enumlib 能处理你的计量比时使用）。
+
 **已知限制：**
 
 - **非整数计量比**：如上，不是简单分数的占位（如 0.56）在小超胞里无法整数化，会得到 0 个结构。舍入到附近分数，或增大 `--max-cell-size`。
+- **大规模多位点枚举即便占位干净也可能吃光内存。** 原子数多、无序位点多的原胞（如 LGPS——P42/nmc，50 原子，Li 在 16h+4d+8f 上无序、外加 Ge/P 混合）搜索空间巨大：`enum.x` 单线程，可能要好几 GB 内存和好几分钟。若返回 0 / 崩溃：(a) 给够内存 + `--timeout`；(b) **缩小范围**——在母相 CIF 里把不研究的无序位点固定为单一有序（占位 1），一次只枚举一个无序位点；(c) 先用 `--max-cell-size 1` + `--max-structures` 控制规模。
 - **平台说明**：`scripts/build_enumlib.sh` 面向 Linux/macOS（系统 `gfortran`）。Windows 用户可在 [WSL](https://learn.microsoft.com/windows/wsl/) 下编译，或沿用旧的 conda + `m2w64-gcc-fortran` 路径（把 `enum.x`/`makestr.x` 放到环境的 `Library/mingw-w64/bin`）。
+
 
 ---
 
 #### 枚举功能配置
 
-xtalkit 核心（`mark`、`skeleton`、`info`、`fetch`）**不需要** pymatgen，仅 `enumerate` 需要，且它是一个可选 uv extra —— 核心保持轻量（仅 gemmi + rich）。无需 conda，无需 root。
+xtalkit 核心（`mark`、`skeleton`、`info`、`fetch`、`build`）**不需要** pymatgen，仅 `enumerate` 需要，且它是一个可选 uv extra —— 核心保持轻量（仅 gemmi + rich）。无需 conda，无需 root。
 
 **第 1 步 —— 安装 `enumerate` extra：**
 
@@ -403,6 +506,8 @@ xtalkit
 ║                     online               ║
 ║  [5] Enumerate   — Enumerate ordered     ║
 ║                     configurations       ║
+║  [6] Build       — Build CIF from        ║
+║                     refinement params    ║
 ║  [0] Exit                                ║
 ╚═══════════════════════════════════════════╝
 ```
@@ -561,16 +666,9 @@ done
 
 ## 已支持的空间群
 
-目前已提供 38 个空间群的 Wyckoff 位置数据：
+已提供**全部 230 个空间群**的 Wyckoff 位置数据。内置数据集（`xtalkit/data/wyckoff.json`）源自国际晶体学表 Vol. A，经 [pyxtal](https://pyxtal.readthedocs.io)（MIT）抽取并用 gemmi 对称操作校验 —— 重新生成见 `scripts/build_wyckoff_db.py`。
 
-| 范围 | 晶系 | 数量 |
-|------|------|------|
-| 1–2 | 三斜 | 2 |
-| 195–230 | 立方 | 36 |
-
-未支持的空间群会抛出 `NotImplementedError` 并附清晰提示。扩展到全部 230 个空间群已在计划中。
-
-**最常见的电池材料（立方空间群）已完全支持。**
+`xtalkit fetch` 可确认数据集完整（230/230）。
 
 ---
 

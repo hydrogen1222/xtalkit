@@ -1,0 +1,10848 @@
+{
+ "1": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "1"
+  }
+ ],
+ "10": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "n",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "m",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,1/2",
+   "letter": "l",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "k",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "j",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "g",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "100": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  }
+ ],
+ "101": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "102": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "103": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  }
+ ],
+ "104": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  }
+ ],
+ "105": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "106": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "107": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4mm"
+  }
+ ],
+ "108": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  }
+ ],
+ "109": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "11": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  }
+ ],
+ "110": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  }
+ ],
+ "111": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "n",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "112": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/4",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,1/4",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "113": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "114": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "115": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "116": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,3/4",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "117": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2+x,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "118": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2-x,1/4",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,3/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "119": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,3/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "12": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "120": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "121": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "122": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/8",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  }
+ ],
+ "123": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "u",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "t",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "s",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "r",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "q",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "p",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "o",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "n",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "4/mmm"
+  }
+ ],
+ "124": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "n",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,1/4",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  }
+ ],
+ "125": [
+  {
+   "coordinates": "1/4+x,1/4+y,z",
+   "letter": "n",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,1/4-x,z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,0",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/2",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,0",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  }
+ ],
+ "126": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,0,1/2",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/2",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4+z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  }
+ ],
+ "127": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,z",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2+x,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2+x,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  }
+ ],
+ "128": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  }
+ ],
+ "129": [
+  {
+   "coordinates": "1/4+x,3/4+y,z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,3/4+x,z",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,3/4+y,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,1/2",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,0",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/2",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,3/4,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "13": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  }
+ ],
+ "130": [
+  {
+   "coordinates": "1/4+x,3/4+y,z",
+   "letter": "g",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,3/4,0",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "131": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "r",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "q",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "p",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "o",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "132": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "p",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "o",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,1/4",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "133": [
+  {
+   "coordinates": "1/4+x,3/4+y,1/4+z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,3/4+x,1/2",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,0,3/4",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,0,1/4",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/4+z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "134": [
+  {
+   "coordinates": "1/4+x,3/4+y,1/4+z",
+   "letter": "n",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,1/4+z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4+x,3/4+x,3/4",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,3/4+x,1/4",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,0,1/2",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,0,0",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/4+z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/4",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,3/4,3/4",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "135": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "136": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "137": [
+  {
+   "coordinates": "1/4+x,3/4+y,1/4+z",
+   "letter": "h",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,3/4+y,1/4+z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,1/2",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,1/4+z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "138": [
+  {
+   "coordinates": "1/4+x,3/4+y,1/4+z",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,3/4+x,1/4+z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,1/4",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,3/4-x,3/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/4+z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,3/4,3/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "139": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "n",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "m",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "l",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4/mmm"
+  }
+ ],
+ "14": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-1"
+  }
+ ],
+ "140": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "m",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,z",
+   "letter": "l",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2+x,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "422"
+  }
+ ],
+ "141": [
+  {
+   "coordinates": "x,3/4+y,1/8+z",
+   "letter": "i",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,3/4+y,1/8+z",
+   "letter": "h",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "g",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,3/4,1/8",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/8+z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,3/4,5/8",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,3/4,1/8",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-42m"
+  }
+ ],
+ "142": [
+  {
+   "coordinates": "x,3/4+y,1/8+z",
+   "letter": "g",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,3/4,3/8",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/8+z",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,3/4,1/8",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "-4"
+  }
+ ],
+ "143": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "3"
+  }
+ ],
+ "144": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "1"
+  }
+ ],
+ "145": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "1"
+  }
+ ],
+ "146": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 9,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "3"
+  }
+ ],
+ "147": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 3,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-3"
+  }
+ ],
+ "148": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 18,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 9,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 9,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "-3"
+  }
+ ],
+ "149": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,1/2",
+   "letter": "k",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "j",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "2/3,1/3,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  }
+ ],
+ "15": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "150": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "32"
+  }
+ ],
+ "151": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,5/6",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,1/3",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "152": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,5/6",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/3",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "153": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,1/6",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,2/3",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "154": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/6",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,2/3",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "155": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 18,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "e",
+   "multiplicity": 9,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "d",
+   "multiplicity": 9,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "32"
+  }
+ ],
+ "156": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "3m"
+  }
+ ],
+ "157": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "3m"
+  }
+ ],
+ "158": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  }
+ ],
+ "159": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  }
+ ],
+ "16": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "u",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "t",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "s",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "r",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "q",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,1/2",
+   "letter": "p",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "o",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "n",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "m",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "l",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "k",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "j",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "222"
+  }
+ ],
+ "160": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 18,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "b",
+   "multiplicity": 9,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "3m"
+  }
+ ],
+ "161": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 18,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "3"
+  }
+ ],
+ "162": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,-x,1/2",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "g",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-3m"
+  }
+ ],
+ "163": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,1/4",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  }
+ ],
+ "164": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-3m"
+  }
+ ],
+ "165": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  }
+ ],
+ "166": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 36,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "h",
+   "multiplicity": 18,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 18,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 18,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 9,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 9,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "-3m"
+  }
+ ],
+ "167": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 36,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "e",
+   "multiplicity": 18,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 18,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 12,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "32"
+  }
+ ],
+ "168": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "6"
+  }
+ ],
+ "169": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  }
+ ],
+ "17": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "170": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  }
+ ],
+ "171": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "172": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "2"
+  }
+ ],
+ "173": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  }
+ ],
+ "174": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 6,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "k",
+   "multiplicity": 3,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 3,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "2/3,1/3,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-6"
+  }
+ ],
+ "175": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "g",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "6/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "6/m"
+  }
+ ],
+ "176": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  }
+ ],
+ "177": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "n",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,1/2",
+   "letter": "m",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "l",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "g",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "622"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "622"
+  }
+ ],
+ "178": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,1/4",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  }
+ ],
+ "179": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,3/4",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "a",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  }
+ ],
+ "18": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "180": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,1/2",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,2x,0",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  }
+ ],
+ "181": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,1/2",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,2x,0",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  }
+ ],
+ "182": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,1/4",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,3/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  }
+ ],
+ "183": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "6mm"
+  }
+ ],
+ "184": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "6"
+  }
+ ],
+ "185": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  }
+ ],
+ "186": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  }
+ ],
+ "187": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,-x,z",
+   "letter": "n",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "m",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "l",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,-x,1/2",
+   "letter": "k",
+   "multiplicity": 3,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "j",
+   "multiplicity": 3,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "2/3,1/3,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "2/3,1/3,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  }
+ ],
+ "188": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "2/3,1/3,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "2/3,1/3,0",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  }
+ ],
+ "189": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 3,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-62m"
+  }
+ ],
+ "19": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "190": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "2/3,1/3,1/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "32"
+  }
+ ],
+ "191": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "r",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "q",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "p",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,2x,z",
+   "letter": "o",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "n",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,2x,1/2",
+   "letter": "m",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,2x,0",
+   "letter": "l",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "k",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "j",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "g",
+   "multiplicity": 3,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "f",
+   "multiplicity": 3,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "6mm"
+  },
+  {
+   "coordinates": "1/3,2/3,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "6/mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "6/mmm"
+  }
+ ],
+ "192": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "m",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,2x,1/4",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "6"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "6/m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "622"
+  }
+ ],
+ "193": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,2x,0",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-6"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  }
+ ],
+ "194": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,2x,z",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,2x,1/4",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/3,2/3,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/3,2/3,3/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "1/3,2/3,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-62m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-3m"
+  }
+ ],
+ "195": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "i",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "23"
+  }
+ ],
+ "196": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "23"
+  }
+ ],
+ "197": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "23"
+  }
+ ],
+ "198": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 12,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "3"
+  }
+ ],
+ "199": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "b",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  }
+ ],
+ "2": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-1"
+  }
+ ],
+ "20": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "200": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "m-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "m-3"
+  }
+ ],
+ "201": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,0,1/2",
+   "letter": "g",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/4+x",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "23"
+  }
+ ],
+ "202": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 24,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "m-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "m-3"
+  }
+ ],
+ "203": [
+  {
+   "coordinates": "1/8+x,1/8+y,1/8+z",
+   "letter": "g",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8+x,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/8+x,1/8+x,1/8+x",
+   "letter": "e",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  }
+ ],
+ "204": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m-3"
+  }
+ ],
+ "205": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-3"
+  }
+ ],
+ "206": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "-3"
+  }
+ ],
+ "207": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,y",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "432"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "432"
+  }
+ ],
+ "208": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "m",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,1/2+y",
+   "letter": "l",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,1/2-y",
+   "letter": "k",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4,1/2,0",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "23"
+  }
+ ],
+ "209": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "i",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,y",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 24,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "432"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "432"
+  }
+ ],
+ "21": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "210": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,y,1/4-y",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  }
+ ],
+ "211": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,1/2-y",
+   "letter": "i",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/4,1/2,0",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "432"
+  }
+ ],
+ "212": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,y,1/4-y",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  }
+ ],
+ "213": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,y,1/4+y",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "7/8,7/8,7/8",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "3/8,3/8,3/8",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "32"
+  }
+ ],
+ "214": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,y,1/4-y",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/8,y,1/4+y",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "f",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "5/8,0,1/4",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/8,0,1/4",
+   "letter": "c",
+   "multiplicity": 12,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "7/8,7/8,7/8",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "32"
+  }
+ ],
+ "215": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-43m"
+  }
+ ],
+ "216": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 24,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-43m"
+  }
+ ],
+ "217": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "f",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/2,0",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-43m"
+  }
+ ],
+ "218": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 24,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "g",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 12,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/4,1/2,0",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "23"
+  }
+ ],
+ "219": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4,0,0",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 24,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "23"
+  }
+ ],
+ "22": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,1/4",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,3/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "220": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "7/8,0,1/4",
+   "letter": "b",
+   "multiplicity": 12,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "3/8,0,1/4",
+   "letter": "a",
+   "multiplicity": 12,
+   "site_symmetry": "-4"
+  }
+ ],
+ "221": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "n",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "m",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "l",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "k",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,y",
+   "letter": "j",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "i",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 6,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 6,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 3,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 3,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "m-3m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "m-3m"
+  }
+ ],
+ "222": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "i",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/4+y,1/4+y",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,0,1/2",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/4+x",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "432"
+  }
+ ],
+ "223": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "k",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,1/2+y",
+   "letter": "j",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "h",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/4,1/2,0",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "c",
+   "multiplicity": 6,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m-3"
+  }
+ ],
+ "224": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "l",
+   "multiplicity": 48,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/4+z",
+   "letter": "k",
+   "multiplicity": 24,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "3/4,1/4+y,1/4-y",
+   "letter": "j",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "3/4,1/4+y,3/4+y",
+   "letter": "i",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,0",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 12,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "3/4,1/2,0",
+   "letter": "f",
+   "multiplicity": 12,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4+x,1/4+x,1/4+x",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 6,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-43m"
+  }
+ ],
+ "225": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 192,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "k",
+   "multiplicity": 96,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "j",
+   "multiplicity": 96,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,y",
+   "letter": "i",
+   "multiplicity": 48,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "h",
+   "multiplicity": 48,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 32,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 24,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "m-3m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "m-3m"
+  }
+ ],
+ "226": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 192,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "i",
+   "multiplicity": 96,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,y",
+   "letter": "h",
+   "multiplicity": 96,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "g",
+   "multiplicity": 64,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 48,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "1/4,0,0",
+   "letter": "c",
+   "multiplicity": 24,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "m-3"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "432"
+  }
+ ],
+ "227": [
+  {
+   "coordinates": "1/8+x,1/8+y,1/8+z",
+   "letter": "i",
+   "multiplicity": 192,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,1/8+y,1/8-y",
+   "letter": "h",
+   "multiplicity": 96,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/8+x,1/8+x,1/8+z",
+   "letter": "g",
+   "multiplicity": 96,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/8+x,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/8+x,1/8+x,1/8+x",
+   "letter": "e",
+   "multiplicity": 32,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "-43m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "-43m"
+  }
+ ],
+ "228": [
+  {
+   "coordinates": "3/8+x,3/8+y,3/8+z",
+   "letter": "h",
+   "multiplicity": 192,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "5/8,3/8+y,3/8-y",
+   "letter": "g",
+   "multiplicity": 96,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "3/8+x,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 96,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "3/8+x,3/8+x,3/8+x",
+   "letter": "e",
+   "multiplicity": 64,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "1/4,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 48,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "3/8,3/8,3/8",
+   "letter": "c",
+   "multiplicity": 32,
+   "site_symmetry": "-3"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "b",
+   "multiplicity": 32,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 16,
+   "site_symmetry": "23"
+  }
+ ],
+ "229": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "k",
+   "multiplicity": 48,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "j",
+   "multiplicity": 48,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,1/2-y",
+   "letter": "i",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,y",
+   "letter": "h",
+   "multiplicity": 24,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "g",
+   "multiplicity": 24,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "3m"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 12,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "d",
+   "multiplicity": 12,
+   "site_symmetry": "-42m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-3m"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 6,
+   "site_symmetry": "4/mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m-3m"
+  }
+ ],
+ "23": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "230": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 96,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/8,y,1/4-y",
+   "letter": "g",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "f",
+   "multiplicity": 48,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,x",
+   "letter": "e",
+   "multiplicity": 32,
+   "site_symmetry": "3"
+  },
+  {
+   "coordinates": "3/8,0,1/4",
+   "letter": "d",
+   "multiplicity": 24,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/8,0,1/4",
+   "letter": "c",
+   "multiplicity": 24,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "b",
+   "multiplicity": 16,
+   "site_symmetry": "32"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 16,
+   "site_symmetry": "-3"
+  }
+ ],
+ "24": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "25": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "26": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  }
+ ],
+ "27": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "28": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "29": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "3": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "2"
+  }
+ ],
+ "30": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "31": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  }
+ ],
+ "32": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "33": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "34": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "35": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "36": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  }
+ ],
+ "37": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "38": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "39": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "4": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "1"
+  }
+ ],
+ "40": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "41": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "42": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "43": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  }
+ ],
+ "44": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "45": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "46": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "47": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "A",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "z",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "y",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "x",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "w",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,y,z",
+   "letter": "v",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "u",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "t",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "s",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "r",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "q",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,y,1/2",
+   "letter": "p",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "o",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "n",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "m",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "l",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "k",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "j",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "i",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "f",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "e",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "48": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,1/4+z",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4+z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4+y,1/2",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/4+y,1/2",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,0",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "3/4,3/4,3/4",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "49": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "r",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "q",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "p",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "o",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "n",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,1/4",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/4",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "5": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "50": [
+  {
+   "coordinates": "1/4+x,1/4+y,z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/4+y,1/2",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/4+y,0",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4+x,1/2,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "51": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,y,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/2,z",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "52": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "53": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,1/4",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "54": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,1/2,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,0,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "55": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "56": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,3/4,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "57": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/4,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "58": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "59": [
+  {
+   "coordinates": "1/4+x,1/4+y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4+x,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,1/4+y,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  }
+ ],
+ "6": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "m"
+  }
+ ],
+ "60": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "61": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "62": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  }
+ ],
+ "63": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "64": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "65": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "r",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "q",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "p",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "o",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "66": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "m",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,3/4,0",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "67": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,z",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,0,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,1/2",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,0",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "68": [
+  {
+   "coordinates": "x,1/4+y,1/4+z",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4+z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/4+z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4+y,1/2",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,0,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "69": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "p",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "o",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "n",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "m",
+   "multiplicity": 16,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,1/4,1/4",
+   "letter": "l",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,1/4",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,z",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,1/4,0",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,0,1/4",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "7": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "1"
+  }
+ ],
+ "70": [
+  {
+   "coordinates": "1/8+x,1/8+y,1/8+z",
+   "letter": "h",
+   "multiplicity": 32,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/4,1/4,1/8+z",
+   "letter": "g",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/8+y,1/4",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/8+x,1/4,1/4",
+   "letter": "e",
+   "multiplicity": 16,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "5/8,5/8,5/8",
+   "letter": "d",
+   "multiplicity": 16,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/8,1/8,1/8",
+   "letter": "c",
+   "multiplicity": 16,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,3/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "222"
+  }
+ ],
+ "71": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "o",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "n",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "m",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,1/2",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "mmm"
+  }
+ ],
+ "72": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,0,1/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "73": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/4,z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,y,0",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/4",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  }
+ ],
+ "74": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "j",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,z",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,y,z",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/4,y,1/4",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/4,1/4,3/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "75": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "4"
+  }
+ ],
+ "76": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "77": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  }
+ ],
+ "78": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "79": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  }
+ ],
+ "8": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "m"
+  }
+ ],
+ "80": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "81": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "-4"
+  }
+ ],
+ "82": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,3/4",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "83": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "l",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "4/m"
+  }
+ ],
+ "84": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "2/m"
+  }
+ ],
+ "85": [
+  {
+   "coordinates": "1/4+x,3/4+y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,3/4,1/2",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,3/4,0",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "86": [
+  {
+   "coordinates": "1/4+x,1/4+y,1/4+z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4+z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,1/4+z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,3/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "-4"
+  }
+ ],
+ "87": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "i",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,y,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/4,1/4,1/4",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2/m"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "4/m"
+  }
+ ],
+ "88": [
+  {
+   "coordinates": "x,1/4+y,1/8+z",
+   "letter": "f",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "0,1/2,1/8+z",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/4,5/8",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/4,1/8",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "-1"
+  },
+  {
+   "coordinates": "0,1/2,3/4",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "-4"
+  }
+ ],
+ "89": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "p",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "o",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "n",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "1/2,0,1/2",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,0,0",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 1,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "c",
+   "multiplicity": 1,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "422"
+  }
+ ],
+ "9": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "1"
+  }
+ ],
+ "90": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "91": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,3/8",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "92": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "93": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "p",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,3/4",
+   "letter": "o",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,1/4",
+   "letter": "n",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,0",
+   "letter": "m",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "l",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,1/2,1/2",
+   "letter": "k",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "j",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "i",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "h",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "g",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,1/2,1/4",
+   "letter": "f",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/4",
+   "letter": "e",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,1/2",
+   "letter": "d",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "1/2,1/2,0",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "94": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,1/2",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "222"
+  }
+ ],
+ "95": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,5/8",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "1/2,y,0",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,y,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "96": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "b",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "2"
+  }
+ ],
+ "97": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "k",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2+x,1/4",
+   "letter": "j",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,1/2",
+   "letter": "i",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,0,0",
+   "letter": "h",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,1/2,z",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "4"
+  },
+  {
+   "coordinates": "0,1/2,1/4",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,1/2,0",
+   "letter": "c",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 2,
+   "site_symmetry": "422"
+  }
+ ],
+ "98": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 16,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/4,1/8",
+   "letter": "f",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,-x,0",
+   "letter": "e",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "x,x,0",
+   "letter": "d",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "c",
+   "multiplicity": 8,
+   "site_symmetry": "2"
+  },
+  {
+   "coordinates": "0,0,1/2",
+   "letter": "b",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  },
+  {
+   "coordinates": "0,0,0",
+   "letter": "a",
+   "multiplicity": 4,
+   "site_symmetry": "222"
+  }
+ ],
+ "99": [
+  {
+   "coordinates": "x,y,z",
+   "letter": "g",
+   "multiplicity": 8,
+   "site_symmetry": "1"
+  },
+  {
+   "coordinates": "x,1/2,z",
+   "letter": "f",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,0,z",
+   "letter": "e",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "x,x,z",
+   "letter": "d",
+   "multiplicity": 4,
+   "site_symmetry": "m"
+  },
+  {
+   "coordinates": "1/2,0,z",
+   "letter": "c",
+   "multiplicity": 2,
+   "site_symmetry": "mm2"
+  },
+  {
+   "coordinates": "1/2,1/2,z",
+   "letter": "b",
+   "multiplicity": 1,
+   "site_symmetry": "4mm"
+  },
+  {
+   "coordinates": "0,0,z",
+   "letter": "a",
+   "multiplicity": 1,
+   "site_symmetry": "4mm"
+  }
+ ]
+}

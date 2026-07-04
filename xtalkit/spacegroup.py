@@ -1,5 +1,21 @@
-"""Space group data queries via Gemmi."""
+"""Space group data queries via Gemmi.
 
+Wyckoff positions for all 230 space groups are loaded from the bundled
+``data/wyckoff.json`` dataset, which is generated at build time by
+``scripts/build_wyckoff_db.py`` (derived from International Tables for
+Crystallography Vol. A via pyxtal, MIT-licensed, and verified against gemmi's
+symmetry operations — see the build script for details). The dataset uses
+gemmi's reference setting, so coordinates are consistent with
+``gemmi.SpaceGroup`` used elsewhere in the package.
+
+Each Wyckoff position is stored as ``(letter, multiplicity, site_symmetry,
+coordinates)`` where ``letter`` is the raw Wyckoff letter (e.g. ``"a"``); the
+full label (``"4a"``) is assembled as ``f"{multiplicity}{letter}"`` in
+``wyckoff_positions``.
+"""
+
+import json
+import os
 from collections import namedtuple
 
 import gemmi
@@ -8,7 +24,9 @@ WyckoffInfo = namedtuple(
     "WyckoffInfo", ["letter", "multiplicity", "site_symmetry", "coordinates"]
 )
 
-# Default cell parameters per crystal system
+# Default cell parameters per crystal system — rough templates used by
+# `skeleton` and `build` when the user does not supply real values. Users
+# should override with actual refined values for any serious work.
 _DEFAULT_CELLS = {
     gemmi.CrystalSystem.Triclinic: (5.0, 6.0, 7.0, 80.0, 90.0, 100.0),
     gemmi.CrystalSystem.Monoclinic: (5.0, 6.0, 7.0, 90.0, 110.0, 90.0),
@@ -19,277 +37,23 @@ _DEFAULT_CELLS = {
     gemmi.CrystalSystem.Cubic: (5.0, 5.0, 5.0, 90.0, 90.0, 90.0),
 }
 
-# Wyckoff position database compiled from International Tables for
-# Crystallography Volume A. Each entry is:
-#   (letter_code, multiplicity, site_symmetry, coordinates)
-# where letter_code is the Wyckoff letter (a, b, c, ...).
-# The full label used in WyckoffInfo.letter is f"{multiplicity}{letter_code}".
-_WYCKOFF_DB: dict[int, list[tuple[str, int, str, str]]] = {}
+_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "wyckoff.json")
+# Lazy-loaded: {sg_number: [(letter, multiplicity, site_symmetry, coordinates), ...]}.
+_WYCKOFF_DB: dict[int, list[tuple[str, int, str, str]]] | None = None
 
 
-def _build_wyckoff_db() -> None:
-    """Populate the Wyckoff position database."""
-    # --- Triclinic (1-2) ---
-    _WYCKOFF_DB[1] = [
-        ("a", 1, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[2] = [
-        ("a", 1, "-1", "0,0,0"),
-        ("b", 1, "-1", "1/2,0,0"),
-        ("c", 1, "-1", "0,1/2,0"),
-        ("d", 1, "-1", "1/2,1/2,0"),
-        ("e", 1, "-1", "0,0,1/2"),
-        ("f", 1, "-1", "1/2,0,1/2"),
-        ("g", 1, "-1", "0,1/2,1/2"),
-        ("h", 1, "-1", "1/2,1/2,1/2"),
-        ("i", 2, "1", "x,y,z"),
-    ]
-
-    # --- Cubic (195-230) ---
-    _WYCKOFF_DB[195] = [
-        ("a", 2, "23", "0,0,0"), ("b", 6, "222", "0,1/2,1/2"),
-        ("c", 8, ".3", "1/4,1/4,1/4"), ("d", 12, "2..", "x,0,0"),
-        ("e", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[196] = [
-        ("a", 2, "23", "0,0,0"), ("b", 6, "222", "1/2,0,0"),
-        ("c", 8, ".3", "1/4,1/4,1/4"), ("d", 12, "2..", "x,0,0"),
-        ("e", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[197] = [
-        ("a", 2, "23", "0,0,0"), ("b", 6, "222", "0,1/2,1/2"),
-        ("c", 8, ".3", "1/4,1/4,1/4"), ("d", 12, "2..", "x,0,0"),
-        ("e", 12, "2..", "x,1/2,0"), ("f", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[198] = [
-        ("a", 2, "23", "0,0,0"), ("b", 6, "222", "1/2,0,0"),
-        ("c", 8, ".3", "1/8,1/8,1/8"), ("d", 12, "2..", "x,0,0"),
-        ("e", 12, "2..", "x,1/2,0"), ("f", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[199] = [
-        ("a", 2, "23", "0,0,0"), ("b", 6, "222", "0,1/2,1/2"),
-        ("c", 8, ".3", "1/4,1/4,1/4"), ("d", 12, "2..", "x,0,0"),
-        ("e", 12, "2..", "x,1/2,0"), ("f", 12, "2..", "x,x,0"),
-        ("g", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[200] = [
-        ("a", 1, "m-3", "0,0,0"), ("b", 1, "m-3", "1/2,1/2,1/2"),
-        ("c", 6, "4mm", "0,1/2,1/2"), ("d", 6, "-42m", "1/2,0,0"),
-        ("e", 8, ".3m", "1/4,1/4,1/4"), ("f", 12, "2mm", "x,0,0"),
-        ("g", 12, "2mm", "x,1/2,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "m..", "x,1/2,z"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[201] = [
-        ("a", 1, "m-3", "0,0,0"), ("b", 1, "m-3", "1/2,1/2,1/2"),
-        ("c", 6, "4mm", "1/2,1/2,0"), ("d", 6, "-42m", "1/2,0,0"),
-        ("e", 8, ".3m", "1/4,1/4,1/4"), ("f", 12, "2mm", "x,0,0"),
-        ("g", 12, "2mm", "x,1/2,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "m..", "x,1/2,z"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[202] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "0,1/4,1/4"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[203] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[204] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 12, "2..", "x,x,0"), ("h", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[205] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 12, "2..", "x,x,0"), ("h", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[206] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 6, "4/mmm", "0,1/2,1/2"), ("d", 8, "3.", "0,0,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "-4..", "x,1/2,0"),
-        ("g", 24, "m..", "x,0,z"), ("h", 24, "2..", "x,y,0"),
-        ("i", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[207] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 12, "2..", "x,x,0"), ("h", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[208] = [
-        ("a", 2, "m-3", "0,0,0"), ("b", 4, "-3.", "1/4,1/4,1/4"),
-        ("c", 8, "3.", "0,0,0"), ("d", 8, "..2", "0,1/4,1/4"),
-        ("e", 12, "2..", "x,0,0"), ("f", 12, "2..", "x,1/2,0"),
-        ("g", 24, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[209] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 24, "4mm", "x,0,0"), ("f", 24, "-42m", "x,1/2,0"),
-        ("g", 24, "2mm", "x,0,1/2"), ("h", 24, "2mm", "x,1/2,1/2"),
-        ("i", 48, "m..", "x,0,z"), ("j", 48, "m..", "x,1/2,z"),
-        ("k", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[210] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 24, "4mm", "x,0,0"), ("f", 24, "-42m", "x,1/2,0"),
-        ("g", 24, "2mm", "x,0,1/2"), ("h", 24, "2mm", "x,1/2,1/2"),
-        ("i", 48, "m..", "x,0,z"), ("j", 48, "m..", "x,1/2,z"),
-        ("k", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[211] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, ".3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,1/4"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 24, "m..", "x,0,z"), ("h", 24, "2..", "x,y,0"),
-        ("i", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[212] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, ".3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 24, "m..", "x,0,z"), ("h", 24, "2..", "x,y,0"),
-        ("i", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[213] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, ".3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 12, "2mm", "x,x,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "2..", "x,y,0"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[214] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, ".3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 12, "2mm", "x,x,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "2..", "x,y,0"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[215] = [
-        ("a", 4, "-43m", "0,0,0"), ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 4, "-43m", "1/4,1/4,1/4"), ("d", 4, "-43m", "3/4,3/4,3/4"),
-        ("e", 16, ".3m", "x,x,x"), ("f", 24, "2.mm", "x,0,0"),
-        ("g", 24, "2.mm", "x,1/2,0"), ("h", 48, "..m", "x,x,z"),
-        ("i", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[216] = [
-        ("a", 4, "-43m", "0,0,0"),
-        ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 4, "-43m", "1/4,1/4,1/4"),
-        ("d", 4, "-43m", "3/4,3/4,3/4"),
-        ("e", 16, ".3m", "x,x,x"),
-        ("f", 24, "2.mm", "x,0,0"),
-        ("g", 24, "2.mm", "x,0,1/2"),
-        ("h", 48, "..m", "x,x,z"),
-    ]
-    _WYCKOFF_DB[217] = [
-        ("a", 4, "-43m", "0,0,0"), ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 4, "-43m", "1/4,1/4,1/4"), ("d", 4, "-43m", "3/4,3/4,3/4"),
-        ("e", 8, ".3m", "x,x,x"), ("f", 12, "2.mm", "x,0,1/2"),
-        ("g", 12, "2.mm", "x,0,0"), ("h", 12, "2.mm", "x,1/2,0"),
-        ("i", 12, "2.mm", "x,1/2,1/2"), ("j", 24, "..m", "x,x,z"),
-        ("k", 24, "..m", "x,-x,z"), ("l", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[218] = [
-        ("a", 4, "-43m", "0,0,0"), ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 4, "-43m", "1/4,1/4,1/4"), ("d", 4, "-43m", "3/4,3/4,3/4"),
-        ("e", 24, "2.mm", "x,0,0"), ("f", 24, "2.mm", "x,1/2,0"),
-        ("g", 48, "..m", "x,x,z"), ("h", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[219] = [
-        ("a", 4, "-43m", "0,0,0"), ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 8, ".3m", "1/4,1/4,1/4"), ("d", 8, ".3m", "3/4,3/4,3/4"),
-        ("e", 24, "2.mm", "x,0,0"), ("f", 24, "..m", "x,x,z"),
-        ("g", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[220] = [
-        ("a", 4, "-43m", "0,0,0"), ("b", 4, "-43m", "1/2,1/2,1/2"),
-        ("c", 8, ".3m", "1/4,1/4,1/4"), ("d", 8, ".3m", "3/4,3/4,3/4"),
-        ("e", 24, "2.mm", "x,0,0"), ("f", 24, "2.mm", "x,1/2,0"),
-        ("g", 48, "..m", "x,x,z"), ("h", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[221] = [
-        ("a", 1, "m-3m", "0,0,0"), ("b", 1, "m-3m", "1/2,1/2,1/2"),
-        ("c", 6, "4mm", "1/2,1/2,0"), ("d", 6, "-42m", "1/2,0,0"),
-        ("e", 8, ".3m", "1/4,1/4,1/4"), ("f", 12, "2mm", "x,0,0"),
-        ("g", 12, "2mm", "x,1/2,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "m..", "x,1/2,z"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[222] = [
-        ("a", 1, "m-3m", "0,0,0"), ("b", 1, "m-3m", "1/2,1/2,1/2"),
-        ("c", 6, "4mm", "0,1/2,1/2"), ("d", 6, "-42m", "1/2,0,0"),
-        ("e", 8, ".3m", "1/8,1/8,1/8"), ("f", 12, "2mm", "x,0,0"),
-        ("g", 12, "2mm", "x,1/2,0"), ("h", 12, "2mm", "x,1/4,1/4"),
-        ("i", 24, "m..", "x,0,z"), ("j", 24, "m..", "x,1/2,z"),
-        ("k", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[223] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, "3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 12, "2mm", "x,x,0"), ("h", 24, "m..", "x,0,z"),
-        ("i", 24, "2..", "x,y,0"), ("j", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[224] = [
-        ("a", 2, "m-3m", "0,0,0"), ("b", 4, "-3m", "1/4,1/4,1/4"),
-        ("c", 8, "3m", "0,0,0"), ("d", 8, "..2", "1/4,1/4,0"),
-        ("e", 12, "2mm", "x,0,0"), ("f", 12, "2mm", "x,1/2,0"),
-        ("g", 24, "m..", "x,0,z"), ("h", 24, "2..", "x,y,0"),
-        ("i", 48, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[225] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 24, "4mm", "x,0,0"), ("f", 24, "-42m", "x,1/2,0"),
-        ("g", 24, "2mm", "x,0,1/2"), ("h", 48, "m..", "x,0,z"),
-        ("i", 48, "m..", "x,1/2,z"), ("j", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[226] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 16, "3m", "x,x,x"), ("f", 24, "4mm", "x,0,0"),
-        ("g", 24, "2mm", "x,0,1/2"), ("h", 48, "m..", "x,0,z"),
-        ("i", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[227] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 16, "3m", "x,x,x"), ("f", 24, "4mm", "x,0,0"),
-        ("g", 24, "4mm", "x,1/2,0"), ("h", 48, "2mm", "x,0,1/2"),
-        ("i", 48, "2mm", "x,1/2,1/2"), ("j", 96, "m..", "x,0,z"),
-        ("k", 96, "m..", "x,1/2,z"), ("l", 192, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[228] = [
-        ("a", 4, "m-3m", "0,0,0"), ("b", 4, "m-3m", "1/2,1/2,1/2"),
-        ("c", 8, "-43m", "1/4,1/4,1/4"), ("d", 8, "-43m", "3/4,3/4,3/4"),
-        ("e", 16, "3m", "x,x,x"), ("f", 24, "4mm", "x,0,0"),
-        ("g", 24, "4mm", "x,1/2,0"), ("h", 48, "2mm", "x,0,1/2"),
-        ("i", 48, "2mm", "x,1/2,1/2"), ("j", 96, "m..", "x,0,z"),
-        ("k", 96, "m..", "x,1/2,z"), ("l", 192, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[229] = [
-        ("a", 8, "m-3m", "0,0,0"), ("b", 8, "m-3m", "1/4,1/4,1/4"),
-        ("c", 24, "4mm", "x,0,0"), ("d", 24, "2mm", "x,0,1/2"),
-        ("e", 48, "m..", "x,0,z"), ("f", 96, "1", "x,y,z"),
-    ]
-    _WYCKOFF_DB[230] = [
-        ("a", 8, "m-3m", "0,0,0"), ("b", 8, "m-3m", "1/4,1/4,1/4"),
-        ("c", 24, "4mm", "x,0,0"), ("d", 24, "4mm", "x,1/2,0"),
-        ("e", 48, "2mm", "x,0,1/2"), ("f", 48, "2mm", "x,1/2,1/2"),
-        ("g", 96, "m..", "x,0,z"), ("h", 96, "m..", "x,1/2,z"),
-        ("i", 192, "1", "x,y,z"),
-    ]
-
-
-_build_wyckoff_db()
+def _load_wyckoff() -> dict[int, list[tuple[str, int, str, str]]]:
+    """Load and cache the bundled Wyckoff dataset."""
+    global _WYCKOFF_DB
+    if _WYCKOFF_DB is None:
+        with open(_DATA_PATH, encoding="utf-8") as f:
+            raw = json.load(f)
+        _WYCKOFF_DB = {
+            int(sg): [(p["letter"], p["multiplicity"],
+                       p["site_symmetry"], p["coordinates"]) for p in positions]
+            for sg, positions in raw.items()
+        }
+    return _WYCKOFF_DB
 
 
 def _get_sg(sg_number: int) -> gemmi.SpaceGroup:
@@ -318,12 +82,14 @@ def wyckoff_positions(sg_number: int) -> list[WyckoffInfo]:
         sg_number: ITA space group number (1-230).
 
     Returns:
-        List of WyckoffInfo namedtuples with letter, multiplicity,
-        site_symmetry, and coordinates string.
+        List of WyckoffInfo namedtuples with letter (full label, e.g.
+        ``"4a"``), multiplicity, site_symmetry, and coordinates string,
+        sorted by multiplicity then letter.
     """
     _get_sg(sg_number)  # validate number
 
-    raw = _WYCKOFF_DB.get(sg_number)
+    db = _load_wyckoff()
+    raw = db.get(sg_number)
     if raw is None:
         raise NotImplementedError(
             f"Wyckoff data not available for space group {sg_number}"

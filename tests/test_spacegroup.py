@@ -15,12 +15,26 @@ def test_sg_name_f43m():
 
 
 def test_wyckoff_positions_f43m():
-    """F-43m has 8 Wyckoff positions: 4a,4b,4c,4d,16e,24f,24g,48h."""
+    """F-43m has 9 Wyckoff positions: 4a,4b,4c,4d,16e,24f,24g,48h,96i.
+
+    The general position is 96i (mult 96 = 24 point-group ops x 4 F-centering);
+    the legacy hand-coded DB omitted it. 24g is (x,1/4,1/4), not (x,0,1/2).
+    """
     positions = wyckoff_positions(216)
     letters = {p.letter for p in positions}
-    assert letters == {"4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h"}
+    assert letters == {"4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h", "96i"}
     total_multiplicity = sum(p.multiplicity for p in positions)
     assert total_multiplicity > 0
+
+
+def test_all_230_space_groups_have_wyckoff_data():
+    """Every space group 1-230 now has Wyckoff data (bundled dataset)."""
+    for n in range(1, 231):
+        positions = wyckoff_positions(n)
+        assert len(positions) > 0, f"SG {n} has no Wyckoff positions"
+        for p in positions:
+            assert p.multiplicity >= 1
+            assert p.coordinates  # non-empty
 
 
 def test_wyckoff_position_data():
