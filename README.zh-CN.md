@@ -144,6 +144,7 @@ xtalkit ewald <path> [<path> ...] [options]
 | `--charges Li:1 ...` | 空 | 显式指定氧化态电荷 |
 | `--guess` | 关闭 | 让 pymatgen 自动猜测氧化态 |
 | `--per-atom` | 关闭 | 按每原子能量排序，而不是总能量 |
+| `--jobs 1` | 1 | 并行计算的进程数，`0` 表示自动使用全部 CPU |
 | `--out path` | `<输入>_ewald/ranking.csv` | 输出完整排序 CSV |
 | `--group` | 关闭 | 将选中和剩余结构分别复制到文件夹 |
 | `--group-dir dir` | `<输入>_ewald` | 归类根目录 |

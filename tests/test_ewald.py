@@ -1,8 +1,11 @@
 import csv
+from concurrent.futures import Future
 from pathlib import Path
+from types import SimpleNamespace
 
 from xtalkit.ewald import (
     EwaldRow,
+    batch_ewald,
     group_rows,
     iter_structure_entries,
     parse_charges,
@@ -84,3 +87,36 @@ def test_write_csv(tmp_path):
     assert data[0]["rank"] == "1"
     assert data[0]["relative_path"] == "1.cif"
     assert data[1]["ewald_energy"] == "-0.5"
+
+
+def test_batch_ewald_parallel_branch(monkeypatch):
+    entries = [("root", "/tmp/a.cif", "a.cif"), ("root", "/tmp/b.cif", "b.cif")]
+    seen = {}
+
+    class FakeExecutor:
+        def __init__(self, max_workers):
+            seen["max_workers"] = max_workers
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def submit(self, fn, *args, **kwargs):
+            fut = Future()
+            fut.set_result(fn(*args, **kwargs))
+            return fut
+
+    def fake_score(source_root, path, relative_path, charges, guess, per_atom):
+        energy = 2.0 if path.endswith("a.cif") else 1.0
+        return EwaldRow(source_root, relative_path, path, "X", 1, energy)
+
+    monkeypatch.setattr("xtalkit.ewald.iter_structure_entries", lambda paths, layout="flat": entries)
+    monkeypatch.setattr("xtalkit.ewald._score_structure_entry", fake_score)
+    monkeypatch.setattr("xtalkit.ewald.cf.ProcessPoolExecutor", FakeExecutor)
+
+    rows = batch_ewald(["/tmp"], jobs=4)
+
+    assert seen["max_workers"] == 2
+    assert [row.path for row in rows] == ["/tmp/b.cif", "/tmp/a.cif"]

@@ -186,6 +186,7 @@ def test_cli_ewald_help():
     assert "--layout" in result.stdout
     assert "--top-n" in result.stdout
     assert "--group" in result.stdout
+    assert "--jobs" in result.stdout
 
 
 def test_cli_build_atom_frac_mode():

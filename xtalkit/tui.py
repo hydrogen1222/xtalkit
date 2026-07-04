@@ -663,6 +663,13 @@ def _ewald_workflow() -> None:
 
     per_atom = _prompt_yes_no("Rank by energy per atom", default=False)
 
+    jobs = _prompt_int_or_none("Parallel jobs (0 = auto, 1 = serial)", default=1)
+    if jobs is None:
+        jobs = 1
+    if jobs < 0:
+        _error("Parallel jobs must be >= 0")
+        jobs = 1
+
     while True:
         sort_choice = _prompt("Sort order: [1] lowest first  [2] highest first")
         if sort_choice == "1":
@@ -698,6 +705,7 @@ def _ewald_workflow() -> None:
             guess=guess,
             per_atom=per_atom,
             layout=layout,
+            jobs=jobs,
         )
         rows = sorted(rows, key=lambda row: row.ewald_energy, reverse=descending)
         selected, remaining = split_rows(rows, top_n)

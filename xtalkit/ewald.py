@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import concurrent.futures as cf
 import os
 import shutil
 from dataclasses import dataclass
@@ -188,6 +189,7 @@ def batch_ewald(
     guess: bool = False,
     per_atom: bool = False,
     layout: str = "flat",
+    jobs: int = 1,
 ) -> list[EwaldRow]:
     """Compute Ewald energy for every structure under ``paths`` and rank them."""
     try:
@@ -205,30 +207,78 @@ def batch_ewald(
             "(looked for CIF/POSCAR/CONTCAR files)"
         )
 
-    for source_root, path, relative_path in entries:
-        try:
-            struct = Structure.from_file(path)
-            energy = compute_ewald_energy(
-                struct,
+    if jobs < 0:
+        raise ValueError("--jobs must be >= 0")
+    workers = (os.cpu_count() or 1) if jobs == 0 else jobs
+    workers = max(1, min(workers, len(entries)))
+    if workers == 1 or len(entries) == 1:
+        for source_root, path, relative_path in entries:
+            rows.append(_score_structure_entry(
+                source_root,
+                path,
+                relative_path,
                 charges=charges,
                 guess=guess,
                 per_atom=per_atom,
-            )
-            rows.append(
-                EwaldRow(
-                    source_root=source_root,
-                    relative_path=relative_path,
-                    path=path,
-                    formula=str(struct.composition.reduced_formula),
-                    n_atoms=len(struct),
-                    ewald_energy=energy,
+            ))
+    else:
+        with cf.ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = [
+                pool.submit(
+                    _score_structure_entry,
+                    source_root,
+                    path,
+                    relative_path,
+                    charges,
+                    guess,
+                    per_atom,
                 )
-            )
-        except Exception as exc:  # noqa: BLE001
-            raise RuntimeError(f"{path}: {exc}") from exc
+                for source_root, path, relative_path in entries
+            ]
+            for future in cf.as_completed(futures):
+                try:
+                    rows.append(future.result())
+                except Exception as exc:  # noqa: BLE001
+                    raise RuntimeError(str(exc)) from exc
 
     rows.sort(key=lambda row: row.ewald_energy)
     return rows
+
+
+def _score_structure_entry(
+    source_root: str,
+    path: str,
+    relative_path: str,
+    charges: dict[str, float] | None,
+    guess: bool,
+    per_atom: bool,
+) -> EwaldRow:
+    """Score one structure file, suitable for multiprocessing."""
+    try:
+        from pymatgen.core import Structure
+    except ImportError as exc:  # pragma: no cover - exercised in integration envs
+        raise RuntimeError(
+            "pymatgen is required for Ewald scoring; run 'uv sync --extra enumerate'"
+        ) from exc
+
+    try:
+        struct = Structure.from_file(path)
+        energy = compute_ewald_energy(
+            struct,
+            charges=charges,
+            guess=guess,
+            per_atom=per_atom,
+        )
+        return EwaldRow(
+            source_root=source_root,
+            relative_path=relative_path,
+            path=path,
+            formula=str(struct.composition.reduced_formula),
+            n_atoms=len(struct),
+            ewald_energy=energy,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"{path}: {exc}") from exc
 
 
 def sort_rows(rows: list[EwaldRow], descending: bool = False) -> list[EwaldRow]:

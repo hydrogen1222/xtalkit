@@ -527,6 +527,7 @@ def cmd_ewald(args) -> int:
             guess=args.guess,
             per_atom=args.per_atom,
             layout=args.layout,
+            jobs=args.jobs,
         )
         descending = args.sort == "desc"
         rows = sorted(rows, key=lambda row: row.ewald_energy, reverse=descending)
@@ -769,6 +770,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="Let pymatgen guess oxidation states")
     p_ewald.add_argument("--per-atom", action="store_true", default=False,
                          help="Rank by energy per atom instead of total energy")
+    p_ewald.add_argument("--jobs", type=int, default=1,
+                         help="Parallel workers for structure scoring (0 = auto; 1 = serial)")
     p_ewald.add_argument("--out", default=None,
                          help="Write full ranking CSV to this path")
     p_ewald.add_argument("--group", action="store_true", default=False,

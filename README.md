@@ -146,6 +146,7 @@ It supports two directory layouts:
 | `--charges Li:1 ...` | (none) | Explicit oxidation states for Ewald scoring |
 | `--guess` | off | Let pymatgen guess oxidation states |
 | `--per-atom` | off | Rank by energy per atom instead of total energy |
+| `--jobs 1` | 1 | Parallel workers for scoring structures; `0` = auto CPU count |
 | `--out path` | `<input>_ewald/ranking.csv` | Write the full ranking CSV |
 | `--group` | off | Copy the selected and remaining structures into folders |
 | `--group-dir dir` | `<input>_ewald` | Grouping root directory |
