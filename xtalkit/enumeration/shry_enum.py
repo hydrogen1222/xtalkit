@@ -56,7 +56,21 @@ def enumerate_with_shry(
     backend = backend or ShryBackend()
     paths = _make_layout(output_dir)
     copy_file(cif_path, os.path.join(paths["input"], "shry_ready.cif"))
-    pip_freeze(os.path.join(paths["input"], "pip_freeze.txt"))
+    # Carry the prepare-stage orbit grouping sidecar (if any) into the workflow
+    # so verify can write checks/orbit_grouping.json (plan §7).
+    orbit_sidecar = f"{cif_path}.orbit_grouping.json"
+    site_orbits = None
+    hall_symbol = None
+    parent_sg_detected = None
+    if os.path.exists(orbit_sidecar):
+        copy_file(orbit_sidecar, os.path.join(paths["input"], "shry_ready.cif.orbit_grouping.json"))
+        import json as _json
+        with open(orbit_sidecar, encoding="utf-8") as _f:
+            _orbit_data = _json.load(_f)
+        site_orbits = _orbit_data.get("site_orbits")
+        hall_symbol = _orbit_data.get("hall_symbol")
+        parent_sg_detected = _orbit_data.get("parent_spacegroup_detected")
+    _write_pip_freeze(backend, os.path.join(paths["input"], "pip_freeze.txt"))
 
     mod_audit = _run_mod_only_audit(
         backend, cif_path, paths["input"], matrix, symprec, angle_tolerance,
@@ -118,9 +132,26 @@ def enumerate_with_shry(
         shry_command_line=" ".join(result.command),
         mod_only_audit=mod_audit,
         backend_version=backend.version(),
+        site_orbits=site_orbits,
+        hall_symbol=hall_symbol,
+        parent_spacegroup_detected=parent_sg_detected,
     )
     write_json(os.path.join(output_dir, "manifest.json"), manifest)
     return manifest
+
+
+def _write_pip_freeze(backend, path: str) -> None:
+    """Write the SHRY isolated env's pip freeze (plan §5/§8).
+
+    Prefers the backend's own ``pip_freeze`` (which recovers the SHRY
+    interpreter from the ``shry`` shebang); falls back to the manifest helper
+    (xtalkit's env) for backends that don't expose it (e.g. test fakes).
+    """
+    backend_freeze = getattr(backend, "pip_freeze", None)
+    if callable(backend_freeze):
+        backend_freeze(path)
+        return
+    pip_freeze(path)
 
 
 def iter_shry_outputs(raw_dir: str):

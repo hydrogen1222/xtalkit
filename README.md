@@ -64,13 +64,15 @@ shry --version                             # verify
 
 > **Why isolated?** If you `uv pip install shry` into the xtalkit venv, it downgrades pymatgen to 2023.10.4 and `uv sync --extra enumerate` will then fight to upgrade it — the two backends break each other. `uv tool install` gives SHRY its own dependency set; xtalkit calls it as a subprocess via `XTALKIT_SHRY_CMD`. This is by design.
 
+> **Full strict audit also needs Tier 2.** `shry prepare`/`verify` run an independent spglib symmetry audit (plan §3.4) and a two-stage `StructureMatcher` dedup (§10) inside the xtalkit process, which need `pymatgen`+`spglib`. So for the full strict workflow also run `uv sync --extra enumerate` (Tier 2's pymatgen brings spglib along). Without it, `shry count`/`enum` still work (they only shell out to SHRY), but `prepare`/`verify` raise a clear "spglib/pymatgen required" error.
+
 ### Installation summary
 
 | Tier | Commands enabled | Extra steps | Conflicts |
 |------|------------------|-------------|-----------|
 | 1 · Core | `mark`, `skeleton`, `build`, `info`, `fetch`, TUI | none | — |
 | 2 · +enumlib | + `enumerate` | `uv sync --extra enumerate` + `build_enumlib.sh` (gfortran) | — |
-| 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD` | SHRY's `pymatgen<=2023.10.4` pin — isolated, so none |
+| 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD`; full audit also `uv sync --extra enumerate` | SHRY's `pymatgen<=2023.10.4` pin — isolated, so none |
 
 Tiers 2 and 3 are **independent** — install either or both.
 

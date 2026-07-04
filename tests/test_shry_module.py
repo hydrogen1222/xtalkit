@@ -18,12 +18,12 @@ from xtalkit.enumeration.postprocess import (
 
 
 P1_PARTIAL = """data_partial
-_cell_length_a 4
-_cell_length_b 4
-_cell_length_c 4
-_cell_angle_alpha 90
-_cell_angle_beta 90
-_cell_angle_gamma 90
+_cell_length_a 4.1
+_cell_length_b 4.2
+_cell_length_c 4.3
+_cell_angle_alpha 71
+_cell_angle_beta 82
+_cell_angle_gamma 83
 _symmetry_space_group_name_H-M 'P 1'
 _symmetry_Int_Tables_number 1
 loop_
@@ -37,7 +37,9 @@ _atom_site_fract_x
 _atom_site_fract_y
 _atom_site_fract_z
 _atom_site_occupancy
-Li1 Li 0 0 0 1/2
+Li1 Li 0.11 0.23 0.37 1/2
+Li2 Li 0.41 0.67 0.19 1/2
+Li3 Li 0.83 0.05 0.51 1/2
 """
 
 
@@ -114,7 +116,7 @@ def test_shry_prepare_fills_vacancy_and_writes_manifest(tmp_path):
         str(out),
         parent_spacegroup=1,
         scaling_matrix=[[2, 0, 0], [0, 1, 0], [0, 0, 1]],
-        target_formula="Li1",
+        target_formula="Li3",
     )
 
     text = out.read_text()
@@ -122,7 +124,7 @@ def test_shry_prepare_fills_vacancy_and_writes_manifest(tmp_path):
     assert " X " in text
     manifest = json.loads((tmp_path / "ready.cif.manifest.json").read_text())
     assert manifest["parent_spacegroup_detected"] == 1
-    assert manifest["target_formula_after_removing_vacancy"] == "Li1"
+    assert manifest["target_formula_after_removing_vacancy"] == "Li3"
     assert result["output_cif"] == str(out)
 
 
@@ -222,6 +224,91 @@ def test_shry_verify_symprec_scan_and_degeneracy(tmp_path):
 def test_supercell_count_parser():
     assert parse_supercell_count("inequivalent structures: 42") == 42
     assert parse_supercell_count("7") == 7
+
+
+def test_dedup_two_stage_detects_confirmed_duplicate(tmp_path):
+    """Plan §10: fingerprint bucketing then StructureMatcher within buckets."""
+    from xtalkit.enumeration.fingerprint import verify_no_duplicates
+
+    base = """data_c
+_cell_length_a 5
+_cell_length_b 5
+_cell_length_c 5
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+_symmetry_space_group_name_H-M 'P 1'
+_symmetry_Int_Tables_number 1
+loop_
+_symmetry_equiv_pos_site_id
+_symmetry_equiv_pos_as_xyz
+1 'x,y,z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+Li1 Li {x} {y} {z} 1
+"""
+    p1 = tmp_path / "a.cif"; p1.write_text(base.format(x=0.1, y=0.2, z=0.3))
+    p2 = tmp_path / "b.cif"; p2.write_text(base.format(x=0.1, y=0.2, z=0.3))  # identical
+    p3 = tmp_path / "c.cif"; p3.write_text(base.format(x=0.4, y=0.5, z=0.6))  # distinct
+
+    result = verify_no_duplicates([str(p1), str(p2), str(p3)])
+    assert result["has_duplicates"] is True
+    assert len(result["duplicates"]) == 1
+    group = result["duplicates"][0]["groups"][0]
+    assert {os.path.basename(g) for g in group} == {"a.cif", "b.cif"}
+
+
+def test_symmetry_audit_rejects_split_orbit_and_symmetrize_passes(tmp_path):
+    """Plan §3.4 / case_007: a P1-expanded CIF splits one orbit across labels.
+
+    Declaring the *detected* group exposes the orbit-split; --symmetrize must
+    repair it (the documented escape hatch).
+    """
+    p1_expanded = """data_p1exp
+_cell_length_a 4
+_cell_length_b 4
+_cell_length_c 4
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+_symmetry_space_group_name_H-M 'P 1'
+_symmetry_Int_Tables_number 1
+loop_
+_symmetry_equiv_pos_site_id
+_symmetry_equiv_pos_as_xyz
+1 'x,y,z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+Li1 Li 0.1 0.5 0.5 1/2
+Li2 Li 0.9 0.5 0.5 1/2
+"""
+    inp = tmp_path / "p1exp.cif"
+    inp.write_text(p1_expanded)
+
+    # Declared group matches detected (123) but labels split the orbit -> error.
+    try:
+        prepare_shry_input(str(inp), str(tmp_path / "out.cif"),
+                           parent_spacegroup=123, scaling_matrix=[[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    except ValueError as exc:
+        assert "does not match spglib symmetry orbits" in str(exc)
+    else:
+        raise AssertionError("expected §3.4 orbit-split error")
+
+    # --symmetrize repairs it.
+    result = prepare_shry_input(str(inp), str(tmp_path / "out.cif"),
+                                parent_spacegroup=123, symmetrize=True,
+                                scaling_matrix=[[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert result["site_orbits"] is not None
 
 
 def test_shry_postprocess_writes_rankings_and_jobs(tmp_path):

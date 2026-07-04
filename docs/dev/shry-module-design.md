@@ -9,14 +9,22 @@ Implemented scope:
 - `XTALKIT_SHRY_CMD` can point to an isolated SHRY environment.
 - `prepare` uses exact `Fraction` occupancy checks, fills explicit vacancy
   rows, preserves CIF symmetry operations, records symmetry orbit data, and
-  writes manifest sidecars.
+  writes manifest sidecars. The §3.4 symmetry audit detects the parent space
+  group **independently with spglib** (expanding the asymmetric unit to the
+  full cell with a composition-signature species mapping), compares it to the
+  declared `--parent-spacegroup`, computes Wyckoff orbits, and refuses an orbit
+  split across CIF labels (repairable with `--symmetrize`).
 - `count` records `symprec`, `angle_tolerance`, and `atol`.
 - `enum` requires `expect_count` in strict mode, runs `--mod-only`, streams raw
   CIF outputs, removes vacancy species, checks formula, and writes
-  `manifest.jsonl`.
-- `verify` uses hash buckets for duplicate detection instead of all-pairs
-  `StructureMatcher`, supports SHRY symprec count scans, optional supercell
-  cross-backend count checks, and optional degeneracy-sum checks.
+  `manifest.jsonl`. The SHRY-side version and isolated-env `pip freeze` are
+  recovered from the `shry` shebang and recorded in the manifest.
+- `verify` uses **two-stage** duplicate detection (plan §10): fingerprint hash
+  bucketing, then `pymatgen.StructureMatcher` only within buckets. It supports
+  SHRY symprec count scans, optional supercell cross-backend count checks, and
+  optional degeneracy-sum checks. Each check is written to its own file under
+  `checks/` (`count.json`, `formula_check.jsonl`, `dedup_check.json`,
+  `symprec_scan.json`, `orbit_grouping.json`, `verify.json`).
 - `supercell_backend` wraps the external supercell CLI through
   `XTALKIT_SUPERCELL_CMD`.
 - `degeneracy` computes `|G| / |stabilizer|` from parent CIF symmetry
