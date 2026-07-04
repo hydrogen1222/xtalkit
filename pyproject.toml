@@ -20,8 +20,8 @@ xtalkit = "xtalkit.cli:main"
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["xtalkit"]
+[tool.setuptools.packages.find]
+include = ["xtalkit", "xtalkit.*"]
 
 [tool.setuptools.package-data]
 xtalkit = ["data/wyckoff.json"]

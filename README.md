@@ -10,14 +10,9 @@ Requires Python 3.10+.
 
 ```bash
 git clone <repo-url> && cd xtalkit
-git checkout feat/enumlib-uv-integration
 uv sync
 uv pip install -e .
 ```
-
-The `enumerate`/enumlib integration currently lives on the
-`feat/enumlib-uv-integration` branch, so switch branches manually before
-installing.
 
 Verify:
 
@@ -56,7 +51,7 @@ xtalkit has two interfaces:
 xtalkit <command> [options]
 ```
 
-Six subcommands:
+Seven subcommands:
 
 | Command | Purpose |
 |---------|---------|
@@ -65,6 +60,7 @@ Six subcommands:
 | `info` | Query Wyckoff positions for a space group |
 | `fetch` | Verify space group database integrity |
 | `enumerate` | Enumerate symmetry-inequivalent ordered configurations (requires pymatgen + enumlib) |
+| `shry` | Strict SHRY workflow for large partial-occupancy enumeration |
 | `build` | Build a CIF from refinement parameters (SG + cell + Wyckoff sites + occupancy) |
 
 ---
@@ -486,6 +482,22 @@ On Windows, `xtalkit/_env.py` additionally applies three runtime workarounds (th
 1. Appends `.X` and `.PY` to `PATHEXT` so `shutil.which("enum.x")` finds the binary
 2. Calls `os.add_dll_directory(env/Library/bin)` so scipy's native extension loads
 3. Monkey-patches `shutil.which` to return absolute paths (Windows otherwise returns `.\makestr.x`, which `subprocess.Popen` cannot launch)
+
+---
+
+### `shry` — Strict SHRY Enumeration Workflow
+
+`xtalkit shry` adds a staged workflow for large partially occupied structures where enumlib can exhaust memory. It keeps the existing `enumerate` command intact.
+
+```bash
+xtalkit shry prepare input.cif --out ready.cif --parent-spacegroup 137
+xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
+xtalkit shry enum ready.cif --expect-count <COUNT> --out shry_enum --write-cif --write-degeneracy
+xtalkit shry verify shry_enum --check-count --check-formula --check-dedup --symprec-list 1e-4 1e-3 1e-2
+xtalkit shry postprocess shry_enum --shortest-distance --pair Li Li
+```
+
+SHRY itself is called as an external CLI. If it lives in a separate environment, set `XTALKIT_SHRY_CMD=/path/to/shry`. See [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md) for the full workflow.
 
 ---
 

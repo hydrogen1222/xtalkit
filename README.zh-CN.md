@@ -10,13 +10,9 @@
 
 ```bash
 git clone <repo-url> && cd xtalkit
-git checkout feat/enumlib-uv-integration
 uv sync
 uv pip install -e .
 ```
-
-`enumerate`/enumlib 集成目前在 `feat/enumlib-uv-integration` 分支上，
-安装前需要手动切换到该分支。
 
 验证安装：
 
@@ -55,7 +51,7 @@ xtalkit 提供两种界面：
 xtalkit <command> [options]
 ```
 
-共六个子命令：
+共七个子命令：
 
 | 命令 | 功能 |
 |------|------|
@@ -64,6 +60,7 @@ xtalkit <command> [options]
 | `info` | 查询某个空间群的 Wyckoff 位置信息 |
 | `fetch` | 校验空间群数据库完整性 |
 | `enumerate` | 枚举对称不等价的有序构型（需 pymatgen + enumlib） |
+| `shry` | 面向大规模部分占据枚举的严格 SHRY 工作流 |
 | `build` | 由精修参数生成 CIF（空间群 + 晶胞 + Wyckoff 位点 + 占据率） |
 
 ---
@@ -485,6 +482,22 @@ uv run pytest tests/test_enumerator.py -v
 1. 向 `PATHEXT` 追加 `.X` 和 `.PY`，让 `shutil.which("enum.x")` 能找到二进制
 2. 调用 `os.add_dll_directory(env/Library/bin)`，让 scipy 的原生扩展能加载
 3. Monkey-patch `shutil.which` 使其只返回绝对路径（Windows 默认会返回 `.\makestr.x`，`subprocess.Popen` 无法启动）
+
+---
+
+### `shry` — 严格 SHRY 枚举工作流
+
+`xtalkit shry` 面向 enumlib 可能耗尽内存的大规模部分占据体系，提供分阶段、可审计的 SHRY 工作流。原有 `enumerate` 命令仍保留。
+
+```bash
+xtalkit shry prepare input.cif --out ready.cif --parent-spacegroup 137
+xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
+xtalkit shry enum ready.cif --expect-count <COUNT> --out shry_enum --write-cif --write-degeneracy
+xtalkit shry verify shry_enum --check-count --check-formula --check-dedup --symprec-list 1e-4 1e-3 1e-2
+xtalkit shry postprocess shry_enum --shortest-distance --pair Li Li
+```
+
+SHRY 通过外部 CLI 调用。若 SHRY 安装在独立环境中，设置 `XTALKIT_SHRY_CMD=/path/to/shry`。完整流程见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)。
 
 ---
 

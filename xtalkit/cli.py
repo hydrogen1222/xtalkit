@@ -40,6 +40,29 @@ def _parse_cell(value: str) -> dict:
     return {k: float(v) for k, v in zip(keys, parts)}
 
 
+def _parse_scaling_matrix(values: list[str] | None) -> list[list[int]]:
+    """Parse 3 diagonal values or a full 3x3 scaling matrix."""
+    if not values:
+        return [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    nums = [int(v) for v in values]
+    if len(nums) == 3:
+        return [[nums[0], 0, 0], [0, nums[1], 0], [0, 0, nums[2]]]
+    if len(nums) == 9:
+        return [nums[0:3], nums[3:6], nums[6:9]]
+    raise ValueError("--scaling-matrix expects 3 diagonal values or 9 matrix values")
+
+
+def _parse_charge_map(values: list[str] | None) -> dict[str, float]:
+    """Parse species charge tokens like Li:1 S:-2."""
+    charges = {}
+    for token in values or []:
+        if ":" not in token:
+            raise ValueError(f"charge token {token!r} must be ELEMENT:CHARGE")
+        element, charge = token.split(":", 1)
+        charges[element] = float(charge)
+    return charges
+
+
 def _parse_elems(value: str) -> dict[str, str]:
     """Parse '4a:Xe,16e:Kr' into a dict (validated)."""
     from xtalkit.utils import parse_element_map
@@ -346,6 +369,144 @@ def cmd_enumerate(args) -> int:
         return 1
 
 
+def cmd_shry_prepare(args) -> int:
+    """Run 'shry prepare'."""
+    try:
+        from xtalkit.enumeration import prepare_shry_input
+        result = prepare_shry_input(
+            input_cif=args.cif,
+            output_cif=args.out,
+            vacancy_symbol=args.vacancy_symbol,
+            occupancy_overrides=args.set_occupancy,
+            parent_spacegroup=args.parent_spacegroup,
+            target_formula=args.target_formula,
+            strict=args.strict,
+            symmetrize=args.symmetrize,
+            symprec=args.symprec,
+            angle_tolerance=args.angle_tolerance,
+            scaling_matrix=_parse_scaling_matrix(args.scaling_matrix),
+        )
+        print(f"[OK] SHRY-ready CIF: {result['output_cif']}")
+        print(f"     Manifest: {result['manifest']}")
+        print(f"     Orbit grouping: {result['orbit_grouping']}")
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_shry_count(args) -> int:
+    """Run 'shry count'."""
+    try:
+        from xtalkit.enumeration import count_shry_structures
+        result = count_shry_structures(
+            cif_path=args.cif,
+            scaling_matrix=_parse_scaling_matrix(args.scaling_matrix),
+            symprec=args.symprec,
+            angle_tolerance=args.angle_tolerance,
+            atol=args.atol,
+            strict=args.strict,
+            symmetrize=args.symmetrize,
+            out_json=args.out,
+        )
+        print(f"[OK] SHRY count-only: {result['count_only_result']}")
+        print(f"     Saved to: {args.out}")
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_shry_enum(args) -> int:
+    """Run 'shry enum'."""
+    try:
+        from xtalkit.enumeration import enumerate_with_shry
+        result = enumerate_with_shry(
+            cif_path=args.cif,
+            output_dir=args.out,
+            scaling_matrix=_parse_scaling_matrix(args.scaling_matrix),
+            symprec=args.symprec,
+            angle_tolerance=args.angle_tolerance,
+            atol=args.atol,
+            expect_count=args.expect_count,
+            remove_vacancy=args.remove_vacancy,
+            target_formula=args.target_formula,
+            write_cif_output=args.write_cif,
+            write_poscar=args.write_poscar,
+            write_degeneracy=args.write_degeneracy,
+            dir_size=args.dir_size,
+            strict=args.strict,
+            symmetrize=args.symmetrize,
+        )
+        print(f"[OK] SHRY generated {result['generated_clean_count']} structure(s).")
+        print(f"     Output directory: {args.out}")
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_shry_verify(args) -> int:
+    """Run 'shry verify'."""
+    try:
+        from xtalkit.enumeration import verify_shry_outputs
+        result = verify_shry_outputs(
+            output_dir=args.output_dir,
+            check_count=args.check_count,
+            check_formula=args.check_formula,
+            check_dedup=args.check_dedup,
+            target_formula=args.target_formula,
+            vacancy_symbol=args.vacancy_symbol,
+            symprec_list=[float(v) for v in args.symprec_list] if args.symprec_list else None,
+            cross_backend=args.cross_backend,
+            check_degeneracy=args.check_degeneracy,
+        )
+        print(f"[OK] SHRY verify passed for {result['clean_count']} structure(s).")
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_shry_postprocess(args) -> int:
+    """Run 'shry postprocess'."""
+    try:
+        from xtalkit.enumeration import (
+            rank_by_shortest_distance,
+            rank_by_ewald,
+            write_tblite_inputs,
+            write_cp2k_inputs,
+            write_slurm_array,
+        )
+        outputs = []
+        if args.shortest_distance:
+            species = tuple(args.pair) if args.pair else None
+            rows = rank_by_shortest_distance(args.output_dir, species=species)
+            outputs.append(f"shortest-distance rows: {len(rows)}")
+        if args.ewald:
+            charges = _parse_charge_map(args.ewald_charges)
+            rows = rank_by_ewald(args.output_dir, charges)
+            outputs.append(f"ewald rows: {len(rows)}")
+        if args.write_tblite:
+            jobs = write_tblite_inputs(args.output_dir, charge=args.charge, uhf=args.uhf)
+            outputs.append(f"tblite jobs: {len(jobs)}")
+        if args.write_cp2k:
+            jobs = write_cp2k_inputs(args.output_dir, template=args.cp2k_template)
+            outputs.append(f"cp2k jobs: {len(jobs)}")
+        if args.write_slurm:
+            script = write_slurm_array(args.output_dir, job_kind=args.slurm_kind)
+            outputs.append(f"slurm script: {script}")
+        if not outputs:
+            raise ValueError("no postprocess action selected")
+        print("[OK] SHRY postprocess complete.")
+        for line in outputs:
+            print(f"     {line}")
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the full CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -437,6 +598,92 @@ def build_parser() -> argparse.ArgumentParser:
                              "non-integer occupancy can make enumlib exhaust memory and "
                              "crash the system instead of failing cleanly.")
     p_enum.set_defaults(func=cmd_enumerate)
+
+    # shry
+    p_shry = sub.add_parser(
+        "shry",
+        help="Strict SHRY workflow for partially occupied structure enumeration",
+    )
+    shry_sub = p_shry.add_subparsers(dest="shry_command", required=True)
+
+    p_shry_prepare = shry_sub.add_parser("prepare", help="Prepare a SHRY-ready CIF")
+    p_shry_prepare.add_argument("cif", help="Input CIF with partial occupancy")
+    p_shry_prepare.add_argument("--out", required=True, help="Output SHRY-ready CIF")
+    p_shry_prepare.add_argument("--vacancy-symbol", default="X",
+                                help="Pseudo species for vacancies (default: X)")
+    p_shry_prepare.add_argument("--set-occupancy", default=None,
+                                help="Explicit idealization, e.g. 'Li1:11/16 M1:Ge1/2P1/2'")
+    p_shry_prepare.add_argument("--parent-spacegroup", type=int, default=None,
+                                help="Expected parent space-group number")
+    p_shry_prepare.add_argument("--target-formula", default=None,
+                                help="Expected formula after removing vacancies")
+    p_shry_prepare.add_argument("--scaling-matrix", nargs="+", default=None,
+                                help="3 diagonal values or 9 full matrix values (default: 1 1 1)")
+    p_shry_prepare.add_argument("--symprec", type=float, default=0.01)
+    p_shry_prepare.add_argument("--angle-tolerance", type=float, default=5.0)
+    p_shry_prepare.add_argument("--symmetrize", action="store_true", default=False)
+    p_shry_prepare.add_argument("--strict", action="store_true", default=True)
+    p_shry_prepare.set_defaults(func=cmd_shry_prepare)
+
+    p_shry_count = shry_sub.add_parser("count", help="Run SHRY count-only")
+    p_shry_count.add_argument("cif", help="SHRY-ready CIF")
+    p_shry_count.add_argument("--scaling-matrix", nargs="+", default=None,
+                              help="3 diagonal values or 9 full matrix values (default: 1 1 1)")
+    p_shry_count.add_argument("--symprec", type=float, default=0.01)
+    p_shry_count.add_argument("--angle-tolerance", type=float, default=5.0)
+    p_shry_count.add_argument("--atol", type=float, default=1e-5)
+    p_shry_count.add_argument("--symmetrize", action="store_true", default=False)
+    p_shry_count.add_argument("--out", default="count.json")
+    p_shry_count.add_argument("--strict", action="store_true", default=True)
+    p_shry_count.set_defaults(func=cmd_shry_count)
+
+    p_shry_enum = shry_sub.add_parser("enum", help="Run strict SHRY enumeration")
+    p_shry_enum.add_argument("cif", help="SHRY-ready CIF")
+    p_shry_enum.add_argument("--scaling-matrix", nargs="+", default=None,
+                             help="3 diagonal values or 9 full matrix values (default: 1 1 1)")
+    p_shry_enum.add_argument("--symprec", type=float, default=0.01)
+    p_shry_enum.add_argument("--angle-tolerance", type=float, default=5.0)
+    p_shry_enum.add_argument("--atol", type=float, default=1e-5)
+    p_shry_enum.add_argument("--expect-count", type=int, required=True)
+    p_shry_enum.add_argument("--out", required=True, help="Output workflow directory")
+    p_shry_enum.add_argument("--remove-vacancy", default="X")
+    p_shry_enum.add_argument("--target-formula", default=None)
+    p_shry_enum.add_argument("--write-cif", action="store_true", default=False)
+    p_shry_enum.add_argument("--write-poscar", action="store_true", default=False)
+    p_shry_enum.add_argument("--write-degeneracy", action="store_true", default=False)
+    p_shry_enum.add_argument("--dir-size", type=int, default=10000)
+    p_shry_enum.add_argument("--symmetrize", action="store_true", default=False)
+    p_shry_enum.add_argument("--strict", action="store_true", default=True)
+    p_shry_enum.set_defaults(func=cmd_shry_enum)
+
+    p_shry_verify = shry_sub.add_parser("verify", help="Verify SHRY outputs")
+    p_shry_verify.add_argument("output_dir")
+    p_shry_verify.add_argument("--check-count", action="store_true", default=False)
+    p_shry_verify.add_argument("--check-formula", action="store_true", default=False)
+    p_shry_verify.add_argument("--check-dedup", action="store_true", default=False)
+    p_shry_verify.add_argument("--target-formula", default=None)
+    p_shry_verify.add_argument("--vacancy-symbol", default="X")
+    p_shry_verify.add_argument("--symprec-list", nargs="*", default=None)
+    p_shry_verify.add_argument("--cross-backend", choices=["supercell"], default=None)
+    p_shry_verify.add_argument("--check-degeneracy", action="store_true", default=False)
+    p_shry_verify.set_defaults(func=cmd_shry_verify)
+
+    p_shry_post = shry_sub.add_parser("postprocess", help="Post-process SHRY outputs")
+    p_shry_post.add_argument("output_dir")
+    p_shry_post.add_argument("--shortest-distance", action="store_true", default=False)
+    p_shry_post.add_argument("--pair", nargs=2, default=None,
+                             help="Species pair for shortest-distance ranking, e.g. Li Li")
+    p_shry_post.add_argument("--ewald", action="store_true", default=False)
+    p_shry_post.add_argument("--ewald-charges", nargs="*", default=None,
+                             help="Explicit charges, e.g. Li:1 Ge:4 P:5 S:-2")
+    p_shry_post.add_argument("--write-tblite", action="store_true", default=False)
+    p_shry_post.add_argument("--charge", type=int, default=0)
+    p_shry_post.add_argument("--uhf", type=int, default=0)
+    p_shry_post.add_argument("--write-cp2k", action="store_true", default=False)
+    p_shry_post.add_argument("--cp2k-template", default=None)
+    p_shry_post.add_argument("--write-slurm", action="store_true", default=False)
+    p_shry_post.add_argument("--slurm-kind", choices=["tblite", "cp2k"], default="tblite")
+    p_shry_post.set_defaults(func=cmd_shry_postprocess)
 
     # build
     p_build = sub.add_parser(
