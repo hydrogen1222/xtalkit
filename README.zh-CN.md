@@ -78,6 +78,39 @@ shry --version                             # 验证
 
 第 2、3 层**相互独立**——可只装其一，或都装。
 
+### 集群离线安装（conda 环境）
+
+如果老师的集群不联网，而且你已经有一个 conda 环境，比如 `full_research`，并且 Python 版本是 3.10，就不要打包整个 `venv`。更稳妥的做法是：在一台能联网的机器上把 xtalkit 打成 wheel，再把依赖 wheel 一起打成离线包，拷到集群后用本地文件安装。
+
+在一台能联网的机器上：
+
+```bash
+python -m pip install build
+bash scripts/build_offline_bundle.sh --with-enumerate --out /tmp/xtalkit-offline
+```
+
+这会生成：
+
+```text
+/tmp/xtalkit-offline/xtalkit-offline-0.1.0.tar.gz
+/tmp/xtalkit-offline/xtalkit-offline-0.1.0/
+  dist/
+  wheelhouse/
+  install.sh
+```
+
+把 tar 包传到集群后，在你的 conda 环境里安装：
+
+```bash
+conda activate full_research
+tar -xf xtalkit-offline-0.1.0.tar.gz
+cd xtalkit-offline-0.1.0
+bash install.sh
+xtalkit --version
+```
+
+如果 conda 环境里已经手工装好了 `pymatgen`，这个离线包也能用。若你只需要核心功能，打包时可以不加 `--with-enumerate`。
+
 ## 快速开始
 
 在一个 CIF 文件中标记两个 Wyckoff 位置：

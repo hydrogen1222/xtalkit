@@ -80,6 +80,39 @@ shry --version                             # verify
 
 Tiers 2 and 3 are **independent** — install either or both.
 
+### Offline conda cluster install
+
+If your cluster is offline and already has a conda environment like `full_research` with Python 3.10, do not copy a `venv`. Build an offline wheel bundle on a machine with internet, then install from local files on the cluster.
+
+On a machine with internet:
+
+```bash
+python -m pip install build
+bash scripts/build_offline_bundle.sh --with-enumerate --out /tmp/xtalkit-offline
+```
+
+This creates:
+
+```text
+/tmp/xtalkit-offline/xtalkit-offline-0.1.0.tar.gz
+/tmp/xtalkit-offline/xtalkit-offline-0.1.0/
+  dist/
+  wheelhouse/
+  install.sh
+```
+
+Copy the tarball to the cluster, then install inside your conda env:
+
+```bash
+conda activate full_research
+tar -xf xtalkit-offline-0.1.0.tar.gz
+cd xtalkit-offline-0.1.0
+bash install.sh
+xtalkit --version
+```
+
+If `pymatgen` is already installed in the conda env, the bundle still works. If you only need the core commands, omit `--with-enumerate` when building the bundle.
+
 ## Quick Start
 
 Mark two Wyckoff positions in a CIF file:
