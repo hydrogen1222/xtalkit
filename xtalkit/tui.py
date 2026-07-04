@@ -82,6 +82,32 @@ def select_output_formats() -> list[str]:
         _error("Invalid selection (1-3)")
 
 
+def _prompt_yes_no(text: str, default: bool = False) -> bool:
+    """Prompt for a yes/no choice."""
+    suffix = "[Y/n]" if default else "[y/N]"
+    while True:
+        value = _prompt(f"{text} {suffix}")
+        if not value:
+            return default
+        if value.lower() in {"y", "yes"}:
+            return True
+        if value.lower() in {"n", "no"}:
+            return False
+        _error("Please enter y or n")
+
+
+def _prompt_int_or_none(text: str, default: int | None = None) -> int | None:
+    """Prompt for an integer or None."""
+    while True:
+        value = _prompt(text)
+        if not value:
+            return default
+        try:
+            return int(value)
+        except ValueError:
+            _error("Please enter a number")
+
+
 def _prompt_element_map() -> dict[str, str] | None:
     """Prompt for an element override map, validating format.
 
@@ -584,6 +610,136 @@ def _enumerate_workflow() -> None:
         _error(str(e))
 
 
+def _ewald_workflow() -> None:
+    """Interactive batch Ewald workflow."""
+    _header("Batch Ewald Electrostatic Energy Ranking")
+
+    while True:
+        path = _prompt("CIF file, file folder, or root folder")
+        resolved = resolve_cif_path(path)
+        if resolved:
+            _success(f"found {resolved}")
+            break
+        if os.path.isdir(os.path.abspath(os.path.expanduser(path))):
+            resolved = os.path.abspath(os.path.expanduser(path))
+            _success(f"found {resolved}")
+            break
+        _error(f"File or directory not found: {path}")
+
+    while True:
+        layout_choice = _prompt("Directory layout: [1] flat files  [2] one-level nested")
+        if layout_choice == "1":
+            layout = "flat"
+            break
+        if layout_choice == "2":
+            layout = "nested"
+            break
+        _error("Invalid selection (1-2)")
+
+    while True:
+        energy_choice = _prompt(
+            "Oxidation source: [1] explicit charges  [2] guess  [3] already present"
+        )
+        if energy_choice == "1":
+            from xtalkit.ewald import parse_charges
+            while True:
+                raw = _prompt("Charges, e.g. Li:1 Ge:4 P:5 S:-2")
+                try:
+                    charges = parse_charges(raw.split())
+                    guess = False
+                    break
+                except ValueError as e:
+                    _error(str(e))
+            break
+        if energy_choice == "2":
+            charges = None
+            guess = True
+            break
+        if energy_choice == "3":
+            charges = None
+            guess = False
+            break
+        _error("Invalid selection (1-3)")
+
+    per_atom = _prompt_yes_no("Rank by energy per atom", default=False)
+
+    while True:
+        sort_choice = _prompt("Sort order: [1] lowest first  [2] highest first")
+        if sort_choice == "1":
+            descending = False
+            break
+        if sort_choice == "2":
+            descending = True
+            break
+        _error("Invalid selection (1-2)")
+
+    top_n = _prompt_int_or_none("Keep top N structures after sorting (Enter for all)")
+    if top_n is not None and top_n <= 0:
+        _error("Top N must be a positive number")
+        top_n = None
+
+    group = _prompt_yes_no("Copy selected structures into folders", default=False)
+    move = False
+    if group:
+        move = _prompt_yes_no("Move instead of copy", default=False)
+
+    base = os.path.splitext(os.path.basename(resolved.rstrip(os.sep)))[0] or "ewald"
+    out_dir = _prompt(f"Output directory [default: {base}_ewald]")
+    output_dir = out_dir if out_dir else f"{base}_ewald"
+
+    console.print()
+    console.print("[cyan]Ranking structures...[/cyan]")
+    try:
+        from xtalkit.ewald import batch_ewald, group_rows, split_rows, write_csv
+
+        rows = batch_ewald(
+            [resolved],
+            charges=charges,
+            guess=guess,
+            per_atom=per_atom,
+            layout=layout,
+        )
+        rows = sorted(rows, key=lambda row: row.ewald_energy, reverse=descending)
+        selected, remaining = split_rows(rows, top_n)
+
+        table = Table(title=f"Ewald Ranking ({len(rows)} structures)")
+        table.add_column("Rank", style="cyan")
+        table.add_column("File", style="yellow")
+        table.add_column("Formula", style="green")
+        table.add_column("Atoms", style="white")
+        table.add_column("Energy (eV)", style="white")
+        preview = selected if top_n is not None else rows
+        for i, row in enumerate(preview[:20], 1):
+            table.add_row(
+                str(i),
+                row.relative_path,
+                row.formula,
+                str(row.n_atoms),
+                f"{row.ewald_energy:.6f}",
+            )
+        console.print(table)
+        if len(preview) > 20:
+            console.print(f"[dim]... and {len(preview) - 20} more[/dim]")
+
+        csv_path = os.path.join(output_dir, "ranking.csv")
+        write_csv(rows, csv_path)
+        _success(f"Saved ranking CSV: {csv_path}")
+
+        if group:
+            group_info = group_rows(
+                selected,
+                remaining,
+                output_dir,
+                move=move,
+            )
+            _success(
+                f"Grouped into {group_info['selected_dir']} "
+                f"and {group_info['remaining_dir']}"
+            )
+    except Exception as e:
+        _error(str(e))
+
+
 def _show_main_menu() -> None:
     """Display the main menu."""
     console.clear()
@@ -595,6 +751,7 @@ def _show_main_menu() -> None:
         "  [4] Fetch DB    -- Verify database online\n"
         "  [5] Enumerate   -- Enumerate ordered configurations (enumlib)\n"
         "  [6] Build       -- Build CIF from refinement params (SG+cell+sites)\n"
+        "  [7] Ewald       -- Batch Ewald ranking and grouping\n"
         "  [0] Exit",
         title="xtalkit . Crystal Wyckoff Toolkit",
         border_style="cyan",
@@ -612,6 +769,7 @@ def run_tui() -> int:
         "4": _fetch_workflow,
         "5": _enumerate_workflow,
         "6": _build_workflow,
+        "7": _ewald_workflow,
     }
 
     while True:
@@ -629,4 +787,4 @@ def run_tui() -> int:
             console.print()
             _prompt("Press Enter to continue...")
         else:
-            _error("Invalid choice (0-6)")
+            _error("Invalid choice (0-7)")

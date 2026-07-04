@@ -180,6 +180,14 @@ def test_cli_build_help():
     assert "--spec" in result.stdout
 
 
+def test_cli_ewald_help():
+    result = run_xtalkit("ewald", "--help")
+    assert result.returncode == 0
+    assert "--layout" in result.stdout
+    assert "--top-n" in result.stdout
+    assert "--group" in result.stdout
+
+
 def test_cli_build_atom_frac_mode():
     """Build from direct fractional coordinates (--atom-frac)."""
     with tempfile.TemporaryDirectory() as tmp:

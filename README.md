@@ -2,13 +2,14 @@
 
 # xtalkit — Crystal Wyckoff Toolkit
 
-A command-line toolkit for **periodic crystals of any kind** — not limited to solid-state electrolytes. (The maintainer works on argyrodite / LGPS-type Li conductors, but xtalkit handles alloys, minerals, ceramics, MOFs — anything with a space group.) It does three jobs:
+A command-line toolkit for **periodic crystals of any kind** — not limited to solid-state electrolytes. (The maintainer works on argyrodite / LGPS-type Li conductors, but xtalkit handles alloys, minerals, ceramics, MOFs — anything with a space group.) It does four jobs:
 
 - **Visualize Wyckoff positions** — mark crystallographic sites with dummy atoms for [VESTA](https://jp-minerals.org/vesta/en/).
 - **Build CIFs from refinement data** — assemble a standards-compliant CIF from a space group, unit cell, and site list.
 - **Enumerate occupational disorder** — generate all symmetry-inequivalent orderings of a partially occupied structure, via two backends:
   - **enumlib** (Hart–Forcade) — fast, for small / medium cells.
   - **SHRY** (Pólya enumeration) — strict, audited, for large partially occupied cells where enumlib exhausts memory.
+- **Batch Ewald ranking** — score many CIF/POSCAR structures by Coulombic Ewald energy, then sort and group them for pre-screening.
 
 ## Table of Contents
 
@@ -16,6 +17,7 @@ A command-line toolkit for **periodic crystals of any kind** — not limited to 
 - [Quick Start](#quick-start)
 - [Command Overview](#command-overview)
 - [Core Commands](#core-commands) — `mark`, `skeleton`, `build`, `info`, `fetch`
+- [Batch Ewald Ranking](#batch-ewald-ranking)
 - [Enumerating Occupational Disorder](#enumerating-occupational-disorder) — enumlib vs SHRY, when to use which
 - [TUI (Interactive Mode)](#tui-interactive-mode)
 - [Reference](#reference) — dummy atoms, modes, tolerance, space groups
@@ -36,7 +38,7 @@ uv pip install -e .
 xtalkit --version          # xtalkit 0.1.0
 ```
 
-### Tier 2 — +enumlib enumeration (`xtalkit enumerate`)
+### Tier 2 — +pymatgen features (`xtalkit enumerate`, `xtalkit ewald`, SHRY postprocess ranking)
 
 Adds pymatgen + source-compiled enumlib Fortran binaries. Prerequisites: `gfortran make git` (e.g. `sudo apt install gfortran make git` on Debian/Ubuntu; on Windows use [WSL](https://learn.microsoft.com/windows/wsl/)).
 
@@ -51,6 +53,8 @@ bash scripts/build_enumlib.sh      # compiles enum.x + makestr.x (one-time, no r
 uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
 # Expect: 3 ordered CIFs from Au0.5/Cu0.5
 ```
+
+The same `uv sync --extra enumerate` step also enables `xtalkit ewald`, which uses pymatgen's Ewald summation backend for batch ranking.
 
 ### Tier 3 — +SHRY enumeration (`xtalkit shry`)
 
@@ -71,7 +75,7 @@ shry --version                             # verify
 | Tier | Commands enabled | Extra steps | Conflicts |
 |------|------------------|-------------|-----------|
 | 1 · Core | `mark`, `skeleton`, `build`, `info`, `fetch`, TUI | none | — |
-| 2 · +enumlib | + `enumerate` | `uv sync --extra enumerate` + `build_enumlib.sh` (gfortran) | — |
+| 2 · +pymatgen | `enumerate`, `ewald`, SHRY postprocess ranking | `uv sync --extra enumerate` + `build_enumlib.sh` (gfortran) | — |
 | 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD`; full audit also `uv sync --extra enumerate` | SHRY's `pymatgen<=2023.10.4` pin — isolated, so none |
 
 Tiers 2 and 3 are **independent** — install either or both.
@@ -102,7 +106,7 @@ xtalkit has two interfaces:
 xtalkit <command> [options]
 ```
 
-Seven subcommands, in two groups:
+Eight subcommands, in two groups:
 
 | Command | Purpose | Tier |
 |---------|---------|------|
@@ -113,8 +117,67 @@ Seven subcommands, in two groups:
 | `fetch` | Verify space group database integrity | Core |
 | `enumerate` | Enumerate symmetry-inequivalent ordered configurations (pymatgen + enumlib) | +enumlib |
 | `shry` | Strict SHRY workflow for large partial-occupancy enumeration | +SHRY |
+| `ewald` | Batch Ewald electrostatic energy ranking and grouping | +pymatgen |
 
-The **Core** commands (Tier 1) are documented next. The two enumeration backends (`enumerate`, `shry`) are documented together under [Enumerating Occupational Disorder](#enumerating-occupational-disorder).
+The **Core** commands (Tier 1) are documented next. The two enumeration backends (`enumerate`, `shry`) are documented together under [Enumerating Occupational Disorder](#enumerating-occupational-disorder). The batch Ewald workflow is documented below in [Batch Ewald Ranking](#batch-ewald-ranking).
+
+---
+
+## Batch Ewald Ranking
+
+`xtalkit ewald` scores many structures by Coulombic Ewald energy, sorts them, optionally keeps the top N, and can copy the selected and remaining structures into separate folders.
+
+```
+xtalkit ewald <path> [<path> ...] [options]
+```
+
+It supports two directory layouts:
+
+1. `flat` - a directory containing many structure files directly, such as `1.cif`, `2.cif`, `3.cif`.
+2. `nested` - a directory containing subdirectories, each of which contains structure files one level deep.
+
+**Common options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--layout flat` | flat | Choose `flat` or `nested` directory scanning |
+| `--sort asc` | asc | `asc` = lowest energy first, `desc` = highest energy first |
+| `--top-n N` | all | Keep only the first N structures after sorting |
+| `--charges Li:1 ...` | (none) | Explicit oxidation states for Ewald scoring |
+| `--guess` | off | Let pymatgen guess oxidation states |
+| `--per-atom` | off | Rank by energy per atom instead of total energy |
+| `--out path` | `<input>_ewald/ranking.csv` | Write the full ranking CSV |
+| `--group` | off | Copy the selected and remaining structures into folders |
+| `--group-dir dir` | `<input>_ewald` | Grouping root directory |
+| `--move` | off | Move files instead of copying them |
+
+**Examples:**
+
+```bash
+# Flat folder: many CIF files directly in one directory
+xtalkit ewald ./cif_pool \
+  --layout flat \
+  --charges Li:1 Ge:4 P:5 S:-2 \
+  --sort asc --top-n 100 --group
+
+# One-level nested folder tree
+xtalkit ewald ./structures \
+  --layout nested \
+  --guess \
+  --per-atom \
+  --sort desc --top-n 50
+```
+
+By default the command writes `ranking.csv` and, if `--group` is set, creates:
+
+```text
+<output-dir>/
+  ranking.csv
+  selected/
+  rest/
+```
+
+For `nested` mode the original one-level folder structure is preserved under `selected/` and `rest/`.
 
 ---
 

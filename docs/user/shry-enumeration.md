@@ -237,6 +237,8 @@ xtalkit shry postprocess LGPS_SHRY --ewald \
   --ewald-charges Li:1 Ge:4 P:5 S:-2
 ```
 
+If you are ranking an arbitrary folder of standalone structures instead of SHRY outputs, use the standalone `xtalkit ewald` command. It supports flat folders, one-level nested folders, top-N filtering, and selected/rest grouping.
+
 ## 8. Quick command summary for LGPS
 
 ```bash

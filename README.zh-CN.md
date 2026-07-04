@@ -2,13 +2,14 @@
 
 # xtalkit — 晶体 Wyckoff 工具箱
 
-面向**任意周期性晶体**的命令行工具箱——不局限于固态电解质。（维护者研究 argyrodite / LGPS 类 Li 导体，但 xtalkit 同样适用于合金、矿物、陶瓷、MOF——任何有空间群的结构。）它做三件事：
+面向**任意周期性晶体**的命令行工具箱——不局限于固态电解质。（维护者研究 argyrodite / LGPS 类 Li 导体，但 xtalkit 同样适用于合金、矿物、陶瓷、MOF——任何有空间群的结构。）它做四件事：
 
 - **可视化 Wyckoff 位置**——用虚拟原子标记晶体学位点，便于在 [VESTA](https://jp-minerals.org/vesta/en/) 中观察。
 - **由精修数据构建 CIF**——由空间群 + 晶胞 + 位点列表组装标准 CIF。
 - **枚举占位无序**——生成部分占据结构的全部对称不等价有序构型，提供两个后端：
   - **enumlib**（Hart–Forcade 算法）——快，适合中小晶胞。
   - **SHRY**（Pólya 计数）——严格、可审计，适合 enumlib 会内存爆炸的大规模部分占据晶胞。
+- **批量 Ewald 排序**——对大量 CIF/POSCAR 结构计算库仑静电能，排序后还能筛选并归类。
 
 ## 目录
 
@@ -16,6 +17,7 @@
 - [快速开始](#快速开始)
 - [命令总览](#命令总览)
 - [核心命令](#核心命令)——`mark`、`skeleton`、`build`、`info`、`fetch`
+- [批量 Ewald 排序](#批量-ewald-排序)
 - [枚举占位无序](#枚举占位无序)——enumlib 与 SHRY 的选择
 - [TUI 交互模式](#tui-交互模式)
 - [参考](#参考)——虚拟原子、模式、容差、空间群
@@ -36,7 +38,7 @@ uv pip install -e .
 xtalkit --version          # xtalkit 0.1.0
 ```
 
-### 第 2 层 · +enumlib 枚举（`xtalkit enumerate`）
+### 第 2 层 · +pymatgen 功能（`xtalkit enumerate`、`xtalkit ewald`、SHRY 后处理排序）
 
 增加 pymatgen + 源码编译的 enumlib Fortran 二进制。前置依赖：`gfortran make git`（Debian/Ubuntu 用 `sudo apt install gfortran make git`；Windows 用 [WSL](https://learn.microsoft.com/windows/wsl/)）。
 
@@ -51,6 +53,8 @@ bash scripts/build_enumlib.sh      # 编译 enum.x + makestr.x（一次性，免
 uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
 # 期望：Au0.5/Cu0.5 得到 3 个有序 CIF
 ```
+
+同样的 `uv sync --extra enumerate` 也会启用 `xtalkit ewald`，它直接使用 pymatgen 的 Ewald 求和后端做批量排序。
 
 ### 第 3 层 · +SHRY 枚举（`xtalkit shry`）
 
@@ -69,7 +73,7 @@ shry --version                             # 验证
 | 层级 | 启用命令 | 额外步骤 | 冲突 |
 |------|----------|----------|------|
 | 1 · 核心 | `mark`、`skeleton`、`build`、`info`、`fetch`、TUI | 无 | — |
-| 2 · +enumlib | + `enumerate` | `uv sync --extra enumerate` + `build_enumlib.sh`（gfortran） | — |
+| 2 · +pymatgen | `enumerate`、`ewald`、SHRY 后处理排序 | `uv sync --extra enumerate` + `build_enumlib.sh`（gfortran） | — |
 | 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD` | SHRY 的 `pymatgen<=2023.10.4` 钉版——隔离安装，故无冲突 |
 
 第 2、3 层**相互独立**——可只装其一，或都装。
@@ -100,7 +104,7 @@ xtalkit 提供两种界面：
 xtalkit <command> [options]
 ```
 
-共七个子命令，分两组：
+共八个子命令，分两组：
 
 | 命令 | 功能 | 层级 |
 |------|------|------|
@@ -111,8 +115,67 @@ xtalkit <command> [options]
 | `fetch` | 校验空间群数据库完整性 | 核心 |
 | `enumerate` | 枚举对称不等价的有序构型（pymatgen + enumlib） | +enumlib |
 | `shry` | 面向大规模部分占据枚举的严格 SHRY 工作流 | +SHRY |
+| `ewald` | 批量计算 Ewald 库仑静电能并归类 | +pymatgen |
 
-**核心**命令（第 1 层）见下文。两个枚举后端（`enumerate`、`shry`）合并在 [枚举占位无序](#枚举占位无序) 一节。
+**核心**命令（第 1 层）见下文。两个枚举后端（`enumerate`、`shry`）合并在 [枚举占位无序](#枚举占位无序) 一节。批量 Ewald 工作流见下方 [批量 Ewald 排序](#批量-ewald-排序)。
+
+---
+
+## 批量 Ewald 排序
+
+`xtalkit ewald` 会对大量结构计算库仑静电能，按能量排序，支持截取前 N 个结构，并把选中的结构与剩余结构分别归类到不同文件夹中。
+
+```
+xtalkit ewald <path> [<path> ...] [options]
+```
+
+支持两种目录布局：
+
+1. `flat` - 一个文件夹里直接放很多结构文件，比如 `1.cif`、`2.cif`、`3.cif`。
+2. `nested` - 一个文件夹里放很多子文件夹，子文件夹里再放结构文件，目录层级只有一层。
+
+**常用选项：**
+
+| 选项 | 默认值 | 说明 |
+|------|--------|------|
+| `--layout flat` | flat | 选择 `flat` 或 `nested` 目录扫描方式 |
+| `--sort asc` | asc | `asc` 表示低能量优先，`desc` 表示高能量优先 |
+| `--top-n N` | 全部 | 只保留排序后的前 N 个结构 |
+| `--charges Li:1 ...` | 空 | 显式指定氧化态电荷 |
+| `--guess` | 关闭 | 让 pymatgen 自动猜测氧化态 |
+| `--per-atom` | 关闭 | 按每原子能量排序，而不是总能量 |
+| `--out path` | `<输入>_ewald/ranking.csv` | 输出完整排序 CSV |
+| `--group` | 关闭 | 将选中和剩余结构分别复制到文件夹 |
+| `--group-dir dir` | `<输入>_ewald` | 归类根目录 |
+| `--move` | 关闭 | 归类时移动文件而不是复制 |
+
+**示例：**
+
+```bash
+# 扁平目录：很多 CIF 文件直接放在一个文件夹里
+xtalkit ewald ./cif_pool \
+  --layout flat \
+  --charges Li:1 Ge:4 P:5 S:-2 \
+  --sort asc --top-n 100 --group
+
+# 一层子文件夹目录树
+xtalkit ewald ./structures \
+  --layout nested \
+  --guess \
+  --per-atom \
+  --sort desc --top-n 50
+```
+
+默认会写出 `ranking.csv`。如果启用 `--group`，会生成：
+
+```text
+<output-dir>/
+  ranking.csv
+  selected/
+  rest/
+```
+
+在 `nested` 模式下，原始的一层文件夹结构会保留在 `selected/` 和 `rest/` 下面。
 
 ---
 

@@ -507,11 +507,68 @@ def cmd_shry_postprocess(args) -> int:
         return 1
 
 
+def cmd_ewald(args) -> int:
+    """Run 'ewald': batch Ewald electrostatic energy ranking."""
+    try:
+        from xtalkit.ewald import (
+            batch_ewald,
+            parse_charges,
+            split_rows,
+            group_rows,
+            write_csv,
+        )
+        charges = parse_charges(args.charges) if args.charges else None
+        base = os.path.splitext(os.path.basename(args.paths[0].rstrip(os.sep)))[0] or "ewald"
+        group_dir = args.group_dir or f"{base}_ewald"
+        out_csv = args.out or os.path.join(group_dir, "ranking.csv")
+        rows = batch_ewald(
+            args.paths,
+            charges=charges,
+            guess=args.guess,
+            per_atom=args.per_atom,
+            layout=args.layout,
+        )
+        descending = args.sort == "desc"
+        rows = sorted(rows, key=lambda row: row.ewald_energy, reverse=descending)
+        selected, remaining = split_rows(rows, args.top_n)
+        energy_col = "E_per_atom (eV)" if args.per_atom else "Ewald E (eV)"
+        order_label = "highest" if descending else "lowest"
+        print(f"Ranked {len(rows)} structure(s) by Ewald energy "
+              f"({order_label} first):")
+        print(f"  {'Rank':<5} {'File':<32} {'Formula':<14} {'N':<5} {energy_col}")
+        print(f"  {'-'*5} {'-'*32} {'-'*14} {'-'*5} {'-'*16}")
+        preview_rows = selected if args.top_n is not None else rows
+        for i, row in enumerate(preview_rows[:20], 1):
+            print(f"  {i:<5} {row.relative_path[:32]:<32} {row.formula:<14} "
+                  f"{row.n_atoms:<5} {row.ewald_energy:.6f}")
+        if len(preview_rows) > 20:
+            print(f"  ... and {len(preview_rows) - 20} more")
+        write_csv(rows, out_csv)
+        print(f"\nWrote ranking CSV: {out_csv}")
+        if args.group:
+            group_info = group_rows(
+                selected,
+                remaining,
+                group_dir,
+                selected_name=args.selected_name,
+                remaining_name=args.remaining_name,
+                move=args.move,
+            )
+            print(
+                f"Grouped into: {group_info['selected_dir']} "
+                f"and {group_info['remaining_dir']}"
+            )
+        return 0
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"[ERR] {e}", file=sys.stderr)
+        return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the full CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="xtalkit",
-        description="Crystal Wyckoff Toolkit — mark Wyckoff positions for VESTA visualization",
+        description="Crystal Wyckoff Toolkit — mark Wyckoff positions, build CIFs, and batch Ewald rank structures",
     )
     parser.add_argument("--version", action="version", version=f"xtalkit {__version__}")
     sub = parser.add_subparsers(dest="command")
@@ -692,6 +749,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_post.add_argument("--write-slurm", action="store_true", default=False)
     p_shry_post.add_argument("--slurm-kind", choices=["tblite", "cp2k"], default="tblite")
     p_shry_post.set_defaults(func=cmd_shry_postprocess)
+
+    # ewald
+    p_ewald = sub.add_parser(
+        "ewald",
+        help="Batch Ewald electrostatic energy ranking for CIF/POSCAR folders",
+    )
+    p_ewald.add_argument("paths", nargs="+",
+                         help="Input file(s) or directory root(s)")
+    p_ewald.add_argument("--layout", choices=["flat", "nested"], default="flat",
+                         help="Directory layout: flat files or one-level nested subdirs")
+    p_ewald.add_argument("--sort", choices=["asc", "desc"], default="asc",
+                         help="Sort order: asc = lowest first, desc = highest first")
+    p_ewald.add_argument("--top-n", type=int, default=None,
+                         help="Keep only the first N structures after sorting")
+    p_ewald.add_argument("--charges", nargs="*", default=None,
+                         help="Explicit oxidation states, e.g. Li:1 Ge:4 P:5 S:-2")
+    p_ewald.add_argument("--guess", action="store_true", default=False,
+                         help="Let pymatgen guess oxidation states")
+    p_ewald.add_argument("--per-atom", action="store_true", default=False,
+                         help="Rank by energy per atom instead of total energy")
+    p_ewald.add_argument("--out", default=None,
+                         help="Write full ranking CSV to this path")
+    p_ewald.add_argument("--group", action="store_true", default=False,
+                         help="Copy ranked structures into selected/rest folders")
+    p_ewald.add_argument("--group-dir", default=None,
+                         help="Grouping root directory (default: <input>_ewald)")
+    p_ewald.add_argument("--selected-name", default="selected",
+                         help="Folder name for the selected top-N structures")
+    p_ewald.add_argument("--remaining-name", default="rest",
+                         help="Folder name for the remaining structures")
+    p_ewald.add_argument("--move", action="store_true", default=False,
+                         help="Move files instead of copying them when grouping")
+    p_ewald.set_defaults(func=cmd_ewald)
 
     # build
     p_build = sub.add_parser(

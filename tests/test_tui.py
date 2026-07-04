@@ -6,6 +6,7 @@ from xtalkit.tui import (
     select_wyckoff_positions,
     select_output_formats,
     resolve_cif_path,
+    _show_main_menu,
 )
 
 
@@ -64,3 +65,9 @@ def test_select_output_formats():
     with patch("builtins.input", return_value="3"):
         result = select_output_formats()
         assert result == ["cif", "xyz"]
+
+
+def test_show_main_menu_mentions_ewald(capsys):
+    _show_main_menu()
+    output = capsys.readouterr().out
+    assert "Ewald" in output
