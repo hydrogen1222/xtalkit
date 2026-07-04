@@ -30,20 +30,54 @@ creates an audit file you can inspect before spending time and memory.
 
 ## 1. Install or point to SHRY
 
-`xtalkit shry` calls the external `shry` command. If `shry` is already on
-`PATH`, nothing else is needed.
-
-If SHRY is installed in a separate environment, point xtalkit to it:
-
-```bash
-export XTALKIT_SHRY_CMD=/path/to/shry
-```
-
-Check:
+`xtalkit shry` calls the external `shry` command. SHRY is a pure-Python
+[PyPI package](https://pypi.org/project/shry/) (no compilation), but it pins
+`pymatgen<=2023.10.4`, which **conflicts** with xtalkit's `enumerate` extra
+(`pymatgen>=2024.5`). So install SHRY in an *isolated* environment, not the
+xtalkit venv:
 
 ```bash
-$XTALKIT_SHRY_CMD --version
+uv tool install shry                       # isolated env; `shry` goes on PATH
+export XTALKIT_SHRY_CMD="$(which shry)"    # point xtalkit at it
+shry --version                             # verify (e.g. SHRY 1.1.8)
 ```
+
+Add the `export` line to your shell profile so it persists. If `shry` is
+already on `PATH` (e.g. from a conda env you activate manually), the
+`XTALKIT_SHRY_CMD` export is optional — xtalkit falls back to `shutil.which("shry")`.
+
+> Do **not** `uv pip install shry` into the xtalkit venv: it downgrades
+> pymatgen to 2023.10.4 and breaks `uv sync --extra enumerate`.
+
+## 1b. Provide a primitive CIF for F-/I-centered cells
+
+Unlike `xtalkit enumerate`, **`shry` does not auto-primitivize** — it
+enumerates the cell you give it. A conventional F-centered argyrodite cell
+(LPSC, Li1 on 48h @ 0.5 = 48 Li-sites) gives C(48,24) ≈ 10¹³ candidates and
+will hang. The primitive cell (12 Li-sites → C(12,6) = 924 → **48
+inequivalent** under F-43m) is tractable.
+
+So before `prepare`, supply a **primitive** CIF that carries the F-43m
+symmetry operations (not P1 — `prepare` keeps the CIF's declared symmetry,
+and strict mode refuses P1). Convert with spglib:
+
+```python
+# Save as make_primitive.py
+import spglib, numpy as np
+from pymatgen.core import Structure
+s = Structure.from_file("LPSC.cif")
+nums = [list(site.species.elements)[0].Z for site in s]
+cell = (s.lattice.matrix, s.frac_coords, np.array(nums))
+lat, pos, num = spglib.standardize_cell(cell, to_primitive=True)
+sym = spglib.get_symmetry((lat, pos, num))
+# ... then write lat/pos/sym to a CIF (see scripts/ in the repo, or use the
+# xtalkit SHRY test helper). The key points: list only the asymmetric-unit
+# atoms, and include the primitive symops as `_symmetry_equiv_pos_as_xyz`.
+```
+
+If your input is already a primitive CIF (or a P1 cell with few sites), skip
+this step. For the rest of this guide we assume `LPSC_prim.cif` is such a
+primitive F-43m CIF with Li1 @ 0.5.
 
 ## 2. Build `LGPS.cif`
 

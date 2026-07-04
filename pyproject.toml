@@ -1,7 +1,7 @@
 [project]
 name = "xtalkit"
 version = "0.1.0"
-description = "Add your description here"
+description = "Crystal Wyckoff Toolkit — mark Wyckoff positions, build CIFs from refinement data, and enumerate occupational disorder (enumlib + SHRY) for periodic crystals"
 requires-python = ">=3.10"
 dependencies = [
     "gemmi>=0.7.5",

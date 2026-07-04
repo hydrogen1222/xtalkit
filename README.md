@@ -2,24 +2,77 @@
 
 # xtalkit — Crystal Wyckoff Toolkit
 
-Mark Wyckoff positions in crystal structures with dummy atoms for intuitive visualization in [VESTA](https://jp-minerals.org/vesta/en/).
+A command-line toolkit for **periodic crystals of any kind** — not limited to solid-state electrolytes. (The maintainer works on argyrodite / LGPS-type Li conductors, but xtalkit handles alloys, minerals, ceramics, MOFs — anything with a space group.) It does three jobs:
+
+- **Visualize Wyckoff positions** — mark crystallographic sites with dummy atoms for [VESTA](https://jp-minerals.org/vesta/en/).
+- **Build CIFs from refinement data** — assemble a standards-compliant CIF from a space group, unit cell, and site list.
+- **Enumerate occupational disorder** — generate all symmetry-inequivalent orderings of a partially occupied structure, via two backends:
+  - **enumlib** (Hart–Forcade) — fast, for small / medium cells.
+  - **SHRY** (Pólya enumeration) — strict, audited, for large partially occupied cells where enumlib exhausts memory.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Command Overview](#command-overview)
+- [Core Commands](#core-commands) — `mark`, `skeleton`, `build`, `info`, `fetch`
+- [Enumerating Occupational Disorder](#enumerating-occupational-disorder) — enumlib vs SHRY, when to use which
+- [TUI (Interactive Mode)](#tui-interactive-mode)
+- [Reference](#reference) — dummy atoms, modes, tolerance, space groups
+- [Development](#development)
 
 ## Installation
 
-Requires Python 3.10+.
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/). xtalkit is split into **three independent tiers** — install only what you need.
+
+### Tier 1 — Core (`mark` / `skeleton` / `build` / `info` / `fetch` / TUI)
+
+No compilation, no heavy dependencies (gemmi + rich only):
 
 ```bash
-git clone <repo-url> && cd xtalkit
+git clone https://github.com/hydrogen1222/xtalkit.git && cd xtalkit
 uv sync
 uv pip install -e .
+xtalkit --version          # xtalkit 0.1.0
 ```
 
-Verify:
+### Tier 2 — +enumlib enumeration (`xtalkit enumerate`)
+
+Adds pymatgen + source-compiled enumlib Fortran binaries. Prerequisites: `gfortran make git` (e.g. `sudo apt install gfortran make git` on Debian/Ubuntu; on Windows use [WSL](https://learn.microsoft.com/windows/wsl/)).
 
 ```bash
-xtalkit --version
-# xtalkit 0.1.0
+uv sync --extra enumerate          # adds pymatgen (>=2024.5)
+bash scripts/build_enumlib.sh      # compiles enum.x + makestr.x (one-time, no root)
 ```
+
+`scripts/build_enumlib.sh` clones [msg-byu/enumlib](https://github.com/msg-byu/enumlib), builds with `gfortran`, and installs to `~/.local/share/xtalkit/bin/`. xtalkit finds the binaries automatically — **no PATH setup needed**. Verify:
+
+```bash
+uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
+# Expect: 3 ordered CIFs from Au0.5/Cu0.5
+```
+
+### Tier 3 — +SHRY enumeration (`xtalkit shry`)
+
+`xtalkit shry` shells out to the external [SHRY](https://pypi.org/project/shry/) CLI (pure Python, no compilation). **SHRY pins `pymatgen<=2023.10.4`, which conflicts with Tier 2's `pymatgen>=2024.5`** — so install SHRY in an *isolated* environment, not the xtalkit venv:
+
+```bash
+uv tool install shry                       # isolated env; `shry` lands on PATH
+export XTALKIT_SHRY_CMD="$(which shry)"    # point xtalkit at it (add to shell profile)
+shry --version                             # verify
+```
+
+> **Why isolated?** If you `uv pip install shry` into the xtalkit venv, it downgrades pymatgen to 2023.10.4 and `uv sync --extra enumerate` will then fight to upgrade it — the two backends break each other. `uv tool install` gives SHRY its own dependency set; xtalkit calls it as a subprocess via `XTALKIT_SHRY_CMD`. This is by design.
+
+### Installation summary
+
+| Tier | Commands enabled | Extra steps | Conflicts |
+|------|------------------|-------------|-----------|
+| 1 · Core | `mark`, `skeleton`, `build`, `info`, `fetch`, TUI | none | — |
+| 2 · +enumlib | + `enumerate` | `uv sync --extra enumerate` + `build_enumlib.sh` (gfortran) | — |
+| 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD` | SHRY's `pymatgen<=2023.10.4` pin — isolated, so none |
+
+Tiers 2 and 3 are **independent** — install either or both.
 
 ## Quick Start
 
@@ -34,7 +87,7 @@ Open the result in VESTA — dummy atoms (Xe, Kr, etc.) mark the Wyckoff sites w
 
 ---
 
-# Usage
+## Command Overview
 
 xtalkit has two interfaces:
 
@@ -43,27 +96,27 @@ xtalkit has two interfaces:
 | **CLI** | `xtalkit <command> ...` | Scripting, batch processing, one-liners |
 | **TUI** | `xtalkit` (no arguments) | Interactive exploration, guided workflows |
 
----
-
-## CLI Reference
-
 ```
 xtalkit <command> [options]
 ```
 
-Seven subcommands:
+Seven subcommands, in two groups:
 
-| Command | Purpose |
-|---------|---------|
-| `mark` | Mark Wyckoff positions in a CIF file |
-| `skeleton` | Generate a pure Wyckoff skeleton (no real atoms) |
-| `info` | Query Wyckoff positions for a space group |
-| `fetch` | Verify space group database integrity |
-| `enumerate` | Enumerate symmetry-inequivalent ordered configurations (requires pymatgen + enumlib) |
-| `shry` | Strict SHRY workflow for large partial-occupancy enumeration |
-| `build` | Build a CIF from refinement parameters (SG + cell + Wyckoff sites + occupancy) |
+| Command | Purpose | Tier |
+|---------|---------|------|
+| `mark` | Mark Wyckoff positions in a CIF file | Core |
+| `skeleton` | Generate a pure Wyckoff skeleton (no real atoms) | Core |
+| `build` | Build a CIF from refinement parameters (SG + cell + Wyckoff sites + occupancy) | Core |
+| `info` | Query Wyckoff positions for a space group | Core |
+| `fetch` | Verify space group database integrity | Core |
+| `enumerate` | Enumerate symmetry-inequivalent ordered configurations (pymatgen + enumlib) | +enumlib |
+| `shry` | Strict SHRY workflow for large partial-occupancy enumeration | +SHRY |
+
+The **Core** commands (Tier 1) are documented next. The two enumeration backends (`enumerate`, `shry`) are documented together under [Enumerating Occupational Disorder](#enumerating-occupational-disorder).
 
 ---
+
+## Core Commands
 
 ### `mark` — Mark Wyckoff Positions in a CIF
 
@@ -289,7 +342,32 @@ Verifies that all bundled space group data is intact. Output:
 
 ---
 
-### `enumerate` — Enumerate Ordered Configurations
+## Enumerating Occupational Disorder
+
+Both `xtalkit enumerate` (enumlib) and `xtalkit shry` (SHRY) solve the same problem: given a CIF with partial occupancy, generate every **symmetry-inequivalent** ordering of the disordered sites. Both collapse symmetry-equivalent configs into one, so you get only genuinely distinct structures. They differ in backend, scale, and safety:
+
+| | `xtalkit enumerate` (enumlib) | `xtalkit shry` (SHRY) |
+|---|---|---|
+| **Algorithm** | Hart–Forcade (supercell + enum.x backtracking) | Pólya enumeration theorem (cycle index, exact count) |
+| **Best for** | Small/medium primitive cells; binary alloys, simple disorder | Large partially-occupied cells; argyrodite/LGPS-type Li disorder |
+| **Count before generating?** | No — runs the full search, then writes | Yes — `shry count` is a cheap safety gate before `shry enum` |
+| **Cell** | Auto-converts to primitive internally | Uses the CIF as given (supply a primitive CIF for F/I-centered cells) |
+| **Audit trail** | Minimal | Per-stage manifests, formula/dedup/degeneracy verification |
+| **Failure mode** | Non-integer stoichiometry can make `enum.x` run away and OOM | Refuses cleanly; `--expect-count` locks generation to the count |
+| **Install** | `uv sync --extra enumerate` + `build_enumlib.sh` (gfortran) | `uv tool install shry` + `XTALKIT_SHRY_CMD` |
+| **Rigor** | Hart–Forcade is exact; pymatgen-internal dedup | Pólya count is exact; generation is canonical-form (one rep per orbit) |
+
+**Which should I use?**
+
+- **Small cell, want it fast** → `enumerate`. It auto-primitivizes and is well-tested.
+- **Large cell, partial occupancy, want a safety gate** → `shry`. Count first; if the number is sane, generate. The strict workflow refuses to write unless count and generation agree.
+- **F-/I-centered cell with many disordered sites** → `shry` with a **primitive** CIF (enumlib auto-primitivizes, but `shry` does not — see the SHRY section below).
+
+Both backends have been cross-checked against each other and against brute-force on LPSC (48 inequivalent Li/vacancy orderings; degeneracy sum = 924 = C(12,6)).
+
+---
+
+### `enumerate` — Enumerate Ordered Configurations (enumlib)
 
 Enumerate all **symmetry-inequivalent** ordered configurations of a disordered CIF using [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib) (Hart-Forcade algorithm). Structures related by a symmetry operation of the parent are automatically collapsed into one — you get only the genuinely distinct orderings, with no manual deduplication.
 
@@ -487,53 +565,76 @@ On Windows, `xtalkit/_env.py` additionally applies three runtime workarounds (th
 
 ### `shry` — Strict SHRY Enumeration Workflow
 
-`xtalkit shry` adds a staged workflow for large partially occupied structures where enumlib can exhaust memory. It keeps the existing `enumerate` command intact.
+`xtalkit shry` is a **staged, audited** workflow for large partially occupied structures where enumlib can exhaust memory. It shells out to the external [SHRY](https://pypi.org/project/shry/) CLI (Pólya enumeration) and adds a count-before-generate safety gate plus per-stage manifests. Install it first: see [Tier 3 — +SHRY](#tier-3--shry-enumeration-xtalkit-shry) (`uv tool install shry` + `XTALKIT_SHRY_CMD`).
 
-Think of it as replacing this old enumlib line:
+> **You need a primitive CIF for F-/I-centered cells.** Unlike `enumerate`, `shry` does **not** auto-primitivize — it enumerates the cell you give it. A conventional F-centered argyrodite cell (e.g. LPSC, Li1 on 48h @ 0.5 = 48 Li-sites) gives C(48,24) ≈ 10¹³ candidates and will hang. The primitive cell (12 Li-sites → C(12,6) = 924 → **48 inequivalent** under F-43m) is tractable. Supply a primitive CIF, or convert with spglib (`standardize_cell(to_primitive=True)`) preserving the space-group operations. xtalkit's `prepare` keeps the CIF's declared symmetry, so the primitive CIF must carry F-43m operations (not P1) — see [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md).
 
-```bash
-xtalkit enumerate LGPS.cif --max-cell-size 1 --output-dir ./LGPS
-```
-
-with four safer SHRY steps:
+The workflow has five stages — `prepare → count → enum → verify → postprocess`:
 
 ```bash
-# 1) Turn the partially occupied CIF into a SHRY-ready CIF.
-xtalkit shry prepare LGPS.cif \
-  --out LGPS_shry_ready.cif \
+# 1) prepare: turn the partially occupied CIF into a SHRY-ready CIF.
+#    Fills vacancy rows, checks occupancy sums to 1, checks integerizability,
+#    audits parent symmetry, writes manifest + orbit-grouping sidecars.
+xtalkit shry prepare LPSC_prim.cif \
+  --out LPSC_shry_ready.cif \
   --vacancy-symbol X \
-  --parent-spacegroup 137 \
-  --target-formula Li20Ge2P4S24 \
+  --parent-spacegroup 216 \
+  --target-formula Li6PS5Cl \
   --scaling-matrix 1 1 1
 
-# 2) Count first. This is the safety gate; it is much cheaper than generation.
-xtalkit shry count LGPS_shry_ready.cif \
+# 2) count: cheap safety gate. Counts symmetry-inequivalent configs (Pólya).
+#    Inspect LPSC_shry_count.json -> "count_only_result" before generating.
+xtalkit shry count LPSC_shry_ready.cif \
   --scaling-matrix 1 1 1 \
   --symprec 0.01 --angle-tolerance 5 --atol 1e-5 \
-  --out LGPS_shry_count.json
+  --out LPSC_shry_count.json
 
-# 3) Open LGPS_shry_count.json, copy count_only_result, then paste it below.
-xtalkit shry enum LGPS_shry_ready.cif \
+# 3) enum: generate. Paste the count from step 2 into --expect-count.
+#    Strict mode REFUSES to write if generation != count (catches misses).
+xtalkit shry enum LPSC_shry_ready.cif \
   --scaling-matrix 1 1 1 \
-  --expect-count <PASTE_COUNT_ONLY_RESULT_HERE> \
-  --out LGPS_SHRY \
+  --expect-count 48 \
+  --out LPSC_SHRY \
   --remove-vacancy X \
-  --target-formula Li20Ge2P4S24 \
+  --target-formula Li6PS5Cl \
   --write-cif --write-poscar --write-degeneracy
 
-# 4) Verify the result set.
-xtalkit shry verify LGPS_SHRY \
-  --check-count --check-formula --check-dedup \
-  --target-formula Li20Ge2P4S24 \
+# 4) verify: count, formula, residual-vacancy, dedup, symprec-stability,
+#    and (optionally) degeneracy-sum == raw combination count.
+xtalkit shry verify LPSC_SHRY \
+  --check-count --check-formula --check-dedup --check-degeneracy \
+  --target-formula Li6PS5Cl \
   --symprec-list 1e-4 1e-3 1e-2
 
-# Optional: rank structures by shortest Li-Li distance.
-xtalkit shry postprocess LGPS_SHRY --shortest-distance --pair Li Li
+# 5) postprocess (optional): rank or generate DFT job folders.
+xtalkit shry postprocess LPSC_SHRY --shortest-distance --pair Li Li
+xtalkit shry postprocess LPSC_SHRY --write-tblite --write-slurm
 ```
 
-If you start from your `LGPS.txt`, keep the first `xtalkit build ... -o LGPS` command exactly as-is. Replace only the second enumlib command with the SHRY steps above.
+**Output layout** (`LPSC_SHRY/`):
 
-SHRY itself is called as an external CLI. If it lives in a separate environment, set `XTALKIT_SHRY_CMD=/path/to/shry`. See [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md) for a beginner-oriented explanation of every file and step.
+```
+input/        # copied SHRY-ready CIF, command.txt, mod-only audit, pip freeze
+raw_shry/     # SHRY's raw ordered CIFs (still contain X vacancy)
+clean_cif/    # cleaned CIFs — X removed, element symbols, P1 supercell
+poscar/       # one POSCAR per config (xtalkit-generated; SHRY has no POSCAR writer)
+checks/       # verify.json, shortest_distance.json, ewald.json, symprec scans
+manifest.json / manifest.jsonl   # full audit trail
+```
+
+**Subcommands:**
+
+| Subcommand | Purpose |
+|------------|---------|
+| `shry prepare` | Build SHRY-ready CIF + audit (occupancy, integerizability, symmetry orbits) |
+| `shry count` | Pólya count of inequivalent configs (no generation) |
+| `shry enum` | Generate configs; strict mode requires `--expect-count` matching `count` |
+| `shry verify` | Check count/formula/vacancy/dedup/symprec-stability/degeneracy |
+| `shry postprocess` | Rank by shortest distance or Ewald energy; write tblite/CP2K folders + Slurm array |
+
+**Strict mode.** All stages default to `--strict` (audited): `enum` requires `--expect-count`, runs a `--mod-only` chemistry audit, and refuses to write if generation ≠ count. Pass `--no-strict` to relax for exploratory runs (e.g. when you don't yet have a count).
+
+If you start from refinement data, run `xtalkit build ... -o LPSC` first to make the partially-occupied CIF, then feed it to `shry prepare`. For a beginner-oriented walkthrough of every file and step, see [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md); for the module design, [docs/dev/shry-module-design.md](docs/dev/shry-module-design.md).
 
 ---
 
@@ -601,7 +702,9 @@ Input your choice: 1
 
 ---
 
-## Dummy Atom System
+## Reference
+
+### Dummy Atom System
 
 xtalkit uses **rare/inert elements** that almost never appear in real CIF files:
 
@@ -626,9 +729,9 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 
 ---
 
-## Overlay vs. Replace Modes
+### Overlay vs. Replace Modes
 
-### Overlay (default)
+#### Overlay (default)
 
 ```
 Before:  Li at (0,0,0)   P at (0.25,0.25,0.25)
@@ -640,7 +743,7 @@ After:   Li at (0,0,0)   P at (0.25,0.25,0.25)
 
 Real atoms are preserved. Dummy atoms are added on top. In VESTA, you see both.
 
-### Replace
+#### Replace
 
 ```
 Before:  Li at (0,0,0)   P at (0.25,0.25,0.25)
@@ -652,7 +755,7 @@ Atoms that match a requested Wyckoff position (within tolerance) are **replaced*
 
 ---
 
-## Matching Tolerance
+### Matching Tolerance
 
 The tolerance (`--tol`, default 0.5) controls how closely an atom's coordinates must match a Wyckoff position's theoretical coordinates to be considered occupying that position.
 
@@ -663,9 +766,9 @@ The tolerance is applied in **fractional coordinate space** (not angstroms). For
 
 ---
 
-## Workflow Recipes
+### Workflow Recipes
 
-### Recipe 1: Study Li₆PS₅Cl (SG 216, F-43m) Wyckoff occupancy
+#### Recipe 1: Study Li₆PS₅Cl (SG 216, F-43m) Wyckoff occupancy
 
 ```bash
 # Step 1: Download CIF from Materials Project
@@ -683,7 +786,7 @@ xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,xyz
 # → You can toggle atoms in VESTA to compare
 ```
 
-### Recipe 2: Create a Wyckoff reference skeleton
+#### Recipe 2: Create a Wyckoff reference skeleton
 
 ```bash
 # Generate a skeleton for F-43m with real cell parameters
@@ -696,7 +799,7 @@ xtalkit skeleton --sg 216 --wyckoff all \
 # → No real atoms — pure reference template
 ```
 
-### Recipe 3: Check which atoms occupy specific Wyckoff positions
+#### Recipe 3: Check which atoms occupy specific Wyckoff positions
 
 ```bash
 # Mark only the Wyckoff positions you care about
@@ -706,7 +809,7 @@ xtalkit mark structure.cif --sg 225 --wyckoff 4a,8c --mode replace
 # → Instantly see in VESTA: "are there atoms at these positions?"
 ```
 
-### Recipe 4: Batch process multiple structures
+#### Recipe 4: Batch process multiple structures
 
 ```bash
 # All .cif files in a directory, same space group
@@ -717,7 +820,7 @@ done
 
 ---
 
-## Supported Space Groups
+### Supported Space Groups
 
 Wyckoff position data is available for **all 230 space groups**. The bundled dataset (`xtalkit/data/wyckoff.json`) is derived from International Tables for Crystallography Vol. A via [pyxtal](https://pyxtal.readthedocs.io) (MIT) and verified against gemmi's symmetry operations — see `scripts/build_wyckoff_db.py` to regenerate it.
 
@@ -730,43 +833,47 @@ Wyckoff position data is available for **all 230 space groups**. The bundled dat
 ```bash
 uv sync                     # Install core dependencies
 uv sync --extra enumerate   # Also enable `enumerate` (pulls pymatgen)
-uv run pytest               # Run all tests (5 skip without the enumerate extra)
+uv run pytest               # Run all tests
 ```
+
+To run the SHRY tests against the real backend (not just the fake), install SHRY per [Tier 3](#tier-3--shry-enumeration-xtalkit-shry) and export `XTALKIT_SHRY_CMD`; otherwise the SHRY tests use an in-process fake backend.
 
 ### Project structure
 
 ```
 xtalkit/
 ├── xtalkit/
-│   ├── __init__.py      # Package, version
-│   ├── cli.py           # argparse CLI + 5 subcommands
-│   ├── tui.py           # rich-based interactive TUI
-│   ├── spacegroup.py    # Gemmi space group queries
-│   ├── matcher.py       # Atom → Wyckoff position matching
-│   ├── marker.py        # Core: mark Wyckoff in CIF
-│   ├── skeleton.py      # Pure Wyckoff skeleton generation
-│   ├── exporter.py      # .cif / .xyz writers
-│   ├── enumerator.py    # enumlib wrapper (lazy pymatgen import)
-│   ├── _env.py          # enumlib binary discovery + Windows env fixes
-│   └── utils.py         # Shared helpers
+│   ├── __init__.py          # Package, version
+│   ├── cli.py               # argparse CLI + 7 subcommands
+│   ├── tui.py               # rich-based interactive TUI
+│   ├── spacegroup.py        # Gemmi space group queries
+│   ├── matcher.py           # Atom → Wyckoff position matching
+│   ├── marker.py            # Core: mark Wyckoff in CIF
+│   ├── skeleton.py          # Pure Wyckoff skeleton generation
+│   ├── builder.py           # Build CIF from refinement params
+│   ├── exporter.py          # .cif / .xyz writers
+│   ├── enumerator.py        # enumlib wrapper (lazy pymatgen import)
+│   ├── enumeration/         # SHRY workflow package
+│   │   ├── shry_prepare.py / shry_count.py / shry_enum.py / shry_verify.py
+│   │   ├── shry_backend.py  # subprocess wrapper for the `shry` CLI
+│   │   ├── cif_io.py        # esd-aware CIF reader/writer (gemmi)
+│   │   ├── occupancy.py / formula.py / degeneracy.py / fingerprint.py
+│   │   └── postprocess.py   # ranking + tblite/CP2K/Slurm job generation
+│   ├── _env.py              # enumlib binary discovery + Windows env fixes
+│   └── utils.py             # Shared helpers
 ├── tests/
-│   ├── fixtures/
-│   │   ├── simple.cif         # Test CIF (F-43m, Li + P)
-│   │   └── disordered_binary.cif  # Au0.5/Cu0.5 for enumerate tests
-│   ├── test_spacegroup.py
-│   ├── test_matcher.py
-│   ├── test_exporter.py
-│   ├── test_marker.py
-│   ├── test_skeleton.py
-│   ├── test_enumerator.py     # enumlib integration (skips without pymatgen)
-│   ├── test_cli.py
-│   ├── test_tui.py
-│   └── test_integration.py
-├── docs/superpowers/
-│   ├── specs/2026-06-20-xtalkit-design.md
-│   └── plans/2026-06-20-xtalkit.md
+│   ├── fixtures/            # simple.cif, disordered_binary.cif
+│   ├── test_marker.py / test_skeleton.py / test_builder.py / test_matcher.py
+│   ├── test_spacegroup.py / test_exporter.py / test_cli.py / test_tui.py
+│   ├── test_enumerator.py   # enumlib integration (skips without pymatgen)
+│   └── test_shry_module.py  # SHRY workflow (uses a fake backend by default)
+├── docs/
+│   ├── user/shry-enumeration.md   # beginner SHRY walkthrough
+│   └── dev/shry-module-design.md  # SHRY module design & bug history
 ├── scripts/
-│   └── build_enumlib.sh    # Compile enumlib (enum.x, makestr.x) from source
+│   ├── build_enumlib.sh     # Compile enumlib (enum.x, makestr.x) from source
+│   └── build_wyckoff_db.py  # Regenerate the bundled Wyckoff dataset
+├── LPSC.cif                 # Example: argyrodite Li6PS5Cl (F-43m, Li partial occ.)
 ├── pyproject.toml
 └── README.md
 ```
@@ -777,10 +884,11 @@ xtalkit/
 
 | Package | Purpose | Required? |
 |---------|---------|-----------|
-| [gemmi](https://gemmi.readthedocs.io/) | Space group data, CIF I/O | Yes |
-| [rich](https://rich.readthedocs.io/) | TUI formatting (tables, panels, colors) | Yes |
-| [pymatgen](https://pymatgen.org/) >=2024.5 | enumlib wrapper for `enumerate` | `enumerate` extra only |
-| [enumlib](https://github.com/msg-byu/enumlib) | Symmetry-inequivalent configuration enumeration (Fortran) | Only for `enumerate` |
-| pytest (dev) | Test framework | Yes |
+| [gemmi](https://gemmi.readthedocs.io/) | Space group data, CIF I/O | Yes (core) |
+| [rich](https://rich.readthedocs.io/) | TUI formatting (tables, panels, colors) | Yes (core) |
+| [pymatgen](https://pymatgen.org/) ≥2024.5 | enumlib wrapper for `enumerate` | `enumerate` extra only |
+| [enumlib](https://github.com/msg-byu/enumlib) | Symmetry-inequivalent enumeration (Fortran, source-compiled) | Only for `enumerate` |
+| [SHRY](https://pypi.org/project/shry/) 1.1.x | Pólya enumeration for large partial-occupancy cells (isolated install) | Only for `shry` |
+| pytest (dev) | Test framework | Yes (dev) |
 
-The `enumerate` subcommand lazy-imports pymatgen, so the core toolkit works without it. See [Enumeration setup](#enumeration-setup) for the `uv sync --extra enumerate` + `build_enumlib.sh` path.
+`enumerate` lazy-imports pymatgen and `shry` shells out to the external `shry` CLI, so the core toolkit works without either. SHRY is **not** declared as a pip dependency because it pins `pymatgen≤2023.10.4`, which conflicts with the `enumerate` extra — install it isolated via `uv tool install shry` (see [Tier 3](#tier-3--shry-enumeration-xtalkit-shry)).

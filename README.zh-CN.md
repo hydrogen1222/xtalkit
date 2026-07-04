@@ -2,24 +2,77 @@
 
 # xtalkit — 晶体 Wyckoff 工具箱
 
-在晶体结构中用虚拟原子标记 Wyckoff 位置，方便在 [VESTA](https://jp-minerals.org/vesta/en/) 中直观可视化。
+面向**任意周期性晶体**的命令行工具箱——不局限于固态电解质。（维护者研究 argyrodite / LGPS 类 Li 导体，但 xtalkit 同样适用于合金、矿物、陶瓷、MOF——任何有空间群的结构。）它做三件事：
+
+- **可视化 Wyckoff 位置**——用虚拟原子标记晶体学位点，便于在 [VESTA](https://jp-minerals.org/vesta/en/) 中观察。
+- **由精修数据构建 CIF**——由空间群 + 晶胞 + 位点列表组装标准 CIF。
+- **枚举占位无序**——生成部分占据结构的全部对称不等价有序构型，提供两个后端：
+  - **enumlib**（Hart–Forcade 算法）——快，适合中小晶胞。
+  - **SHRY**（Pólya 计数）——严格、可审计，适合 enumlib 会内存爆炸的大规模部分占据晶胞。
+
+## 目录
+
+- [安装](#安装)
+- [快速开始](#快速开始)
+- [命令总览](#命令总览)
+- [核心命令](#核心命令)——`mark`、`skeleton`、`build`、`info`、`fetch`
+- [枚举占位无序](#枚举占位无序)——enumlib 与 SHRY 的选择
+- [TUI 交互模式](#tui-交互模式)
+- [参考](#参考)——虚拟原子、模式、容差、空间群
+- [开发](#开发)
 
 ## 安装
 
-要求 Python 3.10+。
+要求 Python 3.10+ 与 [uv](https://docs.astral.sh/uv/)。xtalkit 分为**三个互相独立的层级**——按需安装。
+
+### 第 1 层 · 核心（`mark` / `skeleton` / `build` / `info` / `fetch` / TUI）
+
+无需编译、无重依赖（仅 gemmi + rich）：
 
 ```bash
-git clone <repo-url> && cd xtalkit
+git clone https://github.com/hydrogen1222/xtalkit.git && cd xtalkit
 uv sync
 uv pip install -e .
+xtalkit --version          # xtalkit 0.1.0
 ```
 
-验证安装：
+### 第 2 层 · +enumlib 枚举（`xtalkit enumerate`）
+
+增加 pymatgen + 源码编译的 enumlib Fortran 二进制。前置依赖：`gfortran make git`（Debian/Ubuntu 用 `sudo apt install gfortran make git`；Windows 用 [WSL](https://learn.microsoft.com/windows/wsl/)）。
 
 ```bash
-xtalkit --version
-# xtalkit 0.1.0
+uv sync --extra enumerate          # 增加 pymatgen（>=2024.5）
+bash scripts/build_enumlib.sh      # 编译 enum.x + makestr.x（一次性，免 root）
 ```
+
+`scripts/build_enumlib.sh` 会克隆 [msg-byu/enumlib](https://github.com/msg-byu/enumlib)、用 `gfortran` 编译并安装到 `~/.local/share/xtalkit/bin/`。xtalkit 会自动发现这些二进制——**无需手动配置 PATH**。验证：
+
+```bash
+uv run xtalkit enumerate tests/fixtures/disordered_binary.cif --max-cell-size 2
+# 期望：Au0.5/Cu0.5 得到 3 个有序 CIF
+```
+
+### 第 3 层 · +SHRY 枚举（`xtalkit shry`）
+
+`xtalkit shry` 通过子进程调用外部 [SHRY](https://pypi.org/project/shry/) CLI（纯 Python，无需编译）。**SHRY 钉死 `pymatgen<=2023.10.4`，与第 2 层的 `pymatgen>=2024.5` 冲突**——因此要把 SHRY 装在*隔离*环境，不要装进 xtalkit 的 venv：
+
+```bash
+uv tool install shry                       # 隔离环境；`shry` 进入 PATH
+export XTALKIT_SHRY_CMD="$(which shry)"    # 指向 xtalkit（写入 shell 配置）
+shry --version                             # 验证
+```
+
+> **为何要隔离？** 若 `uv pip install shry` 装进 xtalkit venv，会把 pymatgen 降级到 2023.10.4，`uv sync --extra enumerate` 又会试图升回——两个后端互相破坏。`uv tool install` 给 SHRY 独立的依赖集；xtalkit 经 `XTALKIT_SHRY_CMD` 以子进程调用。这是有意为之。
+
+### 安装汇总
+
+| 层级 | 启用命令 | 额外步骤 | 冲突 |
+|------|----------|----------|------|
+| 1 · 核心 | `mark`、`skeleton`、`build`、`info`、`fetch`、TUI | 无 | — |
+| 2 · +enumlib | + `enumerate` | `uv sync --extra enumerate` + `build_enumlib.sh`（gfortran） | — |
+| 3 · +SHRY | + `shry` | `uv tool install shry` + `XTALKIT_SHRY_CMD` | SHRY 的 `pymatgen<=2023.10.4` 钉版——隔离安装，故无冲突 |
+
+第 2、3 层**相互独立**——可只装其一，或都装。
 
 ## 快速开始
 
@@ -34,7 +87,7 @@ xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff 4a,24f
 
 ---
 
-# 使用说明
+## 命令总览
 
 xtalkit 提供两种界面：
 
@@ -43,27 +96,27 @@ xtalkit 提供两种界面：
 | **CLI**（命令行） | `xtalkit <command> ...` | 脚本化、批处理、一行命令 |
 | **TUI**（交互式） | `xtalkit`（无参数） | 交互探索、引导式工作流 |
 
----
-
-## CLI 命令参考
-
 ```
 xtalkit <command> [options]
 ```
 
-共七个子命令：
+共七个子命令，分两组：
 
-| 命令 | 功能 |
-|------|------|
-| `mark` | 在 CIF 文件中标记 Wyckoff 位置 |
-| `skeleton` | 生成纯 Wyckoff 骨架（不含真实原子） |
-| `info` | 查询某个空间群的 Wyckoff 位置信息 |
-| `fetch` | 校验空间群数据库完整性 |
-| `enumerate` | 枚举对称不等价的有序构型（需 pymatgen + enumlib） |
-| `shry` | 面向大规模部分占据枚举的严格 SHRY 工作流 |
-| `build` | 由精修参数生成 CIF（空间群 + 晶胞 + Wyckoff 位点 + 占据率） |
+| 命令 | 功能 | 层级 |
+|------|------|------|
+| `mark` | 在 CIF 文件中标记 Wyckoff 位置 | 核心 |
+| `skeleton` | 生成纯 Wyckoff 骨架（不含真实原子） | 核心 |
+| `build` | 由精修参数生成 CIF（空间群 + 晶胞 + Wyckoff 位点 + 占据率） | 核心 |
+| `info` | 查询某个空间群的 Wyckoff 位置信息 | 核心 |
+| `fetch` | 校验空间群数据库完整性 | 核心 |
+| `enumerate` | 枚举对称不等价的有序构型（pymatgen + enumlib） | +enumlib |
+| `shry` | 面向大规模部分占据枚举的严格 SHRY 工作流 | +SHRY |
+
+**核心**命令（第 1 层）见下文。两个枚举后端（`enumerate`、`shry`）合并在 [枚举占位无序](#枚举占位无序) 一节。
 
 ---
+
+## 核心命令
 
 ### `mark` — 在 CIF 中标记 Wyckoff 位置
 
@@ -289,7 +342,32 @@ xtalkit fetch
 
 ---
 
-### `enumerate` — 枚举有序构型
+## 枚举占位无序
+
+`xtalkit enumerate`（enumlib）与 `xtalkit shry`（SHRY）解决同一问题：给定一个部分占据的 CIF，生成无序位点的全部**对称不等价**排列。两者都会把对称等价的构型合并为一个，只输出真正不同的结构。区别在后端、规模与安全性：
+
+| | `xtalkit enumerate`（enumlib） | `xtalkit shry`（SHRY） |
+|---|---|---|
+| **算法** | Hart–Forcade（超胞 + enum.x 回溯） | Pólya 计数定理（循环指数，精确计数） |
+| **适用** | 中小原胞；二元合金、简单无序 | 大规模部分占据晶胞；argyrodite/LGPS 类 Li 无序 |
+| **先生成再计数？** | 否——直接跑全搜索再写文件 | 是——`shry count` 是生成前的廉价安全门 |
+| **晶胞** | 内部自动转原胞 | 用你给的 CIF（F/I 心晶胞需自行提供原胞） |
+| **审计** | 较少 | 每阶段 manifest、公式/去重/简并度校验 |
+| **失败模式** | 非整数化学计量可能让 `enum.x` 失控爆内存 | 干净报错；`--expect-count` 把生成数锁到计数 |
+| **安装** | `uv sync --extra enumerate` + `build_enumlib.sh`（gfortran） | `uv tool install shry` + `XTALKIT_SHRY_CMD` |
+| **严谨性** | Hart–Forcade 精确；pymatgen 内部去重 | Pólya 计数精确；生成基于规范形（每轨道一个代表） |
+
+**该用哪个？**
+
+- **小晶胞、求快** → `enumerate`。自动转原胞，测试充分。
+- **大晶胞、部分占据、要安全门** → `shry`。先 count，数目合理再生成；严格模式在计数与生成不一致时拒绝写文件。
+- **F/I 心晶胞且无序位点多** → `shry` + **原胞** CIF（enumlib 自动转原胞，`shry` 不会——见下文 SHRY 一节）。
+
+两个后端已相互交叉验证，并与暴力枚举在 LPSC 上对齐（48 个不等价 Li/空位排列；简并度之和 = 924 = C(12,6)）。
+
+---
+
+### `enumerate` — 枚举有序构型（enumlib）
 
 使用 [pymatgen](https://pymatgen.org/) + [enumlib](https://github.com/msg-byu/enumlib)（Hart-Forcade 算法）枚举一个无序 CIF 的所有**对称不等价**有序构型。母相空间群对称操作相关的结构会自动合并为一个 —— 你拿到的都是真正不同的排列，无需手动去重。
 
@@ -487,53 +565,75 @@ uv run pytest tests/test_enumerator.py -v
 
 ### `shry` — 严格 SHRY 枚举工作流
 
-`xtalkit shry` 面向 enumlib 可能耗尽内存的大规模部分占据体系，提供分阶段、可审计的 SHRY 工作流。原有 `enumerate` 命令仍保留。
+`xtalkit shry` 是面向大规模部分占据体系的**分阶段、可审计**工作流（enumlib 在此类体系会耗尽内存）。它通过子进程调用外部 [SHRY](https://pypi.org/project/shry/) CLI（Pólya 枚举），并提供"先计数再生成"的安全门与每阶段 manifest。先安装：见 [第 3 层 · +SHRY](#第-3-层--shry-枚举xtalkit-shry)（`uv tool install shry` + `XTALKIT_SHRY_CMD`）。
 
-你可以把它理解为：把以前这条 enumlib 命令：
+> **F/I 心晶胞必须提供原胞 CIF。** 与 `enumerate` 不同，`shry` **不会**自动转原胞——它枚举你给的晶胞。常规 F 心 argyrodite 晶胞（如 LPSC，Li1 在 48h @ 0.5 = 48 个 Li 位点）会有 C(48,24) ≈ 10¹³ 个候选，会卡死。原胞（12 个 Li 位点 → C(12,6) = 924 → F-43m 下 **48 个不等价**）可行。请提供原胞 CIF，或用 spglib（`standardize_cell(to_primitive=True)`）转换并保留空间群操作。xtalkit 的 `prepare` 保留 CIF 声明的对称性，故原胞 CIF 必须带 F-43m 操作（不能是 P1）——见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)。
 
-```bash
-xtalkit enumerate LGPS.cif --max-cell-size 1 --output-dir ./LGPS
-```
-
-替换成下面四步更安全的 SHRY 流程：
+工作流分五阶段——`prepare → count → enum → verify → postprocess`：
 
 ```bash
-# 1）把含部分占据的 CIF 转成 SHRY 能安全读取的 CIF。
-xtalkit shry prepare LGPS.cif \
-  --out LGPS_shry_ready.cif \
+# 1）prepare：把部分占据 CIF 转成 SHRY-ready CIF。
+#    填充空位行、校验占据率和为 1、校验可整数化、审计母相对称性，写 manifest + 轨道分组。
+xtalkit shry prepare LPSC_prim.cif \
+  --out LPSC_shry_ready.cif \
   --vacancy-symbol X \
-  --parent-spacegroup 137 \
-  --target-formula Li20Ge2P4S24 \
+  --parent-spacegroup 216 \
+  --target-formula Li6PS5Cl \
   --scaling-matrix 1 1 1
 
-# 2）先只计数。这一步是安全闸门，比真正生成结构便宜得多。
-xtalkit shry count LGPS_shry_ready.cif \
+# 2）count：廉价安全门。按 Pólya 计数对称不等价构型。
+#    生成前先看 LPSC_shry_count.json -> "count_only_result"。
+xtalkit shry count LPSC_shry_ready.cif \
   --scaling-matrix 1 1 1 \
   --symprec 0.01 --angle-tolerance 5 --atol 1e-5 \
-  --out LGPS_shry_count.json
+  --out LPSC_shry_count.json
 
-# 3）打开 LGPS_shry_count.json，把 count_only_result 的数字复制到下面。
-xtalkit shry enum LGPS_shry_ready.cif \
+# 3）enum：生成。把第 2 步的计数贴进 --expect-count。
+#    严格模式在 生成数 != 计数 时拒绝写文件（捕捉漏构型）。
+xtalkit shry enum LPSC_shry_ready.cif \
   --scaling-matrix 1 1 1 \
-  --expect-count <把_count_only_result_粘贴到这里> \
-  --out LGPS_SHRY \
+  --expect-count 48 \
+  --out LPSC_SHRY \
   --remove-vacancy X \
-  --target-formula Li20Ge2P4S24 \
+  --target-formula Li6PS5Cl \
   --write-cif --write-poscar --write-degeneracy
 
-# 4）验证输出结构集。
-xtalkit shry verify LGPS_SHRY \
-  --check-count --check-formula --check-dedup \
-  --target-formula Li20Ge2P4S24 \
+# 4）verify：计数、公式、残留空位、去重、symprec 稳定性，
+#    以及（可选）简并度之和 == 原始组合数。
+xtalkit shry verify LPSC_SHRY \
+  --check-count --check-formula --check-dedup --check-degeneracy \
+  --target-formula Li6PS5Cl \
   --symprec-list 1e-4 1e-3 1e-2
 
-# 可选：按最短 Li-Li 距离排序，方便后续筛结构。
-xtalkit shry postprocess LGPS_SHRY --shortest-distance --pair Li Li
+# 5）postprocess（可选）：排序或生成 DFT 作业目录。
+xtalkit shry postprocess LPSC_SHRY --shortest-distance --pair Li Li
+xtalkit shry postprocess LPSC_SHRY --write-tblite --write-slurm
 ```
 
-如果你从 `LGPS.txt` 开始用，第一条 `xtalkit build ... -o LGPS` 命令保持不变；只需要把第二条 `xtalkit enumerate ...` 替换成上面的 SHRY 四步。
+**输出布局**（`LPSC_SHRY/`）：
 
-SHRY 通过外部 CLI 调用。若 SHRY 安装在独立环境中，设置 `XTALKIT_SHRY_CMD=/path/to/shry`。每个文件和每一步的解释见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)。
+```
+input/        # 复制的 SHRY-ready CIF、command.txt、mod-only 审计、pip freeze
+raw_shry/     # SHRY 原始有序 CIF（仍含 X 空位）
+clean_cif/    # 清理后 CIF——已去 X、用元素符号、P1 超胞
+poscar/       # 每构型一个 POSCAR（xtalkit 生成；SHRY 无 POSCAR 写入器）
+checks/       # verify.json、shortest_distance.json、ewald.json、symprec 扫描
+manifest.json / manifest.jsonl   # 完整审计轨迹
+```
+
+**子命令：**
+
+| 子命令 | 功能 |
+|--------|------|
+| `shry prepare` | 构建 SHRY-ready CIF + 审计（占据、可整数化、对称轨道） |
+| `shry count` | 不等价构型的 Pólya 计数（不生成） |
+| `shry enum` | 生成构型；严格模式要求 `--expect-count` 与 `count` 一致 |
+| `shry verify` | 校验计数/公式/空位/去重/symprec 稳定性/简并度 |
+| `shry postprocess` | 按最短距离或 Ewald 能排序；写 tblite/CP2K 目录 + Slurm 数组 |
+
+**严格模式。** 所有阶段默认 `--strict`（可审计）：`enum` 要求 `--expect-count`、跑 `--mod-only` 化学审计、并在生成数 ≠ 计数时拒绝写文件。探索性运行可加 `--no-strict` 放宽（例如尚未有计数时）。
+
+若从精修数据开始，先用 `xtalkit build ... -o LPSC` 生成部分占据 CIF，再喂给 `shry prepare`。每一步与每个文件的入门讲解见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)；模块设计见 [docs/dev/shry-module-design.md](docs/dev/shry-module-design.md)。
 
 ---
 
@@ -601,7 +701,9 @@ Input your choice: 1
 
 ---
 
-## 虚拟原子系统
+## 参考
+
+### 虚拟原子系统
 
 xtalkit 使用**稀有/惰性元素**，这些元素几乎不会出现在真实 CIF 中：
 
@@ -626,9 +728,9 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 
 ---
 
-## Overlay 与 Replace 模式
+### Overlay 与 Replace 模式
 
-### Overlay（默认）
+#### Overlay（默认）
 
 ```
 之前：  Li at (0,0,0)   P at (0.25,0.25,0.25)
@@ -640,7 +742,7 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 
 真实原子保留，虚拟原子叠加其上。在 VESTA 中两者都会显示。
 
-### Replace
+#### Replace
 
 ```
 之前：  Li at (0,0,0)   P at (0.25,0.25,0.25)
@@ -652,7 +754,7 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 
 ---
 
-## 匹配容差
+### 匹配容差
 
 容差（`--tol`，默认 0.5）控制一个原子的坐标与 Wyckoff 位置理论坐标之间允许多大偏差，仍视为占据该位置。
 
@@ -663,9 +765,9 @@ xtalkit mark file.cif --sg 216 --wyckoff 4a,4c --map 4a:He,4c:Ne
 
 ---
 
-## 工作流配方
+### 工作流配方
 
-### 配方 1：研究 Li₆PS₅Cl（SG 216，F-43m）的 Wyckoff 占位
+#### 配方 1：研究 Li₆PS₅Cl（SG 216，F-43m）的 Wyckoff 占位
 
 ```bash
 # 第 1 步：从 Materials Project 下载 CIF
@@ -683,7 +785,7 @@ xtalkit mark Li6PS5Cl.cif --sg 216 --wyckoff all --format cif,xyz
 # → 可以在 VESTA 中切换原子显示以做对比
 ```
 
-### 配方 2：创建 Wyckoff 参考骨架
+#### 配方 2：创建 Wyckoff 参考骨架
 
 ```bash
 # 用真实晶胞参数为 F-43m 生成骨架
@@ -696,7 +798,7 @@ xtalkit skeleton --sg 216 --wyckoff all \
 # → 没有真实原子 —— 纯参考模板
 ```
 
-### 配方 3：检查哪些原子占据特定 Wyckoff 位置
+#### 配方 3：检查哪些原子占据特定 Wyckoff 位置
 
 ```bash
 # 只标记你关心的 Wyckoff 位置
@@ -706,7 +808,7 @@ xtalkit mark structure.cif --sg 225 --wyckoff 4a,8c --mode replace
 # → 在 VESTA 中立即看到："这些位置上是否有原子？"
 ```
 
-### 配方 4：批处理多个结构
+#### 配方 4：批处理多个结构
 
 ```bash
 # 同一空间群下目录中的所有 .cif 文件
@@ -717,7 +819,7 @@ done
 
 ---
 
-## 已支持的空间群
+### 已支持的空间群
 
 已提供**全部 230 个空间群**的 Wyckoff 位置数据。内置数据集（`xtalkit/data/wyckoff.json`）源自国际晶体学表 Vol. A，经 [pyxtal](https://pyxtal.readthedocs.io)（MIT）抽取并用 gemmi 对称操作校验 —— 重新生成见 `scripts/build_wyckoff_db.py`。
 
@@ -730,43 +832,47 @@ done
 ```bash
 uv sync                     # 安装核心依赖
 uv sync --extra enumerate   # 同时启用 `enumerate`（拉入 pymatgen）
-uv run pytest               # 运行全部测试（未装 enumerate extra 时跳过 5 个）
+uv run pytest               # 运行全部测试
 ```
+
+要让 SHRY 测试跑真实后端（而非 fake），按 [第 3 层](#第-3-层--shry-枚举xtalkit-shry) 安装 SHRY 并 export `XTALKIT_SHRY_CMD`；否则 SHRY 测试使用进程内 fake 后端。
 
 ### 项目结构
 
 ```
 xtalkit/
 ├── xtalkit/
-│   ├── __init__.py      # 包、版本
-│   ├── cli.py           # argparse CLI + 5 个子命令
-│   ├── tui.py           # 基于 rich 的交互式 TUI
-│   ├── spacegroup.py    # Gemmi 空间群查询
-│   ├── matcher.py       # 原子 → Wyckoff 位置匹配
-│   ├── marker.py        # 核心：在 CIF 中标记 Wyckoff
-│   ├── skeleton.py      # 纯 Wyckoff 骨架生成
-│   ├── exporter.py      # .cif / .xyz 写入器
-│   ├── enumerator.py    # enumlib 封装（延迟导入 pymatgen）
-│   ├── _env.py          # enumlib 二进制发现 + Windows 环境修复
-│   └── utils.py         # 共用工具
+│   ├── __init__.py          # 包、版本
+│   ├── cli.py               # argparse CLI + 7 个子命令
+│   ├── tui.py               # 基于 rich 的交互式 TUI
+│   ├── spacegroup.py        # Gemmi 空间群查询
+│   ├── matcher.py           # 原子 → Wyckoff 位置匹配
+│   ├── marker.py            # 核心：在 CIF 中标记 Wyckoff
+│   ├── skeleton.py          # 纯 Wyckoff 骨架生成
+│   ├── builder.py           # 由精修参数构建 CIF
+│   ├── exporter.py          # .cif / .xyz 写入器
+│   ├── enumerator.py        # enumlib 封装（延迟导入 pymatgen）
+│   ├── enumeration/         # SHRY 工作流包
+│   │   ├── shry_prepare.py / shry_count.py / shry_enum.py / shry_verify.py
+│   │   ├── shry_backend.py  # `shry` CLI 的子进程封装
+│   │   ├── cif_io.py        # 去除 esd 的 CIF 读写（gemmi）
+│   │   ├── occupancy.py / formula.py / degeneracy.py / fingerprint.py
+│   │   └── postprocess.py   # 排序 + tblite/CP2K/Slurm 作业生成
+│   ├── _env.py              # enumlib 二进制发现 + Windows 环境修复
+│   └── utils.py             # 共用工具
 ├── tests/
-│   ├── fixtures/
-│   │   ├── simple.cif         # 测试 CIF（F-43m，Li + P）
-│   │   └── disordered_binary.cif  # Au0.5/Cu0.5，用于 enumerate 测试
-│   ├── test_spacegroup.py
-│   ├── test_matcher.py
-│   ├── test_exporter.py
-│   ├── test_marker.py
-│   ├── test_skeleton.py
-│   ├── test_enumerator.py     # enumlib 集成测试（无 pymatgen 时跳过）
-│   ├── test_cli.py
-│   ├── test_tui.py
-│   └── test_integration.py
-├── docs/superpowers/
-│   ├── specs/2026-06-20-xtalkit-design.md
-│   └── plans/2026-06-20-xtalkit.md
+│   ├── fixtures/            # simple.cif、disordered_binary.cif
+│   ├── test_marker.py / test_skeleton.py / test_builder.py / test_matcher.py
+│   ├── test_spacegroup.py / test_exporter.py / test_cli.py / test_tui.py
+│   ├── test_enumerator.py   # enumlib 集成测试（无 pymatgen 时跳过）
+│   └── test_shry_module.py  # SHRY 工作流（默认用 fake 后端）
+├── docs/
+│   ├── user/shry-enumeration.md   # SHRY 入门讲解
+│   └── dev/shry-module-design.md  # SHRY 模块设计与 bug 历史
 ├── scripts/
-│   └── build_enumlib.sh    # 从源码编译 enumlib（enum.x、makestr.x）
+│   ├── build_enumlib.sh     # 从源码编译 enumlib（enum.x、makestr.x）
+│   └── build_wyckoff_db.py  # 重新生成内置 Wyckoff 数据集
+├── LPSC.cif                 # 示例：argyrodite Li6PS5Cl（F-43m，Li 部分占据）
 ├── pyproject.toml
 └── README.md
 ```
@@ -777,10 +883,11 @@ xtalkit/
 
 | 包 | 用途 | 是否必需 |
 |----|------|----------|
-| [gemmi](https://gemmi.readthedocs.io/) | 空间群数据、CIF I/O | 是 |
-| [rich](https://rich.readthedocs.io/) | TUI 格式化（表格、面板、颜色） | 是 |
-| [pymatgen](https://pymatgen.org/) >=2024.5 | `enumerate` 的 enumlib 封装 | 仅 `enumerate` extra |
-| [enumlib](https://github.com/msg-byu/enumlib) | 对称不等价构型枚举（Fortran） | 仅 `enumerate` 需要 |
-| pytest（开发） | 测试框架 | 是 |
+| [gemmi](https://gemmi.readthedocs.io/) | 空间群数据、CIF I/O | 是（核心） |
+| [rich](https://rich.readthedocs.io/) | TUI 格式化（表格、面板、颜色） | 是（核心） |
+| [pymatgen](https://pymatgen.org/) ≥2024.5 | `enumerate` 的 enumlib 封装 | 仅 `enumerate` extra |
+| [enumlib](https://github.com/msg-byu/enumlib) | 对称不等价枚举（Fortran，源码编译） | 仅 `enumerate` 需要 |
+| [SHRY](https://pypi.org/project/shry/) 1.1.x | 大规模部分占据的 Pólya 枚举（隔离安装） | 仅 `shry` 需要 |
+| pytest（开发） | 测试框架 | 是（开发） |
 
-`enumerate` 子命令延迟导入 pymatgen，因此核心工具箱在没有 pymatgen 时也能正常工作。`uv sync --extra enumerate` + `build_enumlib.sh` 路径见 [枚举功能配置](#枚举功能配置)。
+`enumerate` 延迟导入 pymatgen，`shry` 以子进程调用外部 `shry` CLI，故核心工具箱不装两者也能工作。SHRY **未**声明为 pip 依赖，因为它钉死 `pymatgen≤2023.10.4`，与 `enumerate` extra 冲突——用 `uv tool install shry` 隔离安装（见 [第 3 层](#第-3-层--shry-枚举xtalkit-shry)）。
