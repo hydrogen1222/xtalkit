@@ -489,15 +489,51 @@ uv run pytest tests/test_enumerator.py -v
 
 `xtalkit shry` 面向 enumlib 可能耗尽内存的大规模部分占据体系，提供分阶段、可审计的 SHRY 工作流。原有 `enumerate` 命令仍保留。
 
+你可以把它理解为：把以前这条 enumlib 命令：
+
 ```bash
-xtalkit shry prepare input.cif --out ready.cif --parent-spacegroup 137
-xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
-xtalkit shry enum ready.cif --expect-count <COUNT> --out shry_enum --write-cif --write-degeneracy
-xtalkit shry verify shry_enum --check-count --check-formula --check-dedup --symprec-list 1e-4 1e-3 1e-2
-xtalkit shry postprocess shry_enum --shortest-distance --pair Li Li
+xtalkit enumerate LGPS.cif --max-cell-size 1 --output-dir ./LGPS
 ```
 
-SHRY 通过外部 CLI 调用。若 SHRY 安装在独立环境中，设置 `XTALKIT_SHRY_CMD=/path/to/shry`。完整流程见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)。
+替换成下面四步更安全的 SHRY 流程：
+
+```bash
+# 1）把含部分占据的 CIF 转成 SHRY 能安全读取的 CIF。
+xtalkit shry prepare LGPS.cif \
+  --out LGPS_shry_ready.cif \
+  --vacancy-symbol X \
+  --parent-spacegroup 137 \
+  --target-formula Li20Ge2P4S24 \
+  --scaling-matrix 1 1 1
+
+# 2）先只计数。这一步是安全闸门，比真正生成结构便宜得多。
+xtalkit shry count LGPS_shry_ready.cif \
+  --scaling-matrix 1 1 1 \
+  --symprec 0.01 --angle-tolerance 5 --atol 1e-5 \
+  --out LGPS_shry_count.json
+
+# 3）打开 LGPS_shry_count.json，把 count_only_result 的数字复制到下面。
+xtalkit shry enum LGPS_shry_ready.cif \
+  --scaling-matrix 1 1 1 \
+  --expect-count <把_count_only_result_粘贴到这里> \
+  --out LGPS_SHRY \
+  --remove-vacancy X \
+  --target-formula Li20Ge2P4S24 \
+  --write-cif --write-poscar --write-degeneracy
+
+# 4）验证输出结构集。
+xtalkit shry verify LGPS_SHRY \
+  --check-count --check-formula --check-dedup \
+  --target-formula Li20Ge2P4S24 \
+  --symprec-list 1e-4 1e-3 1e-2
+
+# 可选：按最短 Li-Li 距离排序，方便后续筛结构。
+xtalkit shry postprocess LGPS_SHRY --shortest-distance --pair Li Li
+```
+
+如果你从 `LGPS.txt` 开始用，第一条 `xtalkit build ... -o LGPS` 命令保持不变；只需要把第二条 `xtalkit enumerate ...` 替换成上面的 SHRY 四步。
+
+SHRY 通过外部 CLI 调用。若 SHRY 安装在独立环境中，设置 `XTALKIT_SHRY_CMD=/path/to/shry`。每个文件和每一步的解释见 [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md)。
 
 ---
 

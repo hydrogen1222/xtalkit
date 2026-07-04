@@ -489,15 +489,51 @@ On Windows, `xtalkit/_env.py` additionally applies three runtime workarounds (th
 
 `xtalkit shry` adds a staged workflow for large partially occupied structures where enumlib can exhaust memory. It keeps the existing `enumerate` command intact.
 
+Think of it as replacing this old enumlib line:
+
 ```bash
-xtalkit shry prepare input.cif --out ready.cif --parent-spacegroup 137
-xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
-xtalkit shry enum ready.cif --expect-count <COUNT> --out shry_enum --write-cif --write-degeneracy
-xtalkit shry verify shry_enum --check-count --check-formula --check-dedup --symprec-list 1e-4 1e-3 1e-2
-xtalkit shry postprocess shry_enum --shortest-distance --pair Li Li
+xtalkit enumerate LGPS.cif --max-cell-size 1 --output-dir ./LGPS
 ```
 
-SHRY itself is called as an external CLI. If it lives in a separate environment, set `XTALKIT_SHRY_CMD=/path/to/shry`. See [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md) for the full workflow.
+with four safer SHRY steps:
+
+```bash
+# 1) Turn the partially occupied CIF into a SHRY-ready CIF.
+xtalkit shry prepare LGPS.cif \
+  --out LGPS_shry_ready.cif \
+  --vacancy-symbol X \
+  --parent-spacegroup 137 \
+  --target-formula Li20Ge2P4S24 \
+  --scaling-matrix 1 1 1
+
+# 2) Count first. This is the safety gate; it is much cheaper than generation.
+xtalkit shry count LGPS_shry_ready.cif \
+  --scaling-matrix 1 1 1 \
+  --symprec 0.01 --angle-tolerance 5 --atol 1e-5 \
+  --out LGPS_shry_count.json
+
+# 3) Open LGPS_shry_count.json, copy count_only_result, then paste it below.
+xtalkit shry enum LGPS_shry_ready.cif \
+  --scaling-matrix 1 1 1 \
+  --expect-count <PASTE_COUNT_ONLY_RESULT_HERE> \
+  --out LGPS_SHRY \
+  --remove-vacancy X \
+  --target-formula Li20Ge2P4S24 \
+  --write-cif --write-poscar --write-degeneracy
+
+# 4) Verify the result set.
+xtalkit shry verify LGPS_SHRY \
+  --check-count --check-formula --check-dedup \
+  --target-formula Li20Ge2P4S24 \
+  --symprec-list 1e-4 1e-3 1e-2
+
+# Optional: rank structures by shortest Li-Li distance.
+xtalkit shry postprocess LGPS_SHRY --shortest-distance --pair Li Li
+```
+
+If you start from your `LGPS.txt`, keep the first `xtalkit build ... -o LGPS` command exactly as-is. Replace only the second enumlib command with the SHRY steps above.
+
+SHRY itself is called as an external CLI. If it lives in a separate environment, set `XTALKIT_SHRY_CMD=/path/to/shry`. See [docs/user/shry-enumeration.md](docs/user/shry-enumeration.md) for a beginner-oriented explanation of every file and step.
 
 ---
 
