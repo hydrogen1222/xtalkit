@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 import os
+import shlex
 
 from xtalkit.enumeration.manifest import base_manifest, sha256_file, write_json
-from xtalkit.enumeration.shry_backend import ShryBackend, matrix_args, parse_count_output
+from xtalkit.enumeration.shry_backend import (
+    ShryBackend,
+    matrix_args,
+    parse_count_output,
+    parse_total_combinations,
+    validate_scaling_matrix,
+    validate_tolerances,
+)
 
 
 def count_shry_structures(
@@ -22,7 +30,10 @@ def count_shry_structures(
     """Run ``shry --count-only`` and write a count manifest."""
     if not os.path.exists(cif_path):
         raise FileNotFoundError(cif_path)
-    matrix = scaling_matrix or [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    validate_tolerances(symprec, angle_tolerance, atol)
+    matrix = validate_scaling_matrix(
+        scaling_matrix or [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    )
     backend = backend or ShryBackend()
     args = [
         cif_path,
@@ -41,6 +52,11 @@ def count_shry_structures(
         args.append("--symmetrize")
     result = backend.run(args)
     count = parse_count_output(result.stdout, result.stderr)
+    if count <= 0:
+        raise ValueError(
+            f"SHRY reported {count} unique configurations; a valid exhaustive "
+            "enumeration must contain at least one configuration"
+        )
     payload = base_manifest(
         mode="strict_count_only" if strict else "count_only",
         input_cif=os.path.abspath(cif_path),
@@ -51,7 +67,8 @@ def count_shry_structures(
         atol=atol,
         symmetrize_flag=bool(symmetrize),
         count_only_result=count,
-        shry_command_line=" ".join(result.command),
+        total_combinations=parse_total_combinations(result.stdout, result.stderr),
+        shry_command_line=shlex.join(result.command),
         backend_version=backend.version(),
     )
     path = out_json or "count.json"

@@ -1,10 +1,11 @@
 import pytest
+import gemmi
+from xtalkit.matcher import _apply_symmetry
 from xtalkit.spacegroup import (
     wyckoff_positions,
     crystal_system,
     default_cell_params,
     sg_name,
-    WyckoffInfo,
 )
 
 
@@ -35,6 +36,17 @@ def test_all_230_space_groups_have_wyckoff_data():
         for p in positions:
             assert p.multiplicity >= 1
             assert p.coordinates  # non-empty
+
+
+def test_every_bundled_wyckoff_template_has_declared_orbit_size():
+    """Exercise the shared expression evaluator across all 1,731 positions."""
+    for number in range(1, 231):
+        spacegroup = gemmi.SpaceGroup(number)
+        for position in wyckoff_positions(number):
+            orbit = _apply_symmetry(position.coordinates, spacegroup)
+            assert len(orbit) == position.multiplicity, (
+                number, position.letter, position.coordinates, len(orbit)
+            )
 
 
 def test_wyckoff_position_data():

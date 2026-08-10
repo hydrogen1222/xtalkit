@@ -18,7 +18,9 @@ def _ensure_dir(path: str) -> None:
 
 def _frac_dist(a: gemmi.Fractional, b: gemmi.Fractional) -> float:
     """Minimum-image distance in fractional space (for orbit dedup)."""
-    w = lambda x: x - round(x)
+    def w(value: float) -> float:
+        return value - round(value)
+
     return math.sqrt(w(a.x - b.x) ** 2 + w(a.y - b.y) ** 2 + w(a.z - b.z) ** 2)
 
 
@@ -38,6 +40,15 @@ def write_cif(
     block_name = structure.name if structure.name else "xtalkit"
     block = doc.add_new_block(block_name)
 
+    # ``write_cif`` is used only by marker/skeleton outputs. Dummy elements
+    # are visualization proxies and must not be mistaken for a physical
+    # composition in a downstream calculation.
+    block.set_pair(
+        "_audit_creation_method",
+        "'xtalkit visualization-only Wyckoff markers; dummy species are not physical atoms'",
+    )
+    block.set_pair("_xtalkit_output_purpose", "visualization_only")
+
     # Cell parameters
     block.set_pair("_cell_length_a", str(cell.a))
     block.set_pair("_cell_length_b", str(cell.b))
@@ -47,6 +58,7 @@ def write_cif(
     block.set_pair("_cell_angle_gamma", str(cell.gamma))
 
     # Space group (CIF requires quoting of values with spaces)
+    sg_obj = None
     if structure.spacegroup_hm:
         block.set_pair(
             "_symmetry_space_group_name_H-M",
@@ -54,56 +66,61 @@ def write_cif(
         )
 
     # Symmetry operations from the space group
-    try:
-        sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
-    except Exception:
-        sg_obj = None
+        try:
+            sg_obj = gemmi.SpaceGroup(structure.spacegroup_hm)
+            block.set_pair("_symmetry_Int_Tables_number", str(sg_obj.number))
+        except Exception:
+            sg_obj = None
     if sg_obj is not None:
         sym_loop = block.init_loop("_symmetry_equiv_pos_", ["site_id", "as_xyz"])
         for i, op in enumerate(sg_obj.operations()):
             sym_loop.add_row([str(i + 1), f"'{op.triplet()}'"])
 
-    # Atom site loop (mmCIF format with fractional coords)
-    loop = block.init_loop("_atom_site.", [
-        "group_PDB", "id", "type_symbol", "label_atom_id",
-        "Cartn_x", "Cartn_y", "Cartn_z",
-        "fract_x", "fract_y", "fract_z",
+    # Standard small-molecule CIF atom loop.  In particular, occupancy must be
+    # retained: marked disordered structures are still crystallographic data,
+    # not merely pictures.
+    loop = block.init_loop("_atom_site_", [
+        "label", "type_symbol", "fract_x", "fract_y", "fract_z", "occupancy",
     ])
 
-    # Original atoms
+    # Original atom labels must remain unique. Duplicate labels make atom-site
+    # identity ambiguous in CIF and also break replace-mode matching.
+    used_labels: set[str] = set()
     for model in structure:
         for chain in model:
             for residue in chain:
                 for atom in residue:
+                    if atom.name in used_labels:
+                        raise ValueError(f"duplicate atom label {atom.name!r}")
+                    used_labels.add(atom.name)
                     frac = cell.fractionalize(atom.pos)
                     loop.add_row([
-                        "ATOM",
                         atom.name,
                         atom.element.name,
-                        atom.name,
-                        f"{atom.pos.x:.6f}",
-                        f"{atom.pos.y:.6f}",
-                        f"{atom.pos.z:.6f}",
-                        f"{frac.x:.6f}",
-                        f"{frac.y:.6f}",
-                        f"{frac.z:.6f}",
+                        f"{frac.x:.10f}",
+                        f"{frac.y:.10f}",
+                        f"{frac.z:.10f}",
+                        # Gemmi stores occupancy as float32; seven significant
+                        # digits preserve all meaningful input precision without
+                        # exposing binary tails such as 0.6909999847.
+                        f"{atom.occ:.7g}",
                     ])
 
     # Dummy atoms
     for da in dummy_atoms:
-        frac = gemmi.Fractional(*da.fractional_coords)
-        orth = cell.orthogonalize(frac)
+        label = da.label
+        suffix = 2
+        while label in used_labels:
+            label = f"{da.label}_{suffix}"
+            suffix += 1
+        used_labels.add(label)
         loop.add_row([
-            "ATOM",
-            da.label,
+            label,
             da.element,
-            da.label,
-            f"{orth.x:.6f}",
-            f"{orth.y:.6f}",
-            f"{orth.z:.6f}",
-            f"{da.fractional_coords[0]:.6f}",
-            f"{da.fractional_coords[1]:.6f}",
-            f"{da.fractional_coords[2]:.6f}",
+            f"{da.fractional_coords[0]:.10f}",
+            f"{da.fractional_coords[1]:.10f}",
+            f"{da.fractional_coords[2]:.10f}",
+            "1",
         ])
 
     doc.write_file(output_path)
@@ -114,39 +131,94 @@ def write_xyz(
     dummy_atoms: list[DummyAtom],
     output_path: str,
 ) -> None:
-    """Write structure with dummy atoms as an XYZ file.
+    """Write a symmetry-expanded visualization cell as an XYZ file.
 
-    Coordinates are converted to Cartesian using the structure's cell.
+    XYZ cannot store symmetry or occupancy, so asymmetric-unit atoms and
+    Wyckoff representatives are explicitly expanded under the structure's
+    space group. Partial-occupancy species are each shown on their full orbit;
+    the result is therefore for visualization, not quantitative analysis.
     """
     _ensure_dir(output_path)
 
     all_atoms: list[tuple[str, float, float, float]] = []
     cell = structure.cell
+    sg = gemmi.SpaceGroup(structure.spacegroup_hm) \
+        if structure.spacegroup_hm else gemmi.SpaceGroup(1)
 
-    # Collect original atoms (atom.pos is already Cartesian)
+    # Expand original asymmetric-unit atoms.
     for model in structure:
         for chain in model:
             for residue in chain:
                 for atom in residue:
-                    all_atoms.append((
-                        atom.element.name,
-                        atom.pos.x,
-                        atom.pos.y,
-                        atom.pos.z,
-                    ))
+                    frac = cell.fractionalize(atom.pos)
+                    for image in _expanded_orbit(frac, sg):
+                        orth = cell.orthogonalize(image)
+                        all_atoms.append((
+                            atom.element.name, orth.x, orth.y, orth.z,
+                        ))
 
-    # Add dummy atoms (convert fractional to Cartesian)
+    # Expand each dummy Wyckoff representative.
     for da in dummy_atoms:
         frac = gemmi.Fractional(*da.fractional_coords)
-        orth = cell.orthogonalize(frac)
-        all_atoms.append((da.element, orth.x, orth.y, orth.z))
+        for image in _expanded_orbit(frac, sg):
+            orth = cell.orthogonalize(image)
+            all_atoms.append((da.element, orth.x, orth.y, orth.z))
 
-    lines = [f"{len(all_atoms)}", "xtalkit generated"]
+    lines = [
+        f"{len(all_atoms)}",
+        "xtalkit symmetry-expanded visualization; occupancy is not encoded",
+    ]
     for el, x, y, z in all_atoms:
         lines.append(f"{el:<4} {x:12.6f} {y:12.6f} {z:12.6f}")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines))
+
+
+def _expanded_orbit(
+    representative: gemmi.Fractional,
+    spacegroup: gemmi.SpaceGroup,
+) -> list[gemmi.Fractional]:
+    """Expand and periodically deduplicate one fractional representative."""
+    images: list[gemmi.Fractional] = []
+    for op in spacegroup.operations():
+        transformed = op.apply_to_xyz([
+            representative.x, representative.y, representative.z,
+        ])
+        image = gemmi.Fractional(*transformed)
+        image.wrap_to_unit()
+        if not any(_frac_dist(image, old) < 1e-7 for old in images):
+            images.append(image)
+    return images
+
+
+def _chemical_formula_sum(
+    structure: gemmi.Structure,
+    spacegroup: gemmi.SpaceGroup,
+) -> str:
+    """Return the symmetry-expanded unit-cell composition for a CIF tag."""
+    amounts: dict[str, float] = {}
+    for model in structure:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    frac = structure.cell.fractionalize(atom.pos)
+                    multiplicity = len(_expanded_orbit(frac, spacegroup))
+                    amounts[atom.element.name] = (
+                        amounts.get(atom.element.name, 0.0)
+                        + float(atom.occ) * multiplicity
+                    )
+    if not amounts:
+        raise ValueError("cannot write a CIF for a structure without atoms")
+    parts = []
+    for symbol, amount in amounts.items():
+        normalized = round(amount, 7)
+        if normalized <= 0:
+            raise ValueError(
+                f"non-positive unit-cell amount for {symbol}: {normalized}"
+            )
+        parts.append(f"{symbol}{normalized:.7g}")
+    return " ".join(parts)
 
 
 def write_structure_cif(
@@ -193,21 +265,31 @@ def write_structure_cif(
         for i, op in enumerate(sg.operations()):
             sym_loop.add_row([str(i + 1), f"'{op.triplet()}'"])
 
+    formula_group = sg or gemmi.SpaceGroup(1)
+    block.set_pair(
+        "_chemical_formula_sum",
+        f"'{_chemical_formula_sum(structure, formula_group)}'",
+    )
+
     loop = block.init_loop("_atom_site_", [
         "label", "type_symbol", "fract_x", "fract_y", "fract_z", "occupancy",
     ])
+    used_labels: set[str] = set()
     for model in structure:
         for chain in model:
             for residue in chain:
                 for atom in residue:
+                    if atom.name in used_labels:
+                        raise ValueError(f"duplicate atom label {atom.name!r}")
+                    used_labels.add(atom.name)
                     frac = cell.fractionalize(atom.pos)
                     loop.add_row([
                         atom.name,
                         atom.element.name,
-                        f"{frac.x:.6f}",
-                        f"{frac.y:.6f}",
-                        f"{frac.z:.6f}",
-                        f"{atom.occ:.4f}",
+                        f"{frac.x:.10f}",
+                        f"{frac.y:.10f}",
+                        f"{frac.z:.10f}",
+                        f"{atom.occ:.7g}",
                     ])
 
     doc.write_file(output_path)
@@ -236,19 +318,15 @@ def write_structure_xyz(
             for residue in chain:
                 for atom in residue:
                     frac = cell.fractionalize(atom.pos)
-                    seen: list[gemmi.Fractional] = []
-                    for op in sg.operations():
-                        c = op.apply_to_xyz([frac.x, frac.y, frac.z])
-                        f = gemmi.Fractional(*c)
-                        f.wrap_to_unit()
-                        if not any(_frac_dist(f, s) < 1e-3 for s in seen):
-                            seen.append(f)
-                    for f in seen:
+                    for f in _expanded_orbit(frac, sg):
                         orth = cell.orthogonalize(f)
                         all_atoms.append(
                             (atom.element.name, orth.x, orth.y, orth.z))
 
-    lines = [str(len(all_atoms)), "xtalkit built"]
+    lines = [
+        str(len(all_atoms)),
+        "xtalkit symmetry-expanded visualization; occupancy is not encoded",
+    ]
     for el, x, y, z in all_atoms:
         lines.append(f"{el:<4} {x:12.6f} {y:12.6f} {z:12.6f}")
 

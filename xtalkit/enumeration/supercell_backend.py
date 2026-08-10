@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
+
+from xtalkit.enumeration.shry_backend import validate_scaling_matrix
 
 
 def run_supercell_count(
@@ -30,7 +33,9 @@ def run_supercell_count(
             "program and set XTALKIT_SUPERCELL_CMD, or put `supercell` on PATH."
         )
 
-    matrix = scaling_matrix or [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    matrix = validate_scaling_matrix(
+        scaling_matrix or [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    )
     # Common supercell builds accept input file plus -s/--supercell-like sizes.
     # Users with different builds can wrap the executable path in a small script.
     args = [exe, cif_path, "--supercell", *[str(v) for row in matrix for v in row], "--count-only"]
@@ -38,7 +43,7 @@ def run_supercell_count(
     if result.returncode != 0:
         raise RuntimeError(
             "supercell command failed:\n"
-            f"  {' '.join(args)}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+            f"  {shlex.join(args)}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
     return parse_supercell_count(result.stdout + "\n" + result.stderr)
 

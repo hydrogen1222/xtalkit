@@ -1,273 +1,319 @@
-# SHRY Enumeration: Beginner Guide
+# Running a SHRY enumeration safely
 
-This page explains how to replace the old enumlib command with the safer SHRY
-workflow. It is written for the LGPS case in `LGPS.txt`, but the same pattern
-works for other partially occupied CIF files.
+This guide is for a real calculation, not just a CLI demonstration. Read it
+once before submitting a large occupational-disorder problem.
 
-## 0. What changes compared with enumlib?
-
-Your old workflow had two commands:
-
-```bash
-# Build the average/disordered CIF from refinement data.
-xtalkit build ... -o LGPS
-
-# Old enumlib route.
-xtalkit enumerate LGPS.cif --max-cell-size 1 --output-dir ./LGPS
-```
-
-With SHRY, keep the first `xtalkit build ... -o LGPS` command. Replace only the
-second command with these stages:
-
-1. `prepare`: make a SHRY-ready CIF and audit the parent symmetry.
-2. `count`: count symmetry-inequivalent structures before generating them.
-3. `enum`: generate structures only after you have a count.
-4. `verify`: check count, formula, vacancies, duplicates, and symmetry sensitivity.
-5. `postprocess`: optional ranking or job-file generation.
-
-This is deliberately more verbose than one enumlib command because each step
-creates an audit file you can inspect before spending time and memory.
-
-## 1. Install or point to SHRY
-
-`xtalkit shry` calls the external `shry` command. SHRY is a pure-Python
-[PyPI package](https://pypi.org/project/shry/) (no compilation), but it pins
-`pymatgen<=2023.10.4`, which **conflicts** with xtalkit's `enumerate` extra
-(`pymatgen>=2024.5`). So install SHRY in an *isolated* environment, not the
-xtalkit venv:
-
-```bash
-uv tool install shry                       # isolated env; `shry` goes on PATH
-export XTALKIT_SHRY_CMD="$(which shry)"    # point xtalkit at it
-shry --version                             # verify (e.g. SHRY 1.1.8)
-```
-
-Add the `export` line to your shell profile so it persists. If `shry` is
-already on `PATH` (e.g. from a conda env you activate manually), the
-`XTALKIT_SHRY_CMD` export is optional — xtalkit falls back to `shutil.which("shry")`.
-
-> Do **not** `uv pip install shry` into the xtalkit venv: it downgrades
-> pymatgen to 2023.10.4 and breaks `uv sync --extra enumerate`.
-
-## 1b. Provide a primitive CIF for F-/I-centered cells
-
-Unlike `xtalkit enumerate`, **`shry` does not auto-primitivize** — it
-enumerates the cell you give it. A conventional F-centered argyrodite cell
-(LPSC, Li1 on 48h @ 0.5 = 48 Li-sites) gives C(48,24) ≈ 10¹³ candidates and
-will hang. The primitive cell (12 Li-sites → C(12,6) = 924 → **48
-inequivalent** under F-43m) is tractable.
-
-So before `prepare`, supply a **primitive** CIF that carries the F-43m
-symmetry operations (not P1 — `prepare` keeps the CIF's declared symmetry,
-and strict mode refuses P1). Convert with spglib:
-
-```python
-# Save as make_primitive.py
-import spglib, numpy as np
-from pymatgen.core import Structure
-s = Structure.from_file("LPSC.cif")
-nums = [list(site.species.elements)[0].Z for site in s]
-cell = (s.lattice.matrix, s.frac_coords, np.array(nums))
-lat, pos, num = spglib.standardize_cell(cell, to_primitive=True)
-sym = spglib.get_symmetry((lat, pos, num))
-# ... then write lat/pos/sym to a CIF (see scripts/ in the repo, or use the
-# xtalkit SHRY test helper). The key points: list only the asymmetric-unit
-# atoms, and include the primitive symops as `_symmetry_equiv_pos_as_xyz`.
-```
-
-If your input is already a primitive CIF (or a P1 cell with few sites), skip
-this step. For the rest of this guide we assume `LPSC_prim.cif` is such a
-primitive F-43m CIF with Li1 @ 0.5.
-
-## 2. Build `LGPS.cif`
-
-Use the first command from `LGPS.txt` unchanged. In short, it should end with:
-
-```bash
-xtalkit build ... -o LGPS
-```
-
-Expected output:
+SHRY and enumlib solve the same broad problem but have different working
+styles. `xtalkit enumerate` is convenient for small and medium primitive
+structures. The SHRY path is better when you need an exact count before
+generation and a recorded check at every stage.
 
 ```text
-LGPS.cif
+input CIF
+   │
+   ├─ prepare  → corrected/checked partial-occupancy CIF
+   ├─ count    → number of symmetry-inequivalent structures
+   ├─ enum     → raw and cleaned ordered structures
+   ├─ verify   → count, formula, vacancy, and duplicate report
+   └─ postprocess (optional) → rankings or tblite job folders
 ```
 
-This is the average partially occupied structure from your refinement data.
+## 1. Install the two environments
 
-## 3. Prepare a SHRY-ready CIF
+SHRY 1.1.8 requires an older pymatgen than xtalkit. Keep the executable in an
+isolated Python 3.11 uv tool environment:
 
 ```bash
-xtalkit shry prepare LGPS.cif \
-  --out LGPS_shry_ready.cif \
+uv python install 3.11
+uv tool install --python 3.11 'shry==1.1.8'
+shry --help
+uv tool list
+```
+
+Do not install SHRY with `uv pip install` inside this repository. If the
+command is not on `PATH`, point xtalkit to it explicitly:
+
+```bash
+export XTALKIT_SHRY_CMD="$(command -v shry)"
+```
+
+The xtalkit-side audits use current pymatgen and spglib:
+
+```bash
+uv sync --extra enumerate
+```
+
+Compiled enumlib is not required unless you also request the optional
+cross-backend check.
+
+## 2. Check the input before running anything
+
+You should know all of the following:
+
+1. Which cell is in the CIF: primitive or conventional.
+2. The intended parent space group and setting.
+3. Which rows describe the same disordered crystallographic site.
+4. The exact ordered-cell formula after applying the scaling matrix.
+5. Whether every partial occupancy can become an integer atom count.
+
+Do not infer these from the filename. Inspect the CIF tags, refinement table,
+and chemical formula.
+
+### F- and I-centred conventional cells
+
+SHRY enumerates the cell it receives. It does not automatically convert an
+F- or I-centred conventional cell to a primitive one. That distinction can be
+enormous: choosing 24 atoms among 48 sites has roughly (10^{13}) raw
+combinations, while choosing 6 among 12 has only 924.
+
+Whenever possible, export a primitive cell from the refinement or structure
+program that produced the data. If you must convert with pymatgen, the
+following produces a P1 CIF containing every site of the primitive cell:
+
+```python
+import gemmi
+from pymatgen.core import Structure
+from pymatgen.io.cif import CifWriter
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+source = Structure.from_file("conventional.cif")
+analyzer = SpacegroupAnalyzer(source, symprec=0.01, angle_tolerance=5)
+primitive = analyzer.get_primitive_standard_structure()
+
+# P1 output lists the complete primitive cell. The prepare stage below will
+# independently detect its actual parent symmetry. Pymatgen gives the species
+# rows of one disordered site the same label, so make every CIF row unique.
+CifWriter(primitive, symprec=None).write_file("primitive_p1_raw.cif")
+document = gemmi.cif.read_file("primitive_p1_raw.cif")
+labels = document.sole_block().find_loop("_atom_site_label")
+for index in range(len(labels)):
+    labels[index] = f"site{index + 1}"
+document.write_file("primitive_p1.cif")
+
+print("conventional sites:", len(source))
+print("primitive sites:", len(primitive))
+print("primitive formula:", primitive.composition)
+```
+
+This conversion is not self-validating. Compare the site count, composition,
+lattice, and partial occupancies with the source, then remove or archive the
+intermediate `primitive_p1_raw.cif`. In the next step, always pass
+`--parent-spacegroup`; xtalkit will reject the final file if independent
+detection does not recover the intended group.
+
+Do not attach conventional F/I symmetry operations to arbitrary primitive
+vectors. A P1 file listing the complete primitive cell is less elegant but
+unambiguous.
+
+## 3. Prepare the SHRY input
+
+The target formula is the **exact formula of the cell that SHRY will
+enumerate**, after multiplying by the scaling-matrix determinant and removing
+vacancies. It is not automatically reduced.
+
+```bash
+uv run xtalkit shry prepare primitive_p1.cif \
+  --out ready.cif \
   --vacancy-symbol X \
-  --parent-spacegroup 137 \
-  --target-formula Li20Ge2P4S24 \
+  --parent-spacegroup 216 \
+  --target-formula Li6PS5Cl \
   --scaling-matrix 1 1 1
 ```
 
-What this does:
+Preparation does four important things:
 
-- checks that the CIF says parent space group 137;
-- fills missing vacancy occupancy with explicit `X`;
-- checks every disorder group sums to occupancy 1;
-- checks the 1x cell can hold integer counts;
-- writes audit files.
+- completes a partially occupied site with explicit `X` vacancy rows;
+- rejects site occupancies below zero, above one, or summing above one;
+- checks integer atom counts and the exact target formula;
+- detects the parent symmetry independently and records site orbits.
 
-Expected output files:
+It writes:
 
 ```text
-LGPS_shry_ready.cif
-LGPS_shry_ready.cif.manifest.json
-LGPS_shry_ready.cif.orbit_grouping.json
+ready.cif
+ready.cif.manifest.json
+ready.cif.orbit_grouping.json
 ```
 
-If this step fails, do not continue. Fix the input CIF or the occupancy choices
-first.
+Read the manifest before continuing. Check at least
+`parent_spacegroup_detected`, `supercell_matrix`, `site_orbits`, and
+`target_formula_after_removing_vacancy`.
+
+### Deliberate occupancy idealization
+
+Only idealize a refined decimal when the crystallographic model justifies it.
+For example:
+
+```bash
+uv run xtalkit shry prepare input.cif \
+  --out ready.cif \
+  --set-occupancy "Li1:11/16 M1:Ge1/2P1/2" \
+  --parent-spacegroup 137 \
+  --target-formula Li20Ge2P4S24
+```
+
+The label before each colon must exist in the input CIF. The exact fractions
+and the resulting formula are stored in the manifest; no silent rounding is
+performed.
 
 ## 4. Count before generating
 
 ```bash
-xtalkit shry count LGPS_shry_ready.cif \
+uv run xtalkit shry count ready.cif \
   --scaling-matrix 1 1 1 \
   --symprec 0.01 \
   --angle-tolerance 5 \
   --atol 1e-5 \
-  --out LGPS_shry_count.json
+  --out count.json
 ```
 
-Open `LGPS_shry_count.json` and find:
-
-```json
-"count_only_result": 1234
-```
-
-The number above is an example. Copy your real number.
-
-Decision point:
-
-- If the count is small or reasonable, continue.
-- If the count is enormous, stop and rethink the disorder definition before
-  generating structures.
-
-## 5. Generate structures
-
-Paste the count from `LGPS_shry_count.json` into `--expect-count`.
+Inspect the result with any JSON viewer, for example:
 
 ```bash
-xtalkit shry enum LGPS_shry_ready.cif \
+python -m json.tool count.json
+```
+
+`count_only_result` is the number of inequivalent output structures.
+`total_combinations`, when reported by SHRY, is the unsymmetrized combination
+count. Also check the input hash, matrix, tolerances, and backend version.
+
+Do not proceed merely because the command finished. Estimate the storage and
+post-processing cost of `count_only_result`. If the result is unexpectedly
+large, re-check the cell choice and disorder model rather than starting
+generation.
+
+## 5. Generate into a new directory
+
+Copy the exact count into `--expect-count`:
+
+```bash
+uv run xtalkit shry enum ready.cif \
   --scaling-matrix 1 1 1 \
-  --expect-count 1234 \
-  --out LGPS_SHRY \
+  --expect-count <COUNT_FROM_JSON> \
   --remove-vacancy X \
-  --target-formula Li20Ge2P4S24 \
-  --write-cif \
-  --write-poscar \
-  --write-degeneracy
+  --target-formula Li6PS5Cl \
+  --write-cif --write-poscar \
+  --out SHRY_run
 ```
 
-Replace `1234` with your real `count_only_result`.
-
-Main output directory:
+`SHRY_run` must be new or empty. A successful run contains:
 
 ```text
-LGPS_SHRY/
-  input/
-  raw_shry/
-  clean_cif/
-  poscar/
-  checks/
-  manifest.json
-  manifest.jsonl
+SHRY_run/
+├── input/       copied input, command, SHRY environment, mod-only result
+├── raw_shry/    original SHRY CIFs, including vacancy pseudo-species
+├── clean_cif/   ordered CIFs after vacancy removal
+├── poscar/      optional POSCAR files
+├── checks/      verification and ranking reports
+└── manifest.json
 ```
 
-The cleaned structures are in:
+Before full generation, xtalkit runs SHRY's `--mod-only` path and compares the
+expanded composition with the prepared input. A chemistry change stops strict
+mode.
 
-```text
-LGPS_SHRY/clean_cif/
-```
-
-The vacancy species `X` is removed from those cleaned CIFs.
+If generation fails, the directory is intentionally retained. Read
+`manifest.json` for `failure_stage` and inspect the copied command and raw
+output. Do not mix a retry into the same directory.
 
 ## 6. Verify the result
 
 ```bash
-xtalkit shry verify LGPS_SHRY \
-  --check-count \
-  --check-formula \
-  --check-dedup \
-  --target-formula Li20Ge2P4S24 \
+uv run xtalkit shry verify SHRY_run \
+  --target-formula Li6PS5Cl
+```
+
+The default verification checks:
+
+- generated count against the expected count;
+- exact ordered formula and occupancy one;
+- removal of the vacancy pseudo-species;
+- duplicates confirmed by pymatgen `StructureMatcher`.
+
+For a tolerance-sensitivity check:
+
+```bash
+uv run xtalkit shry verify SHRY_run \
+  --target-formula Li6PS5Cl \
   --symprec-list 1e-4 1e-3 1e-2
 ```
 
-This checks:
+All requested tolerances must give a stable count. A change is a reason to
+inspect nearly symmetric coordinates, not a value to average away.
 
-- generated count equals count-only result;
-- every cleaned structure has formula `Li20Ge2P4S24`;
-- no `X` vacancy species remains;
-- no obvious duplicate structure buckets exist;
-- SHRY counts are stable across a few symmetry tolerances.
+### Degeneracy
 
-If this fails, inspect `LGPS_SHRY/checks/`.
+`--write-degeneracy` and `--check-degeneracy` are valid only when the scaling
+matrix determinant is one and the CIF-declared group equals the independently
+detected enumeration group. A genuine supercell needs translational operations
+that are not represented by the parent-cell action, so xtalkit refuses to
+claim a rigorous degeneracy there.
+
+A P1 primitive file whose higher symmetry is detected independently can still
+be enumerated, but it cannot satisfy that declared-group requirement. Leave
+degeneracy disabled unless you have a correctly declared representation.
 
 ## 7. Optional post-processing
 
-Rank by shortest Li-Li distance:
+Rank by shortest distance for a chosen pair:
 
 ```bash
-xtalkit shry postprocess LGPS_SHRY --shortest-distance --pair Li Li
+uv run xtalkit shry postprocess SHRY_run \
+  --shortest-distance --pair Li Li
 ```
 
-Write tblite folders and a Slurm array script:
+Rank by charge-neutral ordered Ewald energy:
 
 ```bash
-xtalkit shry postprocess LGPS_SHRY --write-tblite --write-slurm
+uv run xtalkit shry postprocess SHRY_run \
+  --ewald --ewald-charges Li:1 P:5 S:-2 Cl:-1
 ```
 
-Write CP2K folders:
+Generate periodic tblite POSCAR jobs and a Slurm array:
 
 ```bash
-xtalkit shry postprocess LGPS_SHRY --write-cp2k --cp2k-template cp2k.inp
+uv run xtalkit shry postprocess SHRY_run \
+  --write-tblite --charge 0 --uhf 0
+uv run xtalkit shry postprocess SHRY_run --write-slurm
 ```
 
-Ewald ranking requires explicit oxidation states:
+Install tblite as described in the main README. Review charge and number of
+unpaired electrons in every generated `run.sh`; the defaults describe a
+neutral singlet and may be wrong for your material.
 
-```bash
-xtalkit shry postprocess LGPS_SHRY --ewald \
-  --ewald-charges Li:1 Ge:4 P:5 S:-2
-```
+## 8. Reproducibility checklist
 
-If you are ranking an arbitrary folder of standalone structures instead of SHRY outputs, use the standalone `xtalkit ewald` command. It supports flat folders, one-level nested folders, top-N filtering, and selected/rest grouping.
+Before reporting a production enumeration, retain and review:
 
-## 8. Quick command summary for LGPS
+- the original and prepared CIFs;
+- exact target formula and scaling matrix;
+- parent space group, setting, and detected Hall symbol;
+- SHRY version and isolated package snapshot;
+- count JSON and successful generation manifest;
+- verification report and any tolerance scan;
+- the code revision used for the run.
 
-```bash
-# Keep your existing build command from LGPS.txt first.
-xtalkit build ... -o LGPS
+The count and generated count must agree. Every cleaned structure must have the
+target formula, no vacancy pseudo-species, and no confirmed duplicate.
 
-xtalkit shry prepare LGPS.cif \
-  --out LGPS_shry_ready.cif \
-  --vacancy-symbol X \
-  --parent-spacegroup 137 \
-  --target-formula Li20Ge2P4S24 \
-  --scaling-matrix 1 1 1
+## 9. Common failures
 
-xtalkit shry count LGPS_shry_ready.cif \
-  --scaling-matrix 1 1 1 \
-  --symprec 0.01 --angle-tolerance 5 --atol 1e-5 \
-  --out LGPS_shry_count.json
+**Detected group differs from `--parent-spacegroup`**
+: Check the cell, setting, coordinates, and symmetry tolerance. Do not accept
+  the detected group until it agrees with the intended parent model.
 
-# Replace <COUNT> with count_only_result from LGPS_shry_count.json.
-xtalkit shry enum LGPS_shry_ready.cif \
-  --scaling-matrix 1 1 1 \
-  --expect-count <COUNT> \
-  --out LGPS_SHRY \
-  --remove-vacancy X \
-  --target-formula Li20Ge2P4S24 \
-  --write-cif --write-poscar --write-degeneracy
+**Occupancy cannot be integerized**
+: The orbit multiplicity and supercell determinant cannot produce integer atom
+  counts. Correct the disorder model or choose a justified scaling matrix.
 
-xtalkit shry verify LGPS_SHRY \
-  --check-count --check-formula --check-dedup \
-  --target-formula Li20Ge2P4S24 \
-  --symprec-list 1e-4 1e-3 1e-2
-```
+**`--mod-only` changed the chemistry**
+: Compare `input/shry_ready.cif` and `input/shry_mod_only.cif`. Do not continue
+  strict generation until the change is understood.
+
+**Generated count differs from count-only result**
+: Keep the failed directory and compare command lines, tolerances, input hash,
+  and SHRY version. Never merge partial output with another run.
+
+**Output directory is not empty**
+: Choose a fresh path. This rule prevents stale structures from being counted
+  as results of the current run.

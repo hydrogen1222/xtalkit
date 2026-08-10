@@ -22,7 +22,7 @@ Primary use cases:
 | Package manager | uv | user preference |
 | Core library | Gemmi | built-in 230 space groups with Wyckoff data, fast CIF I/O, CCP4-maintained |
 | Dummy atoms | rare elements (Xe→Kr→Rn→Ar→Ne→He) | never appear in real CIFs, VESTA assigns distinct colors |
-| Matching tolerance | 0.5 fractional default (configurable) | loose enough for experimental data from Materials Project |
+| Matching tolerance | 0.01 fractional default (configurable) | accommodates ordinary refinement/rounding noise without broadly collapsing special-position constraints |
 | Output formats | .cif, .xyz | .cif is primary; .xyz as auxiliary |
 | Space group data | Gemmi offline + `fetch` for updates | offline-first, network optional |
 | Cell params (skeleton) | built-in typical values per SG + user override | each SG has one preset from a known material |
@@ -124,11 +124,12 @@ Rare elements in priority order: Xe(54) → Kr(36) → Rn(86) → Ar(18) → Ne(
 
 ## Matching logic (matcher.py)
 
-1. For each Wyckoff position, generate all equivalent sites via the SG symmetry operations
-2. For each atom in the CIF, compute distance to every Wyckoff equivalent site
-3. If minimum distance ≤ tolerance (default 0.5 fractional units), the atom occupies that Wyckoff position
-4. Return mapping: which atoms are at which Wyckoff positions
-5. Warn if some atoms have no match (possible SG mismatch or poor data)
+1. For each atom, generate its symmetry-related fractional-coordinate images.
+2. Solve each restricted linear Wyckoff template (`x`, `2x`, `1/4+x`, etc.)
+   against every image, with periodic residuals.
+3. The first, lowest-multiplicity position satisfying all shared-variable
+   constraints within tolerance (default 0.01 fractional units) is selected.
+4. Return the atom-label to Wyckoff-label mapping; unmatched atoms are omitted.
 
 ## TUI design
 
@@ -155,7 +156,7 @@ Two-level menu structure. Main menu:
   > Space group number: 216
 
     Wyckoff positions in F-43m (No. 216):
-    4a  4b  4c  4d  16e  24f  24g  48h
+    4a  4b  4c  4d  16e  24f  24g  48h  96i
 
   > Wyckoff positions to mark (comma-separated, or 'all'): 4a,24f
 
@@ -163,7 +164,7 @@ Two-level menu structure. Main menu:
 
   > Output format: [1] cif  [2] xyz  [3] all  > 3
 
-  > Tolerance (default 0.5, fractional): [Enter for default]
+  > Tolerance (default 0.01, fractional): [Enter for default]
 
   ✓ Done. Saved to:
     ./Li6PS5Cl_WYCK.cif
@@ -195,14 +196,15 @@ Two-level menu structure. Main menu:
   Crystal System: cubic
   Wyckoff Positions:
     Label    Site Sym    Coordinates
-    4a       -4          0,0,0
-    4b       -4          1/2,1/2,1/2
-    4c       -4          1/4,1/4,1/4
-    4d       -4          3/4,3/4,3/4
-    16e      .3m         x,x,x
-    24f      ..m         x,0,0
-    24g      ..m         1/4,1/4,z
-    48h      1..         x,x,z
+    4a       -43m        0,0,0
+    4b       -43m        1/2,1/2,1/2
+    4c       -43m        1/4,1/4,1/4
+    4d       -43m        3/4,3/4,3/4
+    16e      3m          x,x,x
+    24f      mm2         x,0,0
+    24g      mm2         x,1/4,1/4
+    48h      m           x,x,z
+    96i      1           x,y,z
 ```
 
 ## Output formats
@@ -226,7 +228,7 @@ Naming: `{original_name}_WYCK.{ext}` for mark, `SG{num}_skeleton.{ext}` for skel
 
 ## Configuration
 
-- `--tol` / `TOLERANCE` env var: matching tolerance in fractional coordinate units (default 0.5)
+- `--tol` / `TOLERANCE` env var: matching tolerance in fractional coordinate units (default 0.01)
 - `--map 4a:Xe,16e:Rn`: override dummy element assignment
 - `--cell a b c α β γ`: override cell parameters for skeleton
 

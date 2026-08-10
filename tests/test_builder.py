@@ -13,6 +13,7 @@ from xtalkit.builder import (
     detect_wyckoff,
 )
 from xtalkit.exporter import write_structure_cif, write_structure_xyz
+from xtalkit.utils import parse_linear_axis
 
 
 # --- free_params / eval_coord ---------------------------------------------
@@ -142,6 +143,28 @@ def test_formula_partial_occupancy():
     assert format_formula({"Li": 2.0, "Cu": 2.0}) == "LiCu"  # integers, GCD 2
     # 16e mult 16 x occ 0.4 -> 6.4 (fractional)
     assert format_formula({"Li": 6.4}) == "Li6.4"
+    # Regression: rounding to integer 1 must not erase a fractional count.
+    assert format_formula({"Li": 1.4, "S": 1.0}) == "Li1.4S1"
+
+
+def test_formula_and_stoichiometry_reject_nonphysical_values():
+    with pytest.raises(ValueError, match="positive"):
+        format_formula({"Li": -1})
+    with pytest.raises(ValueError, match="positive"):
+        format_formula({"Li": 0})
+    with pytest.raises(ValueError, match="empty"):
+        format_formula({})
+    with pytest.raises(ValueError, match=r"\(0, 1\]"):
+        stoichiometry(225, [AtomSite("Li", "4a", [], float("nan"))])
+
+
+def test_formula_does_not_round_small_positive_count_to_zero():
+    assert format_formula({"Li": 1e-12}) == "Li1e-12"
+
+
+def test_linear_coordinate_parser_rejects_zero_denominator():
+    with pytest.raises(ValueError, match="zero denominator"):
+        parse_linear_axis("x/0")
 
 
 # --- validation ------------------------------------------------------------
@@ -171,6 +194,20 @@ def test_validate_atoms_partial_ok():
     assert validate_atoms(225, atoms) == []
 
 
+def test_build_rejects_metric_mismatch_and_overoccupied_site():
+    with pytest.raises(ValueError, match="inconsistent with the selected space group"):
+        build_structure(
+            225,
+            {"a": 5, "b": 6, "c": 5, "alpha": 90, "beta": 90, "gamma": 90},
+            [AtomSite("Na", "4a", [], 1.0)],
+        )
+    with pytest.raises(ValueError, match="invalid site occupancy"):
+        build_structure(
+            225, CUBIC,
+            [AtomSite("Li", "4a", [], 0.6), AtomSite("Cu", "4a", [], 0.6)],
+        )
+
+
 # --- CIF / XYZ round-trip --------------------------------------------------
 
 def test_cif_round_trips_through_gemmi():
@@ -187,7 +224,8 @@ def test_cif_round_trips_through_gemmi():
         labels = list(block.find_values("_atom_site_label"))
         assert labels == ["Na1", "Cl1"]
         occ = list(block.find_values("_atom_site_occupancy"))
-        assert occ == ["1.0000", "1.0000"]
+        assert [float(value) for value in occ] == [1.0, 1.0]
+        assert block.find_value("_chemical_formula_sum").strip("'") == "Na4 Cl4"
 
 
 def test_xyz_expands_to_full_cell():
@@ -246,7 +284,6 @@ def test_stoichiometry_frac_uses_orbit_multiplicity():
 
     Na on 4a (Fm-3m, mult 4) at occ 1 -> 4 Na per cell.
     """
-    cell = {"a": 5.64, "b": 5.64, "c": 5.64, "alpha": 90.0, "beta": 90.0, "gamma": 90.0}
     atoms = [FracAtom("Na", 0.0, 0.0, 0.0, 1.0), FracAtom("Cl", 0.5, 0.5, 0.5, 1.0)]
     assert stoichiometry_frac(225, atoms) == {"Na": 4.0, "Cl": 4.0}
 
@@ -267,6 +304,15 @@ def test_validate_atoms_frac_over_occupancy():
     assert any("exceeds 1.0" in w for w in warnings)
 
 
+def test_validate_atoms_frac_groups_symmetry_equivalent_representatives():
+    atoms = [
+        FracAtom("Li", 0.1, 0.2, 0.3, 0.6),
+        FracAtom("Cu", 0.9, 0.8, 0.7, 0.6),
+    ]
+    warnings = validate_atoms_frac(2, atoms)
+    assert any("exceeds 1.0" in warning for warning in warnings)
+
+
 def test_frac_cif_round_trip_lgps_li_site():
     """A disordered Li site built from fractional coords reads back correctly."""
     # LGPS-like: Li on 16h (partial) in SG 137, non-canonical rep.
@@ -278,4 +324,5 @@ def test_frac_cif_round_trip_lgps_li_site():
         write_structure_cif(s, path)
         block = gemmi.cif.read_file(path).sole_block()
         occ = list(block.find_values("_atom_site_occupancy"))
-        assert occ == ["0.6910"]
+        assert [float(value) for value in occ] == pytest.approx([0.691])
+        assert block.find_value("_chemical_formula_sum").strip("'") == "Li11.056"

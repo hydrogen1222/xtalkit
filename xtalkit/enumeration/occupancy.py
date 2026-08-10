@@ -44,6 +44,8 @@ def parse_set_occupancy(spec: str | None) -> dict[str, dict[str, Fraction]]:
         label = label.strip()
         if not label:
             raise ValueError(f"--set-occupancy token {token!r} has empty label")
+        if label in overrides:
+            raise ValueError(f"duplicate --set-occupancy declaration for {label}")
         overrides[label] = _parse_occupancy_value(value)
     return overrides
 
@@ -63,7 +65,12 @@ def _parse_occupancy_value(value: str) -> dict[str, Fraction]:
             f"cannot parse occupancy composition {value!r}; "
             "use forms like '1/2' or 'Ge1/2P1/2'"
         )
-    return {el: parse_fraction(occ) for el, occ in parts}
+    composition: dict[str, Fraction] = {}
+    for element, occupancy in parts:
+        composition[element] = (
+            composition.get(element, Fraction(0)) + parse_fraction(occupancy)
+        )
+    return composition
 
 
 def check_integerizable(n_sites: int, occupancies: dict[str, Fraction],

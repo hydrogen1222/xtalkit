@@ -44,7 +44,9 @@ import os
 import re
 import subprocess
 import tempfile
+import warnings
 from concurrent.futures import ProcessPoolExecutor
+from typing import Any
 
 from xtalkit._env import setup_for_enumlib
 
@@ -97,8 +99,15 @@ def _augment_partial_occupancy(struct, vacancy_symbol: str) -> int:
     augmented = 0
     for i, site in enumerate(struct):
         species = site.species
-        total = sum(species.values())
-        if abs(total - 1.0) <= 0.01:
+        total = float(sum(species.values()))
+        if total > 1.0 + 1e-8:
+            raise ValueError(
+                f"site {i} occupancy sum {total:.10g} exceeds 1; refusing "
+                "to create a negative vacancy occupancy"
+            )
+        if total <= 0:
+            raise ValueError(f"site {i} has non-positive total occupancy {total}")
+        if abs(total - 1.0) <= 1e-8:
             continue
         new_species = dict(species)
         new_species[DummySpecies(vacancy_symbol)] = 1.0 - total
@@ -125,12 +134,20 @@ def _non_integerizable_species(struct, symm_prec: float, min_cell: int,
     from pymatgen.core import DummySpecies
     from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
     try:
-        sym = SpacegroupAnalyzer(struct, symprec=symm_prec).get_symmetrized_structure()
-    except Exception:
-        return []  # don't block on a symmetry-analysis failure
+        sym = SpacegroupAnalyzer(
+            struct, symprec=symm_prec
+        ).get_symmetrized_structure()
+    except Exception as exc:
+        raise RuntimeError(
+            "enumlib integerizability preflight could not determine symmetry; "
+            "refusing to launch enum.x without a valid safety check. Inspect "
+            "the structure/tolerance or explicitly use skip_preflight=True."
+        ) from exc
 
     bad: list[dict] = []
     seen: set[tuple] = set()
+    entries: list[dict] = []
+    common_sizes = set(range(min_cell, max_cell + 1))
     for group in sym.equivalent_sites:
         mult = len(group)
         rep = group[0]
@@ -141,15 +158,37 @@ def _non_integerizable_species(struct, symm_prec: float, min_cell: int,
             if key in seen:
                 continue
             seen.add(key)
-            counts = [mult * k * float(occ) for k in range(min_cell, max_cell + 1)]
-            if not any(abs(c - round(c)) < 0.01 for c in counts):
+            counts = {
+                k: mult * k * float(occ)
+                for k in range(min_cell, max_cell + 1)
+            }
+            valid_sizes = {
+                k for k, count in counts.items()
+                if abs(count - round(count)) <= 1e-6
+            }
+            entry = {
+                "species": str(sp), "mult": mult, "occ": float(occ),
+                "count": mult * float(occ), "valid_cell_sizes": sorted(valid_sizes),
+            }
+            entries.append(entry)
+            common_sizes &= valid_sizes
+            if not valid_sizes:
                 j = max(0, min(round(mult * min_cell * float(occ)),
                                mult * min_cell))
                 suggested = j / (mult * min_cell)
-                bad.append({
-                    "species": str(sp), "mult": mult, "occ": float(occ),
-                    "count": mult * float(occ), "suggested": suggested,
-                })
+                bad.append({**entry, "suggested": suggested,
+                            "reason": "not_integerizable"})
+    if entries and not bad and not common_sizes:
+        # Every species is integerizable somewhere in the requested interval,
+        # but not at one common cell size. enumlib needs a single supercell.
+        for entry in entries:
+            j = max(0, min(round(entry["mult"] * min_cell * entry["occ"]),
+                           entry["mult"] * min_cell))
+            bad.append({
+                **entry,
+                "suggested": j / (entry["mult"] * min_cell),
+                "reason": "no_common_cell_size",
+            })
     return bad
 
 
@@ -183,7 +222,7 @@ def _parse_vasp_to_structure(
     index_species,
     ordered_sites,
     vacancy_symbol: str = "X",
-) -> "Structure":
+) -> Any:
     """Parse one vasp-format string into a Structure.
 
     Faithful copy of pymatgen's ``EnumlibAdaptor._get_structures`` per-file
@@ -200,7 +239,16 @@ def _parse_vasp_to_structure(
 
     data = re.sub(r"scale factor", "1", data)
     data = re.sub(r"(\d+)-(\d+)", r"\1 -\2", data)
-    poscar = Poscar.from_str(data, index_species)
+    # enumlib identifies species by integer/color order; ``index_species`` is
+    # therefore the authoritative mapping. pymatgen warns whenever supplied
+    # names replace a POSCAR header, which is expected for makestr.x output.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Elements in POSCAR would be overwritten by default_names=.*",
+            category=UserWarning,
+        )
+        poscar = Poscar.from_str(data, index_species)
     sub_structure = poscar.structure
     new_latt = sub_structure.lattice
 
@@ -225,8 +273,18 @@ def _parse_vasp_to_structure(
         )
         inv_org_latt = np.linalg.inv(original_latt.matrix)
         transformation = np.dot(new_latt.matrix, inv_org_latt)
-        transformation = [[round(cell) for cell in row] for row in transformation]
-        struct = ordered_structure * transformation
+        integer_transformation = np.rint(transformation).astype(int)
+        if not np.allclose(
+            transformation, integer_transformation, rtol=0.0, atol=1e-6,
+        ):
+            raise ValueError(
+                "enumlib output lattice is not an integer supercell of the "
+                "ordered-site lattice; refusing to round a non-integral "
+                f"transformation {transformation.tolist()}"
+            )
+        if abs(round(float(np.linalg.det(integer_transformation)))) < 1:
+            raise ValueError("enumlib output has a singular supercell transformation")
+        struct = ordered_structure * integer_transformation.tolist()
         sites.extend([site.to_unit_cell() for site in struct])
         super_latt = sites[-1].lattice
     else:
@@ -386,6 +444,12 @@ def _process_chunk(args) -> list[tuple[int, str]]:
             glob.glob(os.path.join(batch_dir, "vasp.*")),
             key=_vasp_numeric_key,
         )
+        expected = end_exclusive - start
+        if len(vasp_files) != expected:
+            raise RuntimeError(
+                f"makestr.x produced {len(vasp_files)} structure file(s) for "
+                f"requested range [{start}, {end_exclusive}), expected {expected}"
+            )
         for i, vf in enumerate(vasp_files):
             with open(vf, encoding="utf-8") as f:
                 data = f.read()
@@ -455,6 +519,10 @@ def enumerate_structures(
         raise ValueError("format must be 'cif' or 'xyz'.")
     if not vacancy_symbol:
         raise ValueError("vacancy_symbol must be non-empty.")
+    if not math.isfinite(symm_prec) or symm_prec <= 0:
+        raise ValueError("symm_prec must be a finite positive number.")
+    if timeout is not None and (not math.isfinite(timeout) or timeout <= 0):
+        raise ValueError("timeout must be a finite positive number when provided.")
 
     resolved = os.path.abspath(cif_path)
     if not os.path.exists(resolved):
@@ -468,22 +536,15 @@ def enumerate_structures(
             "See README 'Enumeration setup'."
         )
 
-    setup_for_enumlib()
-
-    bin_err = _check_enumlib_binaries()
-    if bin_err:
-        raise RuntimeError(bin_err)
-
     from pymatgen.core import Structure
+    from pymatgen.core import DummySpecies
+
     try:
-        from pymatgen.command_line.enumlib_caller import (
-            EnumlibAdaptor, EnumError)
-    except ImportError as e:
-        raise RuntimeError(
-            "pymatgen is installed but its enumlib_caller module is missing "
-            "(removed in some versions). Reinstall with a version that "
-            "includes it, e.g.: uv pip install 'pymatgen>=2024.5'."
-        ) from e
+        DummySpecies(vacancy_symbol)
+    except Exception as exc:
+        raise ValueError(
+            f"invalid vacancy DummySpecies symbol {vacancy_symbol!r}"
+        ) from exc
 
     struct = Structure.from_file(resolved)
     # Convert to primitive cell before enumeration. enumlib does not do this
@@ -531,9 +592,35 @@ def enumerate_structures(
             )
             raise RuntimeError("\n".join(lines))
 
+    # Only an actually disordered, integerizable structure needs the external
+    # enumlib executables. Keeping this after parsing/preflight lets callers
+    # validate inputs and recognize already ordered CIFs without enumlib.
+    setup_for_enumlib()
+    bin_err = _check_enumlib_binaries()
+    if bin_err:
+        raise RuntimeError(bin_err)
+    try:
+        from pymatgen.command_line.enumlib_caller import (
+            EnumlibAdaptor, EnumError)
+    except ImportError as e:
+        raise RuntimeError(
+            "pymatgen is installed but its enumlib_caller module is missing "
+            "(removed in some versions). Reinstall with a version that "
+            "includes it, e.g.: uv pip install 'pymatgen>=2024.5'."
+        ) from e
+
     basename = os.path.splitext(os.path.basename(resolved))[0]
     out_dir = os.path.abspath(output_dir or f"{basename}_enum")
-    os.makedirs(out_dir, exist_ok=True)
+    if os.path.exists(out_dir):
+        if not os.path.isdir(out_dir):
+            raise NotADirectoryError(out_dir)
+        if os.listdir(out_dir):
+            raise FileExistsError(
+                f"output directory is not empty: {out_dir}. Choose a new or "
+                "empty directory so enumlib runs cannot be mixed."
+            )
+    else:
+        os.makedirs(out_dir)
 
     adaptor = EnumlibAdaptor(
         struct,
@@ -588,6 +675,11 @@ def enumerate_structures(
         # ex.map preserves input order; each batch returns index-ordered paths,
         # so the flattened list is already in global-index order.
         paths = [p for batch in results for (_, p) in batch]
+        if len(paths) != effective_n:
+            raise RuntimeError(
+                f"enumlib reported {effective_n} requested output(s), but only "
+                f"{len(paths)} were written"
+            )
         return paths
     except EnumError as e:
         raise RuntimeError(

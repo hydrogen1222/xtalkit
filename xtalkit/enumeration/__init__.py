@@ -8,7 +8,6 @@ from xtalkit.enumeration.postprocess import (
     rank_by_shortest_distance,
     rank_by_ewald,
     write_tblite_inputs,
-    write_cp2k_inputs,
     write_slurm_array,
 )
 
@@ -20,6 +19,5 @@ __all__ = [
     "rank_by_shortest_distance",
     "rank_by_ewald",
     "write_tblite_inputs",
-    "write_cp2k_inputs",
     "write_slurm_array",
 ]

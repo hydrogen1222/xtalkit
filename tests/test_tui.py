@@ -6,7 +6,10 @@ from xtalkit.tui import (
     select_wyckoff_positions,
     select_output_formats,
     resolve_cif_path,
+    _prompt_float_or_none,
+    _prompt_int_or_none,
     _show_main_menu,
+    run_tui,
 )
 
 
@@ -27,7 +30,6 @@ def test_resolve_cif_path_not_found():
 
 def test_resolve_cif_path_current_dir(tmp_path, monkeypatch):
     """File in current directory found by relative name."""
-    import os
     f = tmp_path / "myfile.cif"
     f.write_text("data")
     monkeypatch.chdir(tmp_path)
@@ -71,3 +73,39 @@ def test_show_main_menu_mentions_ewald(capsys):
     _show_main_menu()
     output = capsys.readouterr().out
     assert "Ewald" in output
+    assert "Fetch DB" not in output
+    assert "xtalkit" in output and "fetch" in output
+    assert "SHRY" in output
+
+
+def test_prompt_integer_retries_instead_of_using_dangerous_default():
+    with patch("builtins.input", side_effect=["not-a-number", "0", "5"]):
+        assert _prompt_int_or_none("Count", minimum=1) == 5
+
+
+def test_prompt_float_rejects_nonfinite_and_out_of_range():
+    with patch("builtins.input", side_effect=["nan", "0", "1.2", "0.5"]):
+        assert _prompt_float_or_none(
+            "Occupancy", greater_than=0.0, maximum=1.0,
+        ) == 0.5
+
+
+def test_prompt_numeric_blank_uses_explicit_default():
+    with patch("builtins.input", return_value=""):
+        assert _prompt_int_or_none("Jobs", default=1, minimum=0) == 1
+    with patch("builtins.input", return_value=""):
+        assert _prompt_float_or_none("Timeout") is None
+
+
+def test_tui_handles_closed_input_without_traceback():
+    with patch("xtalkit.tui._show_main_menu"), patch(
+        "xtalkit.tui._prompt", side_effect=EOFError,
+    ):
+        assert run_tui() == 0
+
+
+def test_tui_handles_keyboard_interrupt_without_traceback():
+    with patch("xtalkit.tui._show_main_menu"), patch(
+        "xtalkit.tui._prompt", side_effect=KeyboardInterrupt,
+    ):
+        assert run_tui() == 130

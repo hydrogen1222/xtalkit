@@ -27,11 +27,13 @@ The independent inputs are:
 from __future__ import annotations
 
 import math
+import re
 from collections import namedtuple
 
 import gemmi
 
 from xtalkit.spacegroup import wyckoff_positions, crystal_system
+from xtalkit.utils import evaluate_coord_template, unit_cell_from_parameters
 
 # A single atomic site: element symbol, full Wyckoff label (e.g. "16e"),
 # the free-coordinate values in template order, and occupancy in (0, 1].
@@ -40,6 +42,31 @@ AtomSite = namedtuple("AtomSite", ["element", "wyckoff", "free", "occ"])
 # A site specified by direct fractional coordinates (refinement-table style):
 # element, fractional x/y/z, and occupancy. The Wyckoff orbit is detected.
 FracAtom = namedtuple("FracAtom", ["element", "x", "y", "z", "occ"])
+
+
+def _validated_element(symbol: str) -> gemmi.Element:
+    """Return an exact real element, rejecting Gemmi's prefix fallbacks."""
+    if not isinstance(symbol, str) or not re.fullmatch(r"[A-Z][a-z]?", symbol):
+        raise ValueError(f"Unknown element {symbol!r} — use an exact element symbol.")
+    try:
+        element = gemmi.Element(symbol)
+    except (RuntimeError, ValueError, TypeError) as exc:
+        raise ValueError(f"Unknown element {symbol!r}: {exc}") from exc
+    if element.atomic_number == 0:
+        raise ValueError(f"Unknown element {symbol!r} — not a real element.")
+    return element
+
+
+def _require_consistent_cell(sg_number: int, cell_params: dict) -> gemmi.UnitCell:
+    """Construct a valid cell and enforce the reference setting's metric."""
+    cell = unit_cell_from_parameters(cell_params)
+    issues = validate_cell(sg_number, cell_params)
+    if issues:
+        raise ValueError(
+            "unit cell is inconsistent with the selected space group: "
+            + "; ".join(issues)
+        )
+    return cell
 
 
 def free_params(coord_str: str) -> list[str]:
@@ -84,53 +111,7 @@ def eval_coord(coord_str: str, values: list[float]) -> tuple[float, float, float
         if ch in "xyz" and ch not in name_to_val:
             name_to_val[ch] = values[len(name_to_val)]
 
-    out: list[float] = []
-    for part in coord_str.split(","):
-        out.append(_wrap01(_eval_axis(part, name_to_val)))
-    return (out[0], out[1], out[2])
-
-
-def _eval_axis(part: str, name_to_val: dict[str, float]) -> float:
-    """Evaluate one comma-separated axis expression."""
-    # Split into signed terms, keeping the leading sign of each.
-    terms: list[str] = []
-    buf = ""
-    for ch in part:
-        if ch in "+-" and buf:
-            terms.append(buf)
-            buf = ch
-        else:
-            buf += ch
-    if buf:
-        terms.append(buf)
-    if not terms:
-        terms = [part]
-
-    total = 0.0
-    for term in terms:
-        term = term.strip()
-        if not term:
-            continue
-        sign = -1.0 if term.startswith("-") else 1.0
-        if term[0] in "+-":
-            term = term[1:]
-        # Trailing variable letter, if any.
-        var = None
-        if term and term[-1] in "xyz":
-            var = term[-1]
-            term = term[:-1]
-        if term:  # numeric coefficient or constant
-            if "/" in term:
-                num, den = term.split("/")
-                coef = float(num) / float(den)
-            else:
-                coef = float(term)
-        else:
-            coef = 1.0
-        if var is not None:
-            coef *= name_to_val[var]
-        total += sign * coef
-    return total
+    return evaluate_coord_template(coord_str, name_to_val)
 
 
 def find_wyckoff(sg_number: int, label: str):
@@ -162,10 +143,7 @@ def build_structure(
     """
     sg = gemmi.SpaceGroup(sg_number)
     structure = gemmi.Structure()
-    structure.cell = gemmi.UnitCell(
-        cell_params["a"], cell_params["b"], cell_params["c"],
-        cell_params["alpha"], cell_params["beta"], cell_params["gamma"],
-    )
+    structure.cell = _require_consistent_cell(sg_number, cell_params)
     structure.spacegroup_hm = sg.hm
 
     model = gemmi.Model(0)
@@ -176,28 +154,28 @@ def build_structure(
 
     elem_counter: dict[str, int] = {}
     for site in atoms:
+        occ = float(site.occ)
+        if not math.isfinite(occ) or not 0.0 < occ <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} on {site.wyckoff} must be in "
+                f"(0, 1], got {site.occ!r}"
+            )
         wp = find_wyckoff(sg_number, site.wyckoff)
         rep = eval_coord(wp.coordinates, list(site.free))
-        # Validate element. gemmi.Element maps unknown symbols to a
-        # placeholder (atomic_number 0) instead of raising, so check the
-        # atomic number to reject non-elements like "Xx".
-        try:
-            element = gemmi.Element(site.element)
-        except (RuntimeError, ValueError, TypeError) as e:
-            raise ValueError(f"Unknown element {site.element!r}: {e}") from e
-        if element.atomic_number == 0:
-            raise ValueError(
-                f"Unknown element {site.element!r} — not a real element."
-            )
+        element = _validated_element(site.element)
 
         elem_counter[site.element] = elem_counter.get(site.element, 0) + 1
         atom = gemmi.Atom()
         atom.name = f"{site.element}{elem_counter[site.element]}"
         atom.element = element
-        atom.occ = float(site.occ)
+        atom.occ = occ
         frac = gemmi.Fractional(*rep)
         atom.pos = structure.cell.orthogonalize(frac)
         residue.add_atom(atom)
+
+    occupancy_issues = validate_atoms(sg_number, atoms)
+    if occupancy_issues:
+        raise ValueError("invalid site occupancy: " + "; ".join(occupancy_issues))
 
     chain.add_residue(residue)
     model.add_chain(chain)
@@ -213,9 +191,16 @@ def stoichiometry(sg_number: int, atoms: list[AtomSite]) -> dict[str, float]:
     """
     counts: dict[str, float] = {}
     for site in atoms:
+        _validated_element(site.element)
+        occupancy = float(site.occ)
+        if not math.isfinite(occupancy) or not 0.0 < occupancy <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} on {site.wyckoff} must be in "
+                f"(0, 1], got {site.occ!r}"
+            )
         wp = find_wyckoff(sg_number, site.wyckoff)
         counts[site.element] = counts.get(site.element, 0.0) \
-            + wp.multiplicity * float(site.occ)
+            + wp.multiplicity * occupancy
     return counts
 
 
@@ -223,13 +208,31 @@ def format_formula(counts: dict[str, float]) -> str:
     """Format a composition dict as a formula string.
 
     Integer counts are normalized by their GCD (so Na4Cl4 -> NaCl); fractional
-    counts (from partial occupancy) are shown rounded to 2 decimals, unsorted
-    by count, in insertion order.
+    counts (from partial occupancy) retain up to 8 significant decimal digits,
+    in insertion order.
     """
-    # Round to 2 decimals; treat near-integers as integers.
-    rounded = {el: round(c, 2) for el, c in counts.items()}
-    int_counts = {el: int(round(c)) for el, c in rounded.items()}
-    all_integer = all(abs(rounded[el] - int_counts[el]) < 1e-6 for el in rounded)
+    # Preserve enough digits for refined fractional occupancies while keeping
+    # a compact display formula; treat only numerical-noise residuals as ints.
+    numeric_counts = {}
+    for element, count in counts.items():
+        _validated_element(element)
+        numeric = float(count)
+        if not math.isfinite(numeric) or numeric <= 0:
+            raise ValueError(
+                f"formula count for {element} must be finite and positive"
+            )
+        numeric_counts[element] = numeric
+    if not numeric_counts:
+        raise ValueError("cannot format an empty chemical formula")
+    int_counts = {el: int(round(c)) for el, c in numeric_counts.items()}
+    # Never round a small positive fractional count down to zero. Counts near
+    # a positive integer may differ only by accumulated floating-point noise.
+    all_integer = all(
+        int_counts[el] >= 1
+        and abs(numeric_counts[el] - int_counts[el])
+        <= 1e-10 * max(1.0, abs(numeric_counts[el]))
+        for el in numeric_counts
+    )
 
     if all_integer and int_counts:
         g = _gcd_all(int_counts.values())
@@ -238,12 +241,10 @@ def format_formula(counts: dict[str, float]) -> str:
 
     parts = []
     for el, c in int_counts.items():
-        if c == 1:
-            parts.append(el)
-        elif all_integer:
-            parts.append(f"{el}{c}")
+        if all_integer:
+            parts.append(el if c == 1 else f"{el}{c}")
         else:
-            parts.append(f"{el}{rounded[el]:g}")
+            parts.append(f"{el}{numeric_counts[el]:.8g}")
     return "".join(parts)
 
 
@@ -270,7 +271,7 @@ def _orbit_size(sg_number: int, rep: tuple[float, float, float]) -> int:
         c = op.apply_to_xyz([rep[0], rep[1], rep[2]])
         f = (c[0] - math.floor(c[0]), c[1] - math.floor(c[1]),
              c[2] - math.floor(c[2]))
-        if not any(max(abs(f[i] - s[i]) for i in range(3)) < 1e-3
+        if not any(max(abs(_min_image(f[i] - s[i])) for i in range(3)) < 1e-3
                    for s in seen):
             seen.append(f)
     return len(seen)
@@ -283,53 +284,18 @@ def _point_in_orbit(sg_number: int, a, b) -> bool:
         c = op.apply_to_xyz([a[0], a[1], a[2]])
         f = (c[0] - math.floor(c[0]), c[1] - math.floor(c[1]),
              c[2] - math.floor(c[2]))
-        if max(abs(f[i] - b[i]) for i in range(3)) < 1e-3:
+        if max(abs(_min_image(f[i] - b[i])) for i in range(3)) < 1e-3:
             return True
     return False
 
 
-def _parse_template_axes(template: str):
-    """Parse a coordinate template into per-axis (const, var|None, coef).
-
-    ``"1/4+x,3/4-y,1/2"`` -> ``[(0.25,'x',1.0),(0.75,'y',-1.0),(0.5,None,1.0)]``.
-    """
-    import re
-    axes = []
-    for ax in template.split(","):
-        ax = ax.strip()
-        terms = re.findall(r"[+-]?[^+-]+", ax)
-        const = 0.0
-        var = None
-        coef = 1.0
-        for t in terms:
-            t = t.strip()
-            if not t:
-                continue
-            if t[-1] in "xyz":
-                var = t[-1]
-                num = t[:-1]
-                if num in ("", "+"):
-                    coef = 1.0
-                elif num == "-":
-                    coef = -1.0
-                elif "/" in num:
-                    n, d = num.split("/")
-                    coef = float(n) / float(d)
-                else:
-                    coef = float(num)
-            else:
-                if "/" in t:
-                    n, d = t.split("/")
-                    const += float(n) / float(d)
-                else:
-                    const += float(t)
-        const = const - math.floor(const)
-        axes.append((const, var, coef))
-    return axes
-
-
-def detect_wyckoff(sg_number: int, x: float, y: float, z: float
-                   ) -> tuple[str, int]:
+def detect_wyckoff(
+    sg_number: int,
+    x: float,
+    y: float,
+    z: float,
+    tolerance: float = 1e-3,
+) -> tuple[str, int]:
     """Return (label, multiplicity) of the Wyckoff orbit containing (x, y, z).
 
     The point may be any representative (canonical or not). For each Wyckoff
@@ -337,44 +303,17 @@ def detect_wyckoff(sg_number: int, x: float, y: float, z: float
     fixed-offset template (with the free variables solved consistently)? The
     first match wins. Returns ("?", multiplicity) if no bundled position matches.
     """
-    import gemmi
-    sg = gemmi.SpaceGroup(sg_number)
     rep = (_wrap01(x), _wrap01(y), _wrap01(z))
-    # Precompute the symmetry images of the point once.
-    images = []
-    for op in sg.operations():
-        c = op.apply_to_xyz([rep[0], rep[1], rep[2]])
-        images.append((c[0] - math.floor(c[0]),
-                       c[1] - math.floor(c[1]),
-                       c[2] - math.floor(c[2])))
-
-    for wp in wyckoff_positions(sg_number):
-        axes = _parse_template_axes(wp.coordinates)
-        for img in images:
-            vals: dict[str, float] = {}
-            ok = True
-            for (const, var, coef), v in zip(axes, img):
-                if var is None:
-                    if min(abs(v - const), abs(v - const - 1), abs(v - const + 1)) > 1e-3:
-                        ok = False
-                        break
-                else:
-                    fv = (v - const) / coef
-                    fv = fv - math.floor(fv)
-                    if var in vals and min(abs(vals[var] - fv),
-                                           abs(vals[var] - fv - 1),
-                                           abs(vals[var] - fv + 1)) > 1e-3:
-                        ok = False
-                        break
-                    vals[var] = fv
-            if ok and len(vals) == len({a[1] for a in axes if a[1]}):
-                return wp.letter, wp.multiplicity
+    from xtalkit.matcher import detect_wyckoff_position
+    match = detect_wyckoff_position(
+        rep,
+        gemmi.SpaceGroup(sg_number),
+        wyckoff_positions(sg_number),
+        tolerance=tolerance,
+    )
+    if match is not None:
+        return match.letter, match.multiplicity
     return "?", _orbit_size(sg_number, rep)
-
-
-# Irrational sentinel values for orbit detection — never land on a rational
-# special position (mirrors the build script's convention).
-_SENTINELS = [0.1414213562, 0.1732050808, 0.2236067977]
 
 
 def build_structure_frac(sg_number: int, cell_params: dict,
@@ -387,10 +326,7 @@ def build_structure_frac(sg_number: int, cell_params: dict,
     """
     sg = gemmi.SpaceGroup(sg_number)
     structure = gemmi.Structure()
-    structure.cell = gemmi.UnitCell(
-        cell_params["a"], cell_params["b"], cell_params["c"],
-        cell_params["alpha"], cell_params["beta"], cell_params["gamma"],
-    )
+    structure.cell = _require_consistent_cell(sg_number, cell_params)
     structure.spacegroup_hm = sg.hm
 
     model = gemmi.Model(0)
@@ -401,22 +337,30 @@ def build_structure_frac(sg_number: int, cell_params: dict,
 
     elem_counter: dict[str, int] = {}
     for site in atoms:
-        try:
-            element = gemmi.Element(site.element)
-        except (RuntimeError, ValueError, TypeError) as e:
-            raise ValueError(f"Unknown element {site.element!r}: {e}") from e
-        if element.atomic_number == 0:
+        coords = (float(site.x), float(site.y), float(site.z))
+        if not all(math.isfinite(value) for value in coords):
             raise ValueError(
-                f"Unknown element {site.element!r} — not a real element."
+                f"fractional coordinates for {site.element} must be finite"
             )
+        occ = float(site.occ)
+        if not math.isfinite(occ) or not 0.0 < occ <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} must be in (0, 1], "
+                f"got {site.occ!r}"
+            )
+        element = _validated_element(site.element)
         elem_counter[site.element] = elem_counter.get(site.element, 0) + 1
         atom = gemmi.Atom()
         atom.name = f"{site.element}{elem_counter[site.element]}"
         atom.element = element
-        atom.occ = float(site.occ)
-        frac = gemmi.Fractional(_wrap01(site.x), _wrap01(site.y), _wrap01(site.z))
+        atom.occ = occ
+        frac = gemmi.Fractional(*(_wrap01(value) for value in coords))
         atom.pos = structure.cell.orthogonalize(frac)
         residue.add_atom(atom)
+
+    occupancy_issues = validate_atoms_frac(sg_number, atoms)
+    if occupancy_issues:
+        raise ValueError("invalid site occupancy: " + "; ".join(occupancy_issues))
 
     chain.add_residue(residue)
     model.add_chain(chain)
@@ -429,23 +373,46 @@ def stoichiometry_frac(sg_number: int, atoms: list[FracAtom]) -> dict[str, float
     computed by expanding each fractional coordinate under the SG operations."""
     counts: dict[str, float] = {}
     for site in atoms:
-        mult = _orbit_size(sg_number, (_wrap01(site.x), _wrap01(site.y), _wrap01(site.z)))
-        counts[site.element] = counts.get(site.element, 0.0) + mult * float(site.occ)
+        _validated_element(site.element)
+        coords = tuple(float(value) for value in (site.x, site.y, site.z))
+        if not all(math.isfinite(value) for value in coords):
+            raise ValueError(
+                f"fractional coordinates for {site.element} must be finite"
+            )
+        occupancy = float(site.occ)
+        if not math.isfinite(occupancy) or not 0.0 < occupancy <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} must be in (0, 1], "
+                f"got {site.occ!r}"
+            )
+        mult = _orbit_size(sg_number, tuple(_wrap01(value) for value in coords))
+        counts[site.element] = counts.get(site.element, 0.0) + mult * occupancy
     return counts
 
 
 def validate_atoms_frac(sg_number: int, atoms: list[FracAtom]) -> list[str]:
-    """Warn when atoms sharing a site have occupancies summing > 1.0."""
-    warnings = []
-    occ_by_site: dict[tuple, float] = {}
+    """Warn when symmetry-equivalent site rows sum to occupancy above one."""
+    sites = []
     for site in atoms:
-        key = (round(_wrap01(site.x), 4), round(_wrap01(site.y), 4),
-               round(_wrap01(site.z), 4))
-        occ_by_site[key] = occ_by_site.get(key, 0.0) + float(site.occ)
-    for key, total in occ_by_site.items():
-        if total > 1.0 + 1e-3:
+        coords = tuple(float(value) for value in (site.x, site.y, site.z))
+        occupancy = float(site.occ)
+        if not all(math.isfinite(value) for value in coords):
+            raise ValueError(
+                f"fractional coordinates for {site.element} must be finite"
+            )
+        if not math.isfinite(occupancy) or not 0.0 < occupancy <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} must be in (0, 1], "
+                f"got {site.occ!r}"
+            )
+        sites.append((tuple(_wrap01(value) for value in coords), occupancy))
+    groups = _group_site_occupancies(sg_number, sites)
+    warnings = []
+    for representative, total in groups:
+        if total > 1.0 + 1e-10:
             warnings.append(
-                f"site {key}: total occupancy {total:g} exceeds 1.0 "
+                f"site {tuple(round(v, 4) for v in representative)}: total "
+                f"occupancy {total:g} exceeds 1.0 "
                 f"(unphysical for disorder)."
             )
     return warnings
@@ -495,17 +462,39 @@ def validate_atoms(sg_number: int, atoms: list[AtomSite]) -> list[str]:
     partial occupancy (disorder — the feature's whole point) and are NOT
     flagged; only unphysical sums > 1.0 are warned about.
     """
-    warnings = []
-    occ_by_site: dict[tuple, float] = {}
+    sites = []
     for site in atoms:
+        occupancy = float(site.occ)
+        if not math.isfinite(occupancy) or not 0.0 < occupancy <= 1.0:
+            raise ValueError(
+                f"occupancy for {site.element} on {site.wyckoff} must be in "
+                f"(0, 1], got {site.occ!r}"
+            )
         wp = find_wyckoff(sg_number, site.wyckoff)
         rep = eval_coord(wp.coordinates, list(site.free))
-        key = (round(rep[0], 4), round(rep[1], 4), round(rep[2], 4))
-        occ_by_site[key] = occ_by_site.get(key, 0.0) + float(site.occ)
-    for key, total in occ_by_site.items():
-        if total > 1.0 + 1e-3:
+        sites.append((rep, occupancy))
+    warnings = []
+    for representative, total in _group_site_occupancies(sg_number, sites):
+        if total > 1.0 + 1e-10:
             warnings.append(
-                f"site {key}: total occupancy {total:g} exceeds 1.0 "
+                f"site {tuple(round(v, 4) for v in representative)}: total "
+                f"occupancy {total:g} exceeds 1.0 "
                 f"(unphysical for disorder)."
             )
     return warnings
+
+
+def _group_site_occupancies(
+    sg_number: int,
+    sites: list[tuple[tuple[float, float, float], float]],
+) -> list[list]:
+    """Combine rows that denote the same orbit, not only identical triples."""
+    groups: list[list] = []
+    for representative, occupancy in sites:
+        for group in groups:
+            if _point_in_orbit(sg_number, group[0], representative):
+                group[1] += occupancy
+                break
+        else:
+            groups.append([representative, occupancy])
+    return groups

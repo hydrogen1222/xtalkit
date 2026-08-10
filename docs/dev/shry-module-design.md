@@ -1,91 +1,96 @@
-# SHRY Module Design
+# SHRY integration: maintainer notes
 
-This module implements Phase 1 of `xtalkit_SHRY模块开发方案_修订版.md`.
+This document describes the invariants and external interfaces that must remain
+true when the SHRY workflow is changed. User instructions live in
+`docs/user/shry-enumeration.md` and its Chinese translation.
 
-Implemented scope:
+## Module boundaries
 
-- `xtalkit.enumeration` package with SHRY prepare/count/enum/verify workflows.
-- SHRY is invoked only through CLI subprocesses via `ShryBackend`.
-- `XTALKIT_SHRY_CMD` can point to an isolated SHRY environment.
-- `prepare` uses exact `Fraction` occupancy checks, fills explicit vacancy
-  rows, preserves CIF symmetry operations, records symmetry orbit data, and
-  writes manifest sidecars. The §3.4 symmetry audit detects the parent space
-  group **independently with spglib** (expanding the asymmetric unit to the
-  full cell with a composition-signature species mapping), compares it to the
-  declared `--parent-spacegroup`, computes Wyckoff orbits, and refuses an orbit
-  split across CIF labels (repairable with `--symmetrize`).
-- `count` records `symprec`, `angle_tolerance`, and `atol`.
-- `enum` requires `expect_count` in strict mode, runs `--mod-only`, streams raw
-  CIF outputs, removes vacancy species, checks formula, and writes
-  `manifest.jsonl`. The SHRY-side version and isolated-env `pip freeze` are
-  recovered from the `shry` shebang and recorded in the manifest.
-- `verify` uses **two-stage** duplicate detection (plan §10): fingerprint hash
-  bucketing, then `pymatgen.StructureMatcher` only within buckets. It supports
-  SHRY symprec count scans, optional supercell cross-backend count checks, and
-  optional degeneracy-sum checks. Each check is written to its own file under
-  `checks/` (`count.json`, `formula_check.jsonl`, `dedup_check.json`,
-  `symprec_scan.json`, `orbit_grouping.json`, `verify.json`).
-- `supercell_backend` wraps the external supercell CLI through
-  `XTALKIT_SUPERCELL_CMD`.
-- `degeneracy` computes `|G| / |stabilizer|` from parent CIF symmetry
-  operations and can write per-configuration values during `shry enum`.
-- `postprocess` supports shortest-distance ranking, optional Ewald ranking,
-  tblite/CP2K job folders, and Slurm array script generation.
+- `shry_backend.py` is the only direct wrapper around the external `shry`
+  executable. `XTALKIT_SHRY_CMD` may select an isolated installation.
+- `shry_prepare.py` owns CIF normalization, exact occupancy checks, vacancy
+  completion, target-formula validation, and independent symmetry auditing.
+- `shry_count.py` runs count-only and records the input hash, matrix,
+  tolerances, raw combination count, inequivalent count, and backend version.
+- `shry_enum.py` owns output-directory isolation, mod-only chemistry checking,
+  raw-output discovery, vacancy removal, formula validation, and manifests.
+- `shry_verify.py` owns count, formula, vacancy, duplicate, tolerance-scan,
+  optional cross-backend, and optional degeneracy checks.
+- `postprocess.py` ranks cleaned structures and writes periodic tblite jobs.
 
-Non-goals:
+SHRY is never imported as a Python library. This prevents its pinned pymatgen
+from contaminating xtalkit's current pymatgen environment.
 
-- No SHRY Python API calls.
-- No random sampling or energy filtering.
-- No automatic large LGPS enumeration in tests.
-- No bundled SHRY or supercell executables; both are configured externally.
-- No automatic production LGPS enumeration in tests.
+## Scientific invariants
 
-The legacy enumlib module remains in `xtalkit.enumerator` and is not removed.
+Preparation must:
 
-## Bug history — 2026-07-04 (SHRY backend made runnable)
+1. parse occupancies exactly with `Fraction`;
+2. normalize real element symbols while keeping an explicit vacancy species;
+3. require each disorder group to sum to one after vacancy completion;
+4. require integer atom counts for the requested scaling determinant;
+5. compare the multiplicity-weighted ordered-cell formula with the exact
+   user-supplied target formula;
+6. detect the parent group independently with spglib;
+7. reject a detected group that differs from `--parent-spacegroup`;
+8. reject a spglib orbit split across incompatible CIF coordinate groups.
 
-The Phase 1 code assumed a SHRY CLI that did not match the real SHRY 1.1.x.
-The module compiled but could not run end-to-end. Fixed and verified on LPSC
-(Li-vacancy, primitive F-43m): prepare → count(48) → enum(48) → verify all
-pass, degeneracy_sum = 924 = C(12,6), and a brute-force cross-check confirmed
-the 48 generated configs cover all 48 ground-truth orbits (no miss, no dup).
+Generation must use a new or empty directory. A failure after layout creation
+must retain diagnostics and write a failed manifest; it must never leave a
+success manifest. Strict mode requires an expected count and rejects a
+mod-only chemistry change.
 
-Root causes and fixes:
+Duplicate detection uses exact composition and site count only to choose
+candidate pairs. Every candidate pair is decided by pymatgen
+`StructureMatcher`; coordinate fingerprints are diagnostic and may not exclude
+a pair.
 
-- **CIF esds** — `cif_io.read_cif` now strips `0.3148(19)`-style standard
-  uncertainties from cell and atom-site numeric fields.
-- **Occupancy / species notation** — `write_cif` emits decimal occupancies
-  (`1/2` → `0.5`) and element-normalized type_symbols (`Li1+` → `Li`); both
-  are required for pymatgen (which SHRY uses) to parse the CIF.
-- **Non-existent SHRY flags** — dropped `--output-dir`, `--write-cif`,
-  `--write-poscar` (none exist in SHRY). SHRY is run with `cwd=raw_dir`; it
-  writes `shry-<base>-<ts>/slice*/` there. Clean CIFs and POSCARs are built
-  by xtalkit in post-processing (SHRY has no POSCAR writer).
-- **Count parsing** — `parse_count_output` now matches `Expected unique
-  patterns is N` (the old `inequivalent structures: N` regex also mis-matched
-  the raw `Total number of combinations is N` line).
-- **Output discovery** — `iter_shry_outputs` only yields `slice*/` CIFs,
-  skipping SHRY's disordered modified-parent CIF that crashed
-  `counts_from_atom_rows`.
-- **mod-only audit** — finds SHRY's modified CIF on disk (was checking stdout
-  for `"data_"`, which never appears) and compares reduced, element-normalized
-  composition; `Li1+` vs `Li+` no longer false-positives.
-- **`--strict` flag** — was `store_true` + `default=True` (a no-op); switched
-  to `BooleanOptionalAction` so `--no-strict` works.
+Degeneracy is reported only for determinant-one matrices when the CIF-declared
+group equals the independently detected enumeration group. Parent-cell
+fractional operations are insufficient for a genuine supercell.
 
-### SHRY CLI contract (reference for future maintenance)
+Ewald ranking requires ordered, charge-neutral structures. tblite jobs use
+periodic POSCAR input and explicit charge/unpaired-electron settings.
 
-SHRY 1.1.x behaviour the integration depends on:
+## External SHRY 1.1.x contract
 
-- No `--output-dir` / `--write-cif` / `--write-poscar` flags.
-- Writes `shry-<basename>-<unixtime>/sliceN/<formula>_<i>_<weight>.cif`
-  (ordered configs) + `<basename>-<scaling>.cif` (disordered modified parent)
-  + `sub.log` into its CWD.
-- `--count-only` prints `Expected unique patterns is N` (and
-  `Total number of combinations is M`); writes nothing.
-- `--mod-only` writes only the modified-parent CIF.
-- `--scaling-matrix` accepts 1, 3, or 9 integers.
-- POSCAR output is not supported — xtalkit generates POSCARs itself.
+The wrapper currently relies on this observed CLI behaviour:
 
-If SHRY changes any of these, `shry_backend.py`, `iter_shry_outputs`, and
-`parse_count_output` are the coupling points.
+- there are no `--output-dir`, `--write-cif`, or `--write-poscar` options;
+- output is written below `shry-<basename>-<timestamp>/` in the process working
+  directory;
+- ordered structures are below `slice*/`;
+- the modified disordered parent is written outside `slice*/`;
+- `--count-only` prints `Expected unique patterns is N` and may also print
+  `Total number of combinations is M`;
+- `--count-only` writes no structure files;
+- `--mod-only` writes only the modified parent;
+- a scaling matrix is accepted as one, three, or nine integers;
+- SHRY does not write POSCAR files.
+
+If that contract changes, inspect `ShryBackend`, `parse_count_output`,
+`iter_shry_outputs`, and the mod-only output discovery together. Do not patch a
+single parser without running a real-backend integration test.
+
+## Manifests and evidence
+
+The SHRY interpreter is recovered from the executable shebang when possible.
+Backend version and isolated-environment package metadata must describe that
+interpreter, not the xtalkit interpreter.
+
+Individual reports belong under `checks/`; `verify.json` is the aggregate
+result. The input hash, actual command line, tolerances, matrix, count, formula,
+and backend version are required reproducibility fields.
+
+## Testing rules
+
+- Unit tests use a deterministic fake backend and must cover failure manifests,
+  count parsing, chemistry changes, vacancy removal, and duplicate logic.
+- A real SHRY executable enables a two-site count-and-enumerate smoke test.
+- Do not put a production LGPS or argyrodite enumeration in the test suite.
+- Keep every real smoke structure small and constrain numerical-library thread
+  counts in CI or local validation.
+- Changes to CIF parsing require round-trip tests through gemmi and pymatgen.
+
+External SHRY, supercell, enumlib, and tblite executables remain optional and
+are never bundled with the Python package.

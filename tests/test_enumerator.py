@@ -1,6 +1,7 @@
 """Tests for xtalkit.enumerator — symmetry-inequivalent configuration enumeration."""
 
 import os
+import shutil
 import tempfile
 
 import pytest
@@ -10,9 +11,15 @@ from xtalkit.enumerator import enumerate_structures, _has_pymatgen
 
 
 HAS_PYMATGEN = _has_pymatgen()
+setup_for_enumlib()
+HAS_ENUMLIB = bool(shutil.which("enum.x") and shutil.which("makestr.x"))
 skip_no_pymatgen = pytest.mark.skipif(
     not HAS_PYMATGEN,
     reason="pymatgen not installed in this environment",
+)
+skip_no_enumlib = pytest.mark.skipif(
+    not (HAS_PYMATGEN and HAS_ENUMLIB),
+    reason="pymatgen and compiled enumlib binaries are required",
 )
 
 
@@ -31,14 +38,15 @@ def test_setup_idempotent():
 
 def test_setup_adds_pathext_on_windows():
     """After setup, PATHEXT should include .X (on Windows)."""
-    import sys, os
+    import sys
+
     setup_for_enumlib()
     if sys.platform == "win32":
         assert ".X" in os.environ.get("PATHEXT", "").upper()
         assert ".PY" in os.environ.get("PATHEXT", "").upper()
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enumerate_simple_binary(disordered_cif):
     """Real enumlib run on Au0.5/Cu0.5 — should find >=1 ordered configs."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -57,7 +65,7 @@ def test_enumerate_simple_binary(disordered_cif):
             assert p.endswith(".cif")
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enumerate_output_cifs_parse(disordered_cif):
     """Each output CIF must be re-parseable by gemmi."""
     import gemmi
@@ -80,7 +88,7 @@ def test_enumerate_output_cifs_parse(disordered_cif):
             assert len(atoms) >= 1
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enumerate_max_structures_limits(disordered_cif):
     """--max-structures should limit the number of output files."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -95,7 +103,7 @@ def test_enumerate_max_structures_limits(disordered_cif):
         assert len(paths) == 1
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enumerate_xyz_format(disordered_cif):
     """--format xyz must actually write parseable XYZ files.
 
@@ -125,7 +133,7 @@ def test_enumerate_xyz_format(disordered_cif):
                 assert len(parts) == 4
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enumerate_custom_vacancy_symbol_is_removed(tmp_path):
     """A non-default vacancy symbol should not leak into output structures."""
     from pymatgen.core import Structure
@@ -151,7 +159,7 @@ def test_enumerate_custom_vacancy_symbol_is_removed(tmp_path):
         assert "Xa" not in symbols
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_enum_input_keeps_distinct_li_vacancy_orbits_separate(tmp_path):
     """Same-species disorder on different Wyckoff orbits needs distinct labels."""
     from pymatgen.core import Structure
@@ -242,6 +250,8 @@ def test_enumerate_rejects_invalid_parameters(disordered_cif):
         {"batch_size": 0},
         {"format": "poscar"},
         {"vacancy_symbol": ""},
+        {"symm_prec": float("nan")},
+        {"timeout": 0},
     ]
     for kwargs in bad_kwargs:
         with pytest.raises(ValueError):
@@ -277,7 +287,6 @@ def test_partial_occupancy_augmentation():
     # Now test a single-species partial-occupancy site
     struct2 = Structure(lat, ["Li"], [[0, 0, 0]])
     # Set occupancy manually
-    from pymatgen.core import Composition
     struct2[0] = {"Li": 0.5}
     n2 = _augment_partial_occupancy(struct2, "X")
     assert n2 == 1
@@ -285,6 +294,25 @@ def test_partial_occupancy_augmentation():
     site = struct2[0]
     assert len(site.species) == 2
     assert DummySpecies("X") in site.species
+
+
+@skip_no_pymatgen
+def test_integerizability_requires_one_common_cell_size():
+    from pymatgen.core import Lattice, Structure
+    from xtalkit.enumerator import (
+        _augment_partial_occupancy,
+        _non_integerizable_species,
+    )
+
+    structure = Structure(
+        Lattice.cubic(5),
+        [{"Li": 0.5}, {"Na": 1 / 3}],
+        [[0.11, 0.23, 0.37], [0.41, 0.67, 0.19]],
+    )
+    _augment_partial_occupancy(structure, "X")
+    bad = _non_integerizable_species(structure, 1e-3, 1, 3)
+    assert bad
+    assert {row["reason"] for row in bad} == {"no_common_cell_size"}
 
 
 def _reduced_formulas(out_dir):
@@ -320,7 +348,7 @@ def _pymatgen_reference_formulas(cif_path, min_cell=1, max_cell=2):
     return sorted(s.composition.reduced_formula for s in ref)
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_streaming_matches_pymatgen_adaptor(disordered_cif):
     """Streamed batched output is the same SET of structures as pymatgen's
     EnumlibAdaptor. This validates the vasp->Structure parsing replication."""
@@ -334,7 +362,7 @@ def test_streaming_matches_pymatgen_adaptor(disordered_cif):
         assert _reduced_formulas(out_dir) == ref
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_batch_size_does_not_change_result(disordered_cif):
     """The set of structures is independent of batch_size."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -347,7 +375,7 @@ def test_batch_size_does_not_change_result(disordered_cif):
         assert _reduced_formulas(out_a) == _reduced_formulas(out_b)
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_parallel_matches_serial(disordered_cif):
     """--jobs=2 produces the same set of structures as --jobs=1."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -360,7 +388,7 @@ def test_parallel_matches_serial(disordered_cif):
         assert _reduced_formulas(out_s) == _reduced_formulas(out_p)
 
 
-@skip_no_pymatgen
+@skip_no_enumlib
 def test_max_structures_does_not_exceed_nor_invent(disordered_cif):
     """--max-structures caps output; a cap larger than the natural count
     returns the natural count (no padding, no truncation beyond the cap)."""
@@ -418,12 +446,8 @@ def test_enumerate_refuses_non_integer_occupancy(tmp_path):
 
 
 @skip_no_pymatgen
-def test_enumerate_skip_preflight_bypasses_check(disordered_cif, tmp_path):
-    """--skip-preflight bypasses the integerizability check (escape hatch)."""
-    # A clean CIF passes the check anyway; this just confirms the flag is wired
-    # through and doesn't raise for a non-integer case when skipped. Use a bad
-    # CIF and confirm skip_preflight lets enumlib run (returns 0 cleanly here
-    # because 0.56 can't integerize, but the pre-flight is what we're skipping).
+def test_enumerate_skip_preflight_bypasses_check(tmp_path, monkeypatch):
+    """The escape hatch bypasses preflight without launching runaway enumlib."""
     from xtalkit.builder import build_structure_frac, FracAtom
     from xtalkit.exporter import write_structure_cif
     cell = {"a": 4.0, "b": 4.0, "c": 4.0,
@@ -431,9 +455,15 @@ def test_enumerate_skip_preflight_bypasses_check(disordered_cif, tmp_path):
     s = build_structure_frac(225, cell, [FracAtom("Li", 0, 0, 0, 0.56)])
     bad_cif = str(tmp_path / "bad.cif")
     write_structure_cif(s, bad_cif)
-    # With skip_preflight, the pre-flight RuntimeError is NOT raised; enumlib
-    # then runs and returns 0 (caught as RuntimeError "0 structures").
-    with pytest.raises(RuntimeError, match="0 structures"):
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("integerizability preflight was not bypassed")
+
+    monkeypatch.setattr("xtalkit.enumerator._non_integerizable_species", fail_if_called)
+    monkeypatch.setattr(
+        "xtalkit.enumerator._check_enumlib_binaries",
+        lambda: "controlled enumlib stop",
+    )
+    with pytest.raises(RuntimeError, match="controlled enumlib stop"):
         enumerate_structures(
             cif_path=bad_cif, max_cell_size=1,
             output_dir=str(tmp_path / "out"), skip_preflight=True,

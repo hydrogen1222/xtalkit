@@ -4,6 +4,7 @@ import math
 
 import gemmi
 from xtalkit.spacegroup import WyckoffInfo
+from xtalkit.utils import parse_linear_axis, representative_coord
 
 
 def _frac_dist(a: gemmi.Fractional, b: gemmi.Fractional) -> float:
@@ -32,28 +33,7 @@ def _apply_symmetry(
     by evaluating the formula at a representative x,y,z then applying
     symmetry operations.
     """
-    parts = formula_coords.split(",")
-
-    try:
-        # Try literal numeric/fraction parsing first, e.g. "0,0,0" or "1/2,1/2,1/2"
-
-        def _parse_part(s: str) -> float:
-            s = s.strip()
-            if "/" in s:
-                num, den = s.split("/")
-                return float(num) / float(den)
-            return float(s)
-
-        base = gemmi.Fractional(*[_parse_part(p) for p in parts])
-    except (ValueError, ZeroDivisionError):
-        # Parameterized coordinate like 'x,x,z' -- use 0.3 as representative
-        rep = (
-            formula_coords.replace("x", "0.3")
-            .replace("y", "0.3")
-            .replace("z", "0.3")
-        )
-        parts = rep.split(",")
-        base = gemmi.Fractional(*[_parse_part(p) for p in parts])
+    base = gemmi.Fractional(*representative_coord(formula_coords))
 
     # Apply all symmetry operations
     equivalents: list[gemmi.Fractional] = []
@@ -71,10 +51,130 @@ def _apply_symmetry(
     return unique
 
 
+def _axis_distance(a: float, b: float) -> float:
+    """Absolute minimum-image separation of two fractional axis values."""
+    return abs((a - b) - round(a - b))
+
+
+def _variable_candidates(
+    observed: float,
+    constant: float,
+    coefficient: float,
+    tolerance: float,
+) -> list[float]:
+    """Solve ``constant + coefficient*x == observed (mod 1)`` for x in [0,1).
+
+    Coefficients such as 2 have several periodic branches.  Explicitly
+    retaining those branches avoids the false negatives caused by simply
+    dividing and taking modulo one.
+    """
+    if abs(coefficient) < 1e-15:
+        return []
+    candidates: list[float] = []
+    delta = observed - constant
+    # Derive every periodic image that can put the variable in [0, 1). This is
+    # exact for arbitrary finite linear coefficients and avoids a hidden fixed
+    # image bound for future database expressions.
+    lower = min(0.0, coefficient) - delta
+    upper = max(0.0, coefficient) - delta
+    first_image = math.ceil(lower - 1e-12)
+    last_image = math.floor(upper + 1e-12)
+    for image in range(first_image, last_image + 1):
+        raw = (delta + image) / coefficient
+        if raw < -1e-9 or raw >= 1.0 + 1e-9:
+            continue
+        candidate = raw % 1.0
+        predicted = constant + coefficient * candidate
+        if _axis_distance(predicted, observed) <= tolerance and not any(
+            _axis_distance(candidate, old) <= 1e-10 for old in candidates
+        ):
+            candidates.append(candidate)
+    return candidates
+
+
+def _template_matches(
+    point: tuple[float, float, float],
+    coordinate_template: str,
+    tolerance: float,
+) -> bool:
+    """Return whether one point satisfies a canonical Wyckoff template."""
+    axes = coordinate_template.split(",")
+    if len(axes) != 3:
+        raise ValueError(
+            f"Wyckoff coordinate must have three axes, got {coordinate_template!r}"
+        )
+
+    equations: dict[str, list[tuple[float, float, float]]] = {}
+    for expression, observed in zip(axes, point):
+        constant, coefficients = parse_linear_axis(expression)
+        if len(coefficients) > 1:
+            raise ValueError(
+                "runtime Wyckoff matcher requires at most one free variable "
+                f"per axis, got {expression!r}"
+            )
+        if not coefficients:
+            if _axis_distance(observed, constant) > tolerance:
+                return False
+            continue
+        variable, coefficient = next(iter(coefficients.items()))
+        equations.setdefault(variable, []).append(
+            (observed, constant, coefficient)
+        )
+
+    for variable_equations in equations.values():
+        observed, constant, coefficient = variable_equations[0]
+        candidates = _variable_candidates(
+            observed, constant, coefficient, tolerance
+        )
+        if not any(
+            all(
+                _axis_distance(c + k * candidate, value) <= tolerance
+                for value, c, k in variable_equations
+            )
+            for candidate in candidates
+        ):
+            return False
+    return True
+
+
+def detect_wyckoff_position(
+    point: tuple[float, float, float],
+    sg: gemmi.SpaceGroup,
+    wyckoffs: list[WyckoffInfo],
+    tolerance: float = 1e-3,
+) -> WyckoffInfo | None:
+    """Identify the most-special Wyckoff orbit containing ``point``.
+
+    Positions must be supplied in increasing multiplicity order (as returned
+    by :func:`xtalkit.spacegroup.wyckoff_positions`).  Testing every symmetry
+    image permits non-canonical asymmetric-unit representatives while solving
+    the template's free variables exactly up to ``tolerance``.
+    """
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("matching tolerance must be finite and non-negative")
+    numeric_point = tuple(float(value) for value in point)
+    if not all(math.isfinite(value) for value in numeric_point):
+        raise ValueError("fractional coordinates must be finite")
+    wrapped = tuple(value % 1.0 for value in numeric_point)
+    images: list[tuple[float, float, float]] = []
+    for op in sg.operations():
+        transformed = op.apply_to_xyz(list(wrapped))
+        image = tuple(float(value) % 1.0 for value in transformed)
+        if not any(max(_axis_distance(a, b) for a, b in zip(image, old)) < 1e-10
+                   for old in images):
+            images.append(image)
+
+    for wyckoff in wyckoffs:
+        if any(_template_matches(image, wyckoff.coordinates, tolerance)
+               for image in images):
+            return wyckoff
+    return None
+
+
 def match_atoms(
     structure: gemmi.Structure,
     wyckoffs: list[WyckoffInfo],
-    tolerance: float = 0.5,
+    tolerance: float = 0.01,
 ) -> dict[str, str]:
     """Match each atom in the structure to its nearest Wyckoff position.
 
@@ -86,8 +186,8 @@ def match_atoms(
         structure: gemmi.Structure with atoms (Cartesian positions stored
                    in atom.pos) and a valid cell for fractional conversion.
         wyckoffs: List of Wyckoff positions for the space group.
-        tolerance: Maximum distance (in fractional coordinate units)
-                   for a match. Default 0.5.
+        tolerance: Maximum residual in the Wyckoff coordinate constraints,
+                   in fractional units. Default 0.01.
 
     Returns:
         dict mapping atom label (str) to Wyckoff letter (str).
@@ -104,11 +204,6 @@ def match_atoms(
     if cell is None:
         return {}
 
-    # Pre-compute all Wyckoff equivalent sites
-    wyckoff_sites: dict[str, list[gemmi.Fractional]] = {}
-    for w in wyckoffs:
-        wyckoff_sites[w.letter] = _apply_symmetry(w.coordinates, sg)
-
     mapping: dict[str, str] = {}
 
     for model in structure:
@@ -116,17 +211,13 @@ def match_atoms(
             for residue in chain:
                 for atom in residue:
                     atom_frac = cell.fractionalize(atom.pos)
-                    best_letter: str | None = None
-                    best_dist = float("inf")
-
-                    for letter, sites in wyckoff_sites.items():
-                        for site in sites:
-                            d = _frac_dist(atom_frac, site)
-                            if d < best_dist:
-                                best_dist = d
-                                best_letter = letter
-
-                    if best_dist <= tolerance and best_letter is not None:
-                        mapping[atom.name] = best_letter
+                    match = detect_wyckoff_position(
+                        (atom_frac.x, atom_frac.y, atom_frac.z),
+                        sg,
+                        wyckoffs,
+                        tolerance=tolerance,
+                    )
+                    if match is not None:
+                        mapping[atom.name] = match.letter
 
     return mapping

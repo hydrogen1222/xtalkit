@@ -1,7 +1,9 @@
 """Multiwfn-style TUI for xtalkit."""
 
+import math
 import os
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 from rich.panel import Panel
 
@@ -25,22 +27,22 @@ def _header(text: str) -> None:
 
 def _success(text: str) -> None:
     """Print a success message."""
-    console.print(f"[green]✓ {text}[/green]")
+    console.print(f"[green]✓ {escape(text)}[/green]")
 
 
 def _error(text: str) -> None:
     """Print an error message."""
-    console.print(f"[red]✗ {text}[/red]")
+    console.print(f"[red]✗ {escape(text)}[/red]")
 
 
 def _warn(text: str) -> None:
     """Print a warning."""
-    console.print(f"[yellow]⚠ {text}[/yellow]")
+    console.print(f"[yellow]⚠ {escape(text)}[/yellow]")
 
 
 def _prompt(text: str) -> str:
     """Prompt for user input."""
-    return console.input(f"[bold]{text}[/bold] ").strip()
+    return console.input(f"[bold]{escape(text)}[/bold] ").strip()
 
 
 def resolve_cif_path(path: str) -> str | None:
@@ -96,16 +98,63 @@ def _prompt_yes_no(text: str, default: bool = False) -> bool:
         _error("Please enter y or n")
 
 
-def _prompt_int_or_none(text: str, default: int | None = None) -> int | None:
-    """Prompt for an integer or None."""
+def _prompt_int_or_none(
+    text: str,
+    default: int | None = None,
+    *,
+    minimum: int | None = None,
+    maximum: int | None = None,
+) -> int | None:
+    """Prompt until a blank/default or an in-range integer is entered."""
     while True:
         value = _prompt(text)
         if not value:
             return default
         try:
-            return int(value)
+            parsed = int(value)
+        except ValueError:
+            _error("Please enter an integer")
+            continue
+        if minimum is not None and parsed < minimum:
+            _error(f"Value must be at least {minimum}")
+            continue
+        if maximum is not None and parsed > maximum:
+            _error(f"Value must be at most {maximum}")
+            continue
+        return parsed
+
+
+def _prompt_float_or_none(
+    text: str,
+    default: float | None = None,
+    *,
+    greater_than: float | None = None,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> float | None:
+    """Prompt until a blank/default or a finite in-range float is entered."""
+    while True:
+        value = _prompt(text)
+        if not value:
+            return default
+        try:
+            parsed = float(value)
         except ValueError:
             _error("Please enter a number")
+            continue
+        if not math.isfinite(parsed):
+            _error("Value must be finite")
+            continue
+        if greater_than is not None and parsed <= greater_than:
+            _error(f"Value must be greater than {greater_than:g}")
+            continue
+        if minimum is not None and parsed < minimum:
+            _error(f"Value must be at least {minimum:g}")
+            continue
+        if maximum is not None and parsed > maximum:
+            _error(f"Value must be at most {maximum:g}")
+            continue
+        return parsed
 
 
 def _prompt_element_map() -> dict[str, str] | None:
@@ -138,7 +187,7 @@ def _show_element_assignments(
     table.add_column("Element", style="yellow")
     for letter in sorted(
         wyckoff_letters,
-        key=lambda w: (int("".join(c for c in w if c.isdigit()) or 0), w),
+        key=lambda w: (-int("".join(c for c in w if c.isdigit()) or 0), w),
     ):
         table.add_row(letter, assignment[letter])
     console.print(table)
@@ -196,14 +245,19 @@ def _mark_workflow() -> None:
     # Output format
     formats = select_output_formats()
 
-    # Offset (default 0.02 for visibility in overlay, 0 for replace)
-    default_offset = "0.02" if mode == "overlay" else "0"
-    off_str = _prompt(f"Dummy atom offset in fractional coords (default {default_offset})")
-    offset = float(off_str) if off_str else float(default_offset)
+    # Exact crystallographic coordinates are the default.  A non-zero offset
+    # is retained only as an explicitly requested visual aid.
+    offset = _prompt_float_or_none(
+        "Visual-only dummy offset in fractional coords (Enter for 0 = exact)",
+        default=0.0,
+    )
 
     # Tolerance
-    tol_str = _prompt("Tolerance in fractional coords (default 0.5)")
-    tolerance = float(tol_str) if tol_str else 0.5
+    tolerance = _prompt_float_or_none(
+        "Wyckoff constraint tolerance (Enter for 0.01)",
+        default=0.01,
+        greater_than=0.0,
+    )
 
     # Output base
     base = os.path.splitext(resolved)[0]
@@ -267,11 +321,15 @@ def _skeleton_workflow() -> None:
             cell_str = _prompt("Enter: a b c alpha beta gamma")
             parts = cell_str.split()
             if len(parts) == 6:
-                cell_params = {
-                    "a": float(parts[0]), "b": float(parts[1]), "c": float(parts[2]),
-                    "alpha": float(parts[3]), "beta": float(parts[4]), "gamma": float(parts[5]),
-                }
-                break
+                try:
+                    cell_params = {
+                        "a": float(parts[0]), "b": float(parts[1]), "c": float(parts[2]),
+                        "alpha": float(parts[3]), "beta": float(parts[4]), "gamma": float(parts[5]),
+                    }
+                    break
+                except ValueError:
+                    _error("All six cell parameters must be numbers")
+                    continue
             _error("Need 6 values: a b c alpha beta gamma")
         else:
             _error("Invalid selection (1-2)")
@@ -335,23 +393,6 @@ def _info_workflow() -> None:
     console.print(table)
 
 
-def _fetch_workflow() -> None:
-    """Interactive fetch / verify workflow."""
-    from xtalkit.spacegroup import wyckoff_positions
-    _header("Verify Space Group Database")
-    try:
-        supported = 0
-        for n in range(1, 231):
-            try:
-                wyckoff_positions(n)
-                supported += 1
-            except NotImplementedError:
-                continue
-        _success(f"Space group data intact ({supported}/230 supported)")
-    except Exception as e:
-        _error(f"Data error: {e}")
-
-
 def _build_workflow() -> None:
     """Interactive build workflow: assemble a CIF from refinement parameters."""
     _header("Build CIF from Refinement Parameters")
@@ -397,10 +438,14 @@ def _build_workflow() -> None:
             cell_str = _prompt("Enter: a b c alpha beta gamma")
             parts = cell_str.split()
             if len(parts) == 6:
-                cell_params = dict(zip(
-                    ["a", "b", "c", "alpha", "beta", "gamma"],
-                    [float(x) for x in parts]))
-                break
+                try:
+                    cell_params = dict(zip(
+                        ["a", "b", "c", "alpha", "beta", "gamma"],
+                        [float(x) for x in parts]))
+                    break
+                except ValueError:
+                    _error("All six cell parameters must be numbers")
+                    continue
             _error("Need 6 values: a b c alpha beta gamma")
         else:
             _error("Invalid selection (1-2)")
@@ -434,12 +479,12 @@ def _build_workflow() -> None:
         else:
             console.print(f"  {label}: [white]{wp.coordinates}[/white] "
                           f"(no free parameters)")
-        occ_str = _prompt("Occupancy (default 1.0)")
-        try:
-            occ = float(occ_str) if occ_str else 1.0
-        except ValueError:
-            _warn("Invalid occupancy, using 1.0")
-            occ = 1.0
+        occ = _prompt_float_or_none(
+            "Occupancy (Enter for 1.0)",
+            default=1.0,
+            greater_than=0.0,
+            maximum=1.0,
+        )
         atoms.append(AtomSite(element, label, free_vals, occ))
         _success(f"Added {element} on {label} (occ {occ}). Composition so far: "
                  f"{format_formula(stoichiometry(sg_number, atoms))}")
@@ -485,30 +530,21 @@ def _enumerate_workflow() -> None:
         _error(f"File not found: {path}")
 
     # Min cell size
-    min_str = _prompt("Min supercell size (default 1)")
-    try:
-        min_cell = int(min_str) if min_str else 1
-    except ValueError:
-        _error("Invalid number, using default 1")
-        min_cell = 1
+    min_cell = _prompt_int_or_none(
+        "Min supercell size (Enter for 1)", default=1, minimum=1,
+    )
 
     # Max cell size
-    max_str = _prompt("Max supercell size (default 2)")
-    try:
-        max_cell = int(max_str) if max_str else 2
-    except ValueError:
-        _error("Invalid number, using default 2")
-        max_cell = 2
-    if max_cell < min_cell:
-        _warn("Max < Min, adjusting max = min")
-        max_cell = min_cell
+    max_cell = _prompt_int_or_none(
+        "Max supercell size (Enter for 2)", default=max(2, min_cell),
+        minimum=min_cell,
+    )
 
     # Symmetry precision
-    sp_str = _prompt("Symmetry tolerance (default 0.1)")
-    try:
-        symm_prec = float(sp_str) if sp_str else 0.1
-    except ValueError:
-        symm_prec = 0.1
+    symm_prec = _prompt_float_or_none(
+        "Symmetry tolerance (Enter for 0.1)", default=0.1,
+        greater_than=0.0,
+    )
 
     # Vacancy symbol
     vac = _prompt("Vacancy DummySpecies symbol (default X)") or "X"
@@ -519,24 +555,26 @@ def _enumerate_workflow() -> None:
     output_dir = out_str if out_str else f"{base}_enum"
 
     # Max structures
-    ms_str = _prompt("Max structures to write (Enter for unlimited)")
-    try:
-        max_structures = int(ms_str) if ms_str else None
-    except ValueError:
-        max_structures = None
+    max_structures = _prompt_int_or_none(
+        "Max structures to write (Enter for unlimited)", minimum=1,
+    )
 
     # Output format
-    fmt_choice = _prompt("Output format: [1] cif  [2] xyz (default cif)")
-    out_format = "xyz" if fmt_choice == "2" else "cif"
+    while True:
+        fmt_choice = _prompt("Output format: [1] cif  [2] xyz")
+        if fmt_choice in {"", "1"}:
+            out_format = "cif"
+            break
+        if fmt_choice == "2":
+            out_format = "xyz"
+            break
+        _error("Invalid selection (1-2)")
 
     # Timeout (none by default, but expose it so a runaway enumlib run can
     # be bounded interactively instead of hanging the TUI forever)
-    to_str = _prompt("Timeout in minutes (Enter for none)")
-    try:
-        timeout = float(to_str) if to_str else None
-    except ValueError:
-        _warn("Invalid timeout, using none")
-        timeout = None
+    timeout = _prompt_float_or_none(
+        "Timeout in minutes (Enter for none)", greater_than=0.0,
+    )
 
     # Performance options (memory + parallelism for the structure-generation
     # phase; enum.x itself stays single-threaded regardless).
@@ -545,18 +583,16 @@ def _enumerate_workflow() -> None:
         "(not enum.x); --batch-size caps memory; --scratch-dir /dev/shm "
         "avoids disk I/O.[/dim]"
     )
-    jobs_str = _prompt("Parallel jobs (default 1 = serial; 0 = auto)")
-    try:
-        jobs = int(jobs_str) if jobs_str else 1
-    except ValueError:
-        _warn("Invalid jobs, using 1 (serial)")
-        jobs = 1
-    bs_str = _prompt("Batch size (default 256; smaller = less memory)")
-    try:
-        batch_size = int(bs_str) if bs_str else 256
-    except ValueError:
-        _warn("Invalid batch size, using 256")
-        batch_size = 256
+    jobs = _prompt_int_or_none(
+        "Parallel jobs (Enter for 1 = serial; 0 = auto)",
+        default=1,
+        minimum=0,
+    )
+    batch_size = _prompt_int_or_none(
+        "Batch size (Enter for 256; smaller uses less memory)",
+        default=256,
+        minimum=1,
+    )
     scratch = _prompt("Scratch dir for enumlib (Enter for system temp; try /dev/shm)")
     scratch_dir = scratch if scratch else None
 
@@ -582,27 +618,48 @@ def _enumerate_workflow() -> None:
         # Try to show summary table
         try:
             import gemmi
+
+            def _parse_enum_row(path: str) -> tuple[str, str, str, str]:
+                """Return (formula, n_atoms, a_str) for a CIF or XYZ file."""
+                if path.lower().endswith(".xyz"):
+                    with open(path) as f:
+                        lines = f.read().strip().splitlines()
+                    if len(lines) < 2:
+                        return ("?", "?", "-")
+                    n_atoms = lines[0].strip()
+                    counts: dict[str, int] = {}
+                    for line in lines[2:]:
+                        parts = line.split()
+                        if parts:
+                            counts[parts[0]] = counts.get(parts[0], 0) + 1
+                    formula = "".join(
+                        f"{el}{cnt}" for el, cnt in sorted(counts.items())
+                    )
+                    return (formula, n_atoms, "-")
+                doc = gemmi.cif.read_file(path)
+                block = doc.sole_block()
+                a = float(block.find_value("_cell_length_a") or 0)
+                atoms = list(block.find_values("_atom_site_label"))
+                formula = block.find_value("_chemical_formula_sum")
+                formula = str(formula).strip("'\"") if formula else "?"
+                return (formula, str(len(atoms)), f"{a:.3f}")
+
             table = Table(title="Enumerated Structures")
             table.add_column("#", style="cyan")
             table.add_column("File", style="yellow")
             table.add_column("Formula", style="green")
             table.add_column("Atoms", style="white")
             table.add_column("a (Å)", style="white")
-            for i, p in enumerate(paths):
+            for i, p in enumerate(paths, start=1):
                 try:
-                    doc = gemmi.cif.read_file(p)
-                    block = doc.sole_block()
-                    a = float(block.find_value("_cell_length_a") or 0)
-                    atoms = list(block.find_values("_atom_site_label"))
-                    formula = block.find_value("_chemical_formula_sum")
-                    formula = str(formula).strip("'\"") if formula else "?"
+                    formula, n_atoms, a_str = _parse_enum_row(p)
                     table.add_row(str(i), os.path.basename(p), formula,
-                                  str(len(atoms)), f"{a:.3f}")
+                                  n_atoms, a_str)
                 except Exception:
                     table.add_row(str(i), os.path.basename(p), "?", "?", "?")
             console.print(table)
         except ImportError:
-            for i, p in enumerate(paths):
+            for i, p in enumerate(paths, start=1):
                 console.print(f"  [{i}] {p}")
 
         _success(f"Saved to: {output_dir}")
@@ -663,12 +720,9 @@ def _ewald_workflow() -> None:
 
     per_atom = _prompt_yes_no("Rank by energy per atom", default=False)
 
-    jobs = _prompt_int_or_none("Parallel jobs (0 = auto, 1 = serial)", default=1)
-    if jobs is None:
-        jobs = 1
-    if jobs < 0:
-        _error("Parallel jobs must be >= 0")
-        jobs = 1
+    jobs = _prompt_int_or_none(
+        "Parallel jobs (0 = auto, 1 = serial)", default=1, minimum=0,
+    )
 
     while True:
         sort_choice = _prompt("Sort order: [1] lowest first  [2] highest first")
@@ -680,10 +734,9 @@ def _ewald_workflow() -> None:
             break
         _error("Invalid selection (1-2)")
 
-    top_n = _prompt_int_or_none("Keep top N structures after sorting (Enter for all)")
-    if top_n is not None and top_n <= 0:
-        _error("Top N must be a positive number")
-        top_n = None
+    top_n = _prompt_int_or_none(
+        "Keep top N structures after sorting (Enter for all)", minimum=1,
+    )
 
     group = _prompt_yes_no("Copy selected structures into folders", default=False)
     move = False
@@ -710,12 +763,13 @@ def _ewald_workflow() -> None:
         rows = sorted(rows, key=lambda row: row.ewald_energy, reverse=descending)
         selected, remaining = split_rows(rows, top_n)
 
+        energy_header = "Energy per atom (eV)" if per_atom else "Energy (eV)"
         table = Table(title=f"Ewald Ranking ({len(rows)} structures)")
         table.add_column("Rank", style="cyan")
         table.add_column("File", style="yellow")
         table.add_column("Formula", style="green")
         table.add_column("Atoms", style="white")
-        table.add_column("Energy (eV)", style="white")
+        table.add_column(energy_header, style="white")
         preview = selected if top_n is not None else rows
         for i, row in enumerate(preview[:20], 1):
             table.add_row(
@@ -753,15 +807,15 @@ def _show_main_menu() -> None:
     console.clear()
     console.print()
     panel = Panel(
-        "[bold white]  [1] Mark CIF    -- Mark Wyckoff in a structure[/bold white]\n"
-        "  [2] Skeleton    -- Generate pure Wyckoff skeleton\n"
-        "  [3] Query SG    -- View space group information\n"
-        "  [4] Fetch DB    -- Verify database online\n"
-        "  [5] Enumerate   -- Enumerate ordered configurations (enumlib)\n"
-        "  [6] Build       -- Build CIF from refinement params (SG+cell+sites)\n"
-        "  [7] Ewald       -- Batch Ewald ranking and grouping\n"
-        "  [0] Exit",
-        title="xtalkit . Crystal Wyckoff Toolkit",
+        "[bold white]  \\[1] Query space group and Wyckoff positions[/bold white]\n"
+        "[bold white]  \\[2] Mark Wyckoff positions in a CIF (visualization)[/bold white]\n"
+        "[bold white]  \\[3] Build a CIF from refinement parameters[/bold white]\n"
+        "[bold white]  \\[4] Generate a Wyckoff skeleton (visualization)[/bold white]\n"
+        "[bold white]  \\[5] Enumerate a small/medium disordered structure[/bold white]\n"
+        "[bold white]  \\[6] Rank ordered structures by Ewald energy[/bold white]\n"
+        "[bold white]  \\[0] Exit[/bold white]\n\n"
+        "[dim]SHRY: command line only · Database check: xtalkit fetch[/dim]",
+        title="xtalkit — Crystal Wyckoff Toolkit",
         border_style="cyan",
     )
     console.print(panel)
@@ -771,28 +825,34 @@ def _show_main_menu() -> None:
 def run_tui() -> int:
     """Launch the interactive TUI."""
     workflows = {
-        "1": _mark_workflow,
-        "2": _skeleton_workflow,
-        "3": _info_workflow,
-        "4": _fetch_workflow,
+        "1": _info_workflow,
+        "2": _mark_workflow,
+        "3": _build_workflow,
+        "4": _skeleton_workflow,
         "5": _enumerate_workflow,
-        "6": _build_workflow,
-        "7": _ewald_workflow,
+        "6": _ewald_workflow,
     }
 
-    while True:
-        _show_main_menu()
-        choice = _prompt("Input your choice")
+    try:
+        while True:
+            _show_main_menu()
+            choice = _prompt("Input your choice")
 
-        if choice == "0":
-            console.print("[cyan]Goodbye![/cyan]")
-            return 0
+            if choice == "0":
+                console.print("[cyan]Goodbye![/cyan]")
+                return 0
 
-        func = workflows.get(choice)
-        if func:
-            console.print()
-            func()
-            console.print()
-            _prompt("Press Enter to continue...")
-        else:
-            _error("Invalid choice (0-7)")
+            func = workflows.get(choice)
+            if func:
+                console.print()
+                func()
+                console.print()
+                _prompt("Press Enter to continue...")
+            else:
+                _error("Invalid choice (0-6)")
+    except EOFError:
+        console.print("\n[cyan]Input closed. Goodbye![/cyan]")
+        return 0
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Cancelled by user.[/yellow]")
+        return 130

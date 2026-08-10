@@ -11,11 +11,20 @@
 # Overrides:
 #   F90                  Fortran compiler (default: gfortran)
 #   XTALKIT_ENUMLIB_BIN  install directory (default: ~/.local/share/xtalkit/bin)
+#   ENUMLIB_REF          audited enumlib commit/tag to build
+#   XTALKIT_BUILD_JOBS   compiler concurrency (default: 1)
 #
 set -euo pipefail
 
 F90="${F90:-gfortran}"
 PREFIX="${XTALKIT_ENUMLIB_BIN:-$HOME/.local/share/xtalkit/bin}"
+ENUMLIB_REF="${ENUMLIB_REF:-67217859c1cfe6e1d8cfe25b76a1d14a28c6030e}"
+BUILD_JOBS="${XTALKIT_BUILD_JOBS:-1}"
+
+if ! [[ "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "[ERR] XTALKIT_BUILD_JOBS must be a positive integer." >&2
+    exit 1
+fi
 
 # --- prerequisite checks -----------------------------------------------------
 for cmd in "$F90" git make; do
@@ -33,31 +42,35 @@ for cmd in "$F90" git make; do
     fi
 done
 
-echo "[1/4] Compiler: $F90   |   Install prefix: $PREFIX"
+echo "[1/4] Compiler: $F90   |   Jobs: $BUILD_JOBS   |   Install prefix: $PREFIX"
 
 # --- clone (full clone so `git describe` works for the version tag) ---------
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 echo "[2/4] Cloning enumlib (+ symlib submodule) into $WORK/enumlib ..."
 git clone --recursive https://github.com/msg-byu/enumlib.git "$WORK/enumlib"
+git -C "$WORK/enumlib" checkout --detach "$ENUMLIB_REF"
+git -C "$WORK/enumlib" submodule update --init --recursive
 
 # --- build symlib (dependency) then enum.x + makestr.x ----------------------
 echo "[3/4] Compiling symlib ..."
-( cd "$WORK/enumlib/symlib/src" && make "F90=$F90" )
+( cd "$WORK/enumlib/symlib/src" && make -j "$BUILD_JOBS" "F90=$F90" )
 
 echo "[4/4] Compiling enum.x + makestr.x ..."
-( cd "$WORK/enumlib/src" && make "F90=$F90" enum.x makestr.x )
+( cd "$WORK/enumlib/src" && make -j "$BUILD_JOBS" "F90=$F90" enum.x makestr.x )
 
 # --- install -----------------------------------------------------------------
 mkdir -p "$PREFIX"
 cp "$WORK/enumlib/src/enum.x" "$WORK/enumlib/src/makestr.x" "$PREFIX/"
 chmod 0755 "$PREFIX/enum.x" "$PREFIX/makestr.x"
+git -C "$WORK/enumlib" rev-parse HEAD > "$PREFIX/enumlib-commit.txt"
 
 cat <<EOF
 
 [OK] Installed:
       $PREFIX/enum.x
       $PREFIX/makestr.x
+      $PREFIX/enumlib-commit.txt
 
 xtalkit discovers these automatically — no PATH setup needed. To use a
 different location, set XTALKIT_ENUMLIB_BIN and re-run this script.

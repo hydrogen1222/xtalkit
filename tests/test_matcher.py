@@ -1,4 +1,3 @@
-import pytest
 import gemmi
 from xtalkit.matcher import match_atoms
 from xtalkit.spacegroup import wyckoff_positions
@@ -33,7 +32,7 @@ def test_match_atoms_exact_position():
     """Atom at (0,0,0) should match 4a in F-43m."""
     structure = _make_cubic_structure([("Li", (0.0, 0.0, 0.0))])
     wyckoffs = wyckoff_positions(216)
-    mapping = match_atoms(structure, wyckoffs, tolerance=0.5)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert "Li1" in mapping
     assert mapping["Li1"] == "4a"
 
@@ -42,22 +41,17 @@ def test_match_atoms_near_position():
     """Atom near (0.25,0.25,0.25) should match 4c in F-43m (0.25,0.25,0.25)."""
     structure = _make_cubic_structure([("P", (0.251, 0.249, 0.250))])
     wyckoffs = wyckoff_positions(216)
-    mapping = match_atoms(structure, wyckoffs, tolerance=0.5)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert "P1" in mapping
     assert mapping["P1"] == "4c"
 
 
-def test_match_atoms_no_match_beyond_tolerance():
-    """An atom genuinely far from every Wyckoff site must not match.
-
-    (0.1, 0.2, 0.3) sits well away from all F-43m special positions and the
-    representative general-position orbitals, so with a tight 0.01 tolerance
-    it should be left unmatched.
-    """
-    structure = _make_cubic_structure([("Li", (0.1, 0.2, 0.3))])
+def test_match_atoms_generic_point_matches_general_position():
+    """A generic point belongs to the general Wyckoff orbit, not to no orbit."""
+    structure = _make_cubic_structure([("Li", (0.101, 0.213, 0.337))])
     wyckoffs = wyckoff_positions(216)
     mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
-    assert "Li1" not in mapping
+    assert mapping["Li1"] == "96i"
 
 
 def test_match_atoms_minimum_image_boundary():
@@ -87,7 +81,7 @@ def test_match_atoms_multiple_atoms():
         ("P", (0.25, 0.25, 0.25)),
     ])
     wyckoffs = wyckoff_positions(216)
-    mapping = match_atoms(structure, wyckoffs, tolerance=0.5)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert mapping["Li1"] == "4a"
     assert mapping["P2"] == "4c"
 
@@ -96,7 +90,7 @@ def test_match_atoms_empty_structure():
     """Empty structure returns empty dict."""
     structure = _make_cubic_structure([])
     wyckoffs = wyckoff_positions(216)
-    mapping = match_atoms(structure, wyckoffs, tolerance=0.5)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert mapping == {}
 
 
@@ -105,6 +99,6 @@ def test_match_atoms_symmetry_equivalent():
     This tests that symmetry-equivalent positions are generated correctly."""
     structure = _make_cubic_structure([("Na", (0.5, 0.5, 0.5))])
     wyckoffs = wyckoff_positions(216)
-    mapping = match_atoms(structure, wyckoffs, tolerance=0.5)
+    mapping = match_atoms(structure, wyckoffs, tolerance=0.01)
     assert "Na1" in mapping
     assert mapping["Na1"] == "4b"

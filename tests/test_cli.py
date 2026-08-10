@@ -1,9 +1,12 @@
 import os
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
 
 import pytest
+
+from xtalkit.cli import _path_arg
 
 
 @pytest.fixture
@@ -23,6 +26,15 @@ def test_cli_version():
     result = run_xtalkit("--version")
     assert result.returncode == 0
     assert "xtalkit" in result.stdout
+
+
+def test_cli_top_level_help_points_to_a_real_first_step():
+    result = run_xtalkit("--help")
+    assert result.returncode == 0
+    assert "xtalkit info --sg 216" in result.stdout
+    assert '--atom "Na 4a"' in result.stdout
+    assert "without a subcommand" in result.stdout
+    assert "README.zh-CN.md" in result.stdout
 
 
 def test_cli_info():
@@ -80,16 +92,17 @@ def test_cli_info_help():
     assert result.returncode == 0
 
 
-def test_cli_no_args_enters_tui():
-    """With no args, launches interactive TUI; exit with '0'."""
-    result = subprocess.run(
-        [sys.executable, "-m", "xtalkit.cli"],
-        capture_output=True, text=True,
-        input="0\n",
-    )
+def test_cli_no_args_in_noninteractive_shell_prints_help():
+    """Redirected/CI invocation must not block waiting for TUI input."""
+    result = run_xtalkit()
     assert result.returncode == 0
-    output = result.stdout + result.stderr
-    assert "xtalkit" in output.lower() or "menu" in output.lower() or "tui" in output.lower()
+    assert "usage: xtalkit" in result.stdout
+    assert "Typical first steps" in result.stdout
+
+
+def test_cli_path_argument_expands_home_directory():
+    assert _path_arg("~/example.cif") == str(Path.home() / "example.cif")
+    assert _path_arg("relative/example.cif") == "relative/example.cif"
 
 
 def test_cli_fetch():

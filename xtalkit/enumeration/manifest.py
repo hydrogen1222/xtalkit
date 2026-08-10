@@ -22,12 +22,17 @@ def sha256_file(path: str) -> str:
 
 
 def write_json(path: str, data: dict) -> None:
+    """Atomically replace a JSON artifact so interrupted writes are not trusted."""
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    tmp = f"{path}.tmp-{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, sort_keys=True)
         f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
 
 def append_jsonl(path: str, data: dict) -> None:
@@ -38,10 +43,24 @@ def append_jsonl(path: str, data: dict) -> None:
         f.write(json.dumps(data, sort_keys=True) + "\n")
 
 
-def _dependency_versions() -> dict:
-    """Best-effort version probe for the audit/dedup dependencies (plan §5).
+def write_jsonl(path: str, rows) -> None:
+    """Atomically replace a JSONL report with one JSON object per input row."""
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    tmp = f"{path}.tmp-{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, sort_keys=True) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
-    pymatgen (StructureMatcher dedup, §10) and spglib (symmetry audit, §3.4)
+
+def _dependency_versions() -> dict:
+    """Best-effort version probe for the audit and deduplication dependencies.
+
+    pymatgen (StructureMatcher deduplication) and spglib (symmetry audit)
     are lazy-imported so the core toolkit still works without the ``enumerate``
     extra; missing packages record as ``null`` rather than failing the manifest.
     """

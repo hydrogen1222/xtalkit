@@ -54,19 +54,19 @@ def _parse_scaling_matrix(values: list[str] | None) -> list[list[int]]:
 
 def _parse_charge_map(values: list[str] | None) -> dict[str, float]:
     """Parse species charge tokens like Li:1 S:-2."""
-    charges = {}
-    for token in values or []:
-        if ":" not in token:
-            raise ValueError(f"charge token {token!r} must be ELEMENT:CHARGE")
-        element, charge = token.split(":", 1)
-        charges[element] = float(charge)
-    return charges
+    from xtalkit.ewald import parse_charges
+    return parse_charges(values or [])
 
 
 def _parse_elems(value: str) -> dict[str, str]:
     """Parse '4a:Xe,16e:Kr' into a dict (validated)."""
     from xtalkit.utils import parse_element_map
     return parse_element_map(value)
+
+
+def _path_arg(value: str) -> str:
+    """Expand a leading ``~`` while preserving relative-path semantics."""
+    return os.path.expanduser(value)
 
 
 def cmd_mark(args) -> int:
@@ -84,7 +84,7 @@ def cmd_mark(args) -> int:
             base = os.path.splitext(os.path.basename(args.cif))[0]
             output_base = os.path.join(os.path.dirname(args.cif) or ".", f"{base}_WYCK")
 
-        formats = args.format.split(",")
+        formats = [item.strip() for item in args.format.split(",") if item.strip()]
         element_map = _parse_elems(args.map) if args.map else None
 
         result = mark(
@@ -100,7 +100,7 @@ def cmd_mark(args) -> int:
         )
         print(f"[OK] Done. Saved to: {result}")
         return 0
-    except (ValueError, FileNotFoundError, NotImplementedError) as e:
+    except (ValueError, OSError, NotImplementedError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -118,7 +118,7 @@ def cmd_skeleton(args) -> int:
         else:
             output_base = f"SG{args.sg}_skeleton"
 
-        formats = args.format.split(",")
+        formats = [item.strip() for item in args.format.split(",") if item.strip()]
         element_map = _parse_elems(args.map) if args.map else None
         cell_params = _parse_cell(args.cell) if args.cell else None
 
@@ -132,7 +132,7 @@ def cmd_skeleton(args) -> int:
         )
         print(f"[OK] Done. Saved to: {result}")
         return 0
-    except (ValueError, FileNotFoundError, NotImplementedError) as e:
+    except (ValueError, OSError, NotImplementedError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -164,9 +164,7 @@ def cmd_info(args) -> int:
 def cmd_fetch(args) -> int:
     """Run the 'fetch' subcommand."""
     from xtalkit.spacegroup import wyckoff_positions
-    # Verifies the bundled Wyckoff data is intact. Only 38 space groups are
-    # populated so far (1-2, 195-230); the rest raise NotImplementedError,
-    # which we count as "not yet supported" rather than a data error.
+    # Verify the bundled all-230-space-group Wyckoff database is readable.
     try:
         supported = 0
         for n in range(1, 231):
@@ -208,7 +206,7 @@ def _parse_atom_frac_raw(value: str) -> tuple[str, float, float, float, float]:
     Format: element x y z [occ]. Occupancy defaults to 1.0.
     """
     parts = value.split()
-    if len(parts) < 4:
+    if len(parts) not in (4, 5):
         raise ValueError(
             f"--atom-frac expects 'element x y z [occ]', got {value!r}"
         )
@@ -218,7 +216,7 @@ def _parse_atom_frac_raw(value: str) -> tuple[str, float, float, float, float]:
         occ = float(parts[4]) if len(parts) >= 5 else 1.0
     except ValueError as e:
         raise ValueError(f"--atom-frac numeric parse error in {value!r}: {e}") from e
-    if not (0.0 <= occ <= 1.0 + 1e-6):
+    if not (0.0 <= occ <= 1.0):
         raise ValueError(f"--atom-frac occupancy {occ} out of range [0, 1] in {value!r}")
     return element, coords[0], coords[1], coords[2], occ
 
@@ -227,6 +225,11 @@ def cmd_build(args) -> int:
     """Run the 'build' subcommand: assemble a CIF from refinement parameters."""
     try:
         if args.spec:
+            if args.sg is not None or args.cell is not None or args.atom or args.atom_frac:
+                raise ValueError(
+                    "--spec cannot be combined with --sg, --cell, --atom, or "
+                    "--atom-frac"
+                )
             with open(args.spec, encoding="utf-8") as f:
                 spec = json.load(f)
             sg_number = int(spec["sg"])
@@ -313,6 +316,8 @@ def cmd_build(args) -> int:
               f"crystal system: {crystal_system(sg_number)}, formula: {formula}")
         output_base = args.output or f"SG{sg_number}_built"
         formats = [f.strip() for f in args.format.split(",") if f.strip()]
+        if not formats:
+            raise ValueError("at least one output format is required")
         paths = []
         for fmt in formats:
             path = f"{output_base}.{fmt}"
@@ -325,7 +330,7 @@ def cmd_build(args) -> int:
             paths.append(path)
         print(f"     Saved to: {', '.join(paths)}")
         return 0
-    except (ValueError, FileNotFoundError, KeyError, NotImplementedError) as e:
+    except (ValueError, OSError, KeyError, NotImplementedError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -364,7 +369,7 @@ def cmd_enumerate(args) -> int:
         if len(paths) > 10:
             print(f"     ... and {len(paths) - 10} more")
         return 0
-    except (RuntimeError, FileNotFoundError, ValueError) as e:
+    except (RuntimeError, OSError, ValueError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -390,7 +395,7 @@ def cmd_shry_prepare(args) -> int:
         print(f"     Manifest: {result['manifest']}")
         print(f"     Orbit grouping: {result['orbit_grouping']}")
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -412,7 +417,7 @@ def cmd_shry_count(args) -> int:
         print(f"[OK] SHRY count-only: {result['count_only_result']}")
         print(f"     Saved to: {args.out}")
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -438,10 +443,14 @@ def cmd_shry_enum(args) -> int:
             strict=args.strict,
             symmetrize=args.symmetrize,
         )
-        print(f"[OK] SHRY generated {result['generated_clean_count']} structure(s).")
+        print(
+            f"[OK] SHRY enumerated {result['generated_raw_count']} structure(s); "
+            f"wrote {result['generated_clean_count']} clean CIF(s) and "
+            f"{result['generated_poscar_count']} POSCAR(s)."
+        )
         print(f"     Output directory: {args.out}")
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -463,7 +472,7 @@ def cmd_shry_verify(args) -> int:
         )
         print(f"[OK] SHRY verify passed for {result['clean_count']} structure(s).")
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -475,7 +484,6 @@ def cmd_shry_postprocess(args) -> int:
             rank_by_shortest_distance,
             rank_by_ewald,
             write_tblite_inputs,
-            write_cp2k_inputs,
             write_slurm_array,
         )
         outputs = []
@@ -490,11 +498,8 @@ def cmd_shry_postprocess(args) -> int:
         if args.write_tblite:
             jobs = write_tblite_inputs(args.output_dir, charge=args.charge, uhf=args.uhf)
             outputs.append(f"tblite jobs: {len(jobs)}")
-        if args.write_cp2k:
-            jobs = write_cp2k_inputs(args.output_dir, template=args.cp2k_template)
-            outputs.append(f"cp2k jobs: {len(jobs)}")
         if args.write_slurm:
-            script = write_slurm_array(args.output_dir, job_kind=args.slurm_kind)
+            script = write_slurm_array(args.output_dir)
             outputs.append(f"slurm script: {script}")
         if not outputs:
             raise ValueError("no postprocess action selected")
@@ -502,7 +507,7 @@ def cmd_shry_postprocess(args) -> int:
         for line in outputs:
             print(f"     {line}")
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -560,7 +565,7 @@ def cmd_ewald(args) -> int:
                 f"and {group_info['remaining_dir']}"
             )
         return 0
-    except (ValueError, RuntimeError, FileNotFoundError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"[ERR] {e}", file=sys.stderr)
         return 1
 
@@ -569,33 +574,50 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the full CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="xtalkit",
-        description="Crystal Wyckoff Toolkit — mark Wyckoff positions, build CIFs, and batch Ewald rank structures",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Work with crystallographic Wyckoff positions, refinement CIFs, "
+            "occupational disorder, and Ewald rankings."
+        ),
+        epilog="""Typical first steps:
+  xtalkit info --sg 216
+  xtalkit build --sg 225 --cell "5.64 5.64 5.64 90 90 90" \\
+    --atom "Na 4a" --atom "Cl 4b" -o NaCl
+  xtalkit build --help
+
+Run xtalkit without a subcommand to open the interactive terminal interface.
+Chinese manual: https://github.com/hydrogen1222/xtalkit/blob/master/README.zh-CN.md
+Project and English manual: https://github.com/hydrogen1222/xtalkit""",
     )
     parser.add_argument("--version", action="version", version=f"xtalkit {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     # mark
-    p_mark = sub.add_parser("mark", help="Mark Wyckoff positions in a CIF file")
-    p_mark.add_argument("cif", help="Path to the input CIF file")
+    p_mark = sub.add_parser(
+        "mark", help="Visualize selected Wyckoff positions in a CIF",
+    )
+    p_mark.add_argument("cif", type=_path_arg, help="Path to the input CIF file")
     p_mark.add_argument("--sg", type=int, required=True, help="Space group number (1-230)")
     p_mark.add_argument("--wyckoff", type=_parse_wyckoff, required=True,
                         help="Wyckoff letters to mark (comma-separated, or 'all')")
     p_mark.add_argument("--mode", choices=["overlay", "replace"], default="overlay",
                         help="overlay: add dummies; replace: swap real atoms (default: overlay)")
-    p_mark.add_argument("--tol", type=float, default=0.5,
-                        help="Matching tolerance in fractional coordinate units (default: 0.5)")
-    p_mark.add_argument("--offset", type=float, default=0.02,
-                        help="Fractional offset for dummy atoms (default: 0.02, use 0 for exact positions)")
+    p_mark.add_argument("--tol", type=float, default=0.01,
+                        help="Wyckoff constraint tolerance in fractional units (default: 0.01)")
+    p_mark.add_argument("--offset", type=float, default=0.0,
+                        help="Visual-only fractional displacement (default: 0 = exact Wyckoff position)")
     p_mark.add_argument("--map", type=str, default=None,
                         help="Element override, e.g. '4a:Xe,16e:Kr'")
     p_mark.add_argument("--format", type=str, default="cif",
                         help="Output format(s): cif,xyz (comma-separated, default: cif)")
-    p_mark.add_argument("-o", "--output", type=str, default=None,
+    p_mark.add_argument("-o", "--output", type=_path_arg, default=None,
                         help="Output base path (without extension)")
     p_mark.set_defaults(func=cmd_mark)
 
     # skeleton
-    p_skel = sub.add_parser("skeleton", help="Generate pure Wyckoff skeleton")
+    p_skel = sub.add_parser(
+        "skeleton", help="Generate a visualization-only Wyckoff skeleton",
+    )
     p_skel.add_argument("--sg", type=int, required=True, help="Space group number (1-230)")
     p_skel.add_argument("--wyckoff", type=_parse_wyckoff, required=True,
                         help="Wyckoff letters to generate (comma-separated, or 'all')")
@@ -605,7 +627,7 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Element override, e.g. '4a:Xe,16e:Kr'")
     p_skel.add_argument("--format", type=str, default="cif",
                         help="Output format(s): cif,xyz (comma-separated)")
-    p_skel.add_argument("-o", "--output", type=str, default=None,
+    p_skel.add_argument("-o", "--output", type=_path_arg, default=None,
                         help="Output base path (without extension)")
     p_skel.set_defaults(func=cmd_skeleton)
 
@@ -615,16 +637,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_info.set_defaults(func=cmd_info)
 
     # fetch
-    p_fetch = sub.add_parser("fetch", help="Verify space group database")
+    p_fetch = sub.add_parser(
+        "fetch", help="Verify the bundled Wyckoff database (no download)",
+    )
     p_fetch.set_defaults(func=cmd_fetch)
 
     # enumerate
     p_enum = sub.add_parser(
         "enumerate",
-        help="Enumerate ordered configurations of a disordered CIF "
-             "(requires the 'enumerate' extra + compiled enumlib)",
+        help="Enumerate small/medium disordered structures with enumlib",
     )
-    p_enum.add_argument("cif", help="Path to the input disordered CIF")
+    p_enum.add_argument("cif", type=_path_arg,
+                        help="Path to the input disordered CIF")
     p_enum.add_argument("--min-cell-size", type=int, default=1,
                         help="Minimum supercell size to enumerate (default: 1)")
     p_enum.add_argument("--max-cell-size", type=int, default=2,
@@ -633,10 +657,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Symmetry tolerance for SpacegroupAnalyzer (default: 0.1)")
     p_enum.add_argument("--vacancy-symbol", type=str, default="X",
                         help="DummySpecies symbol for vacancies (default: X)")
-    p_enum.add_argument("--output-dir", type=str, default=None,
+    p_enum.add_argument("--output-dir", type=_path_arg, default=None,
                         help="Output directory (default: <cif_basename>_enum/)")
     p_enum.add_argument("--max-structures", type=int, default=None,
-                        help="Stop after N structures (default: unlimited)")
+                        help="Write at most N results after enum.x finishes; "
+                             "does not limit enum.x search (default: unlimited)")
     p_enum.add_argument("--timeout", type=float, default=None,
                         help="Timeout in minutes (default: none)")
     p_enum.add_argument("--format", type=str, default="cif", choices=["cif", "xyz"],
@@ -648,7 +673,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_enum.add_argument("--batch-size", type=int, default=256,
                         help="Structures per batch — caps peak memory (default: 256). "
                              "Larger = fewer makestr.x calls but more memory.")
-    p_enum.add_argument("--scratch-dir", type=str, default=None,
+    p_enum.add_argument("--scratch-dir", type=_path_arg, default=None,
                         help="Directory for enumlib scratch files (default: system temp). "
                              "/dev/shm puts them on tmpfs (faster, limited to ~half RAM).")
     p_enum.add_argument("--skip-preflight", action="store_true", default=False,
@@ -660,13 +685,17 @@ def build_parser() -> argparse.ArgumentParser:
     # shry
     p_shry = sub.add_parser(
         "shry",
-        help="Strict SHRY workflow for partially occupied structure enumeration",
+        help="Count-first SHRY workflow for larger disordered structures",
     )
     shry_sub = p_shry.add_subparsers(dest="shry_command", required=True)
 
     p_shry_prepare = shry_sub.add_parser("prepare", help="Prepare a SHRY-ready CIF")
-    p_shry_prepare.add_argument("cif", help="Input CIF with partial occupancy")
-    p_shry_prepare.add_argument("--out", required=True, help="Output SHRY-ready CIF")
+    p_shry_prepare.add_argument(
+        "cif", type=_path_arg, help="Input CIF with partial occupancy",
+    )
+    p_shry_prepare.add_argument(
+        "--out", type=_path_arg, required=True, help="Output SHRY-ready CIF",
+    )
     p_shry_prepare.add_argument("--vacancy-symbol", default="X",
                                 help="Pseudo species for vacancies (default: X)")
     p_shry_prepare.add_argument("--set-occupancy", default=None,
@@ -682,33 +711,38 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_prepare.add_argument("--symmetrize", action="store_true", default=False)
     p_shry_prepare.add_argument(
         "--strict", action=argparse.BooleanOptionalAction, default=True,
-        help="Strict audited workflow (default on). Use --no-strict to relax "
-             "count/audit gating for exploratory runs.")
+        help="Label the manifest as strict (default on). Preparation always "
+             "validates occupancy, integerizability, and symmetry grouping.")
     p_shry_prepare.set_defaults(func=cmd_shry_prepare)
 
     p_shry_count = shry_sub.add_parser("count", help="Run SHRY count-only")
-    p_shry_count.add_argument("cif", help="SHRY-ready CIF")
+    p_shry_count.add_argument("cif", type=_path_arg, help="SHRY-ready CIF")
     p_shry_count.add_argument("--scaling-matrix", nargs="+", default=None,
                               help="3 diagonal values or 9 full matrix values (default: 1 1 1)")
     p_shry_count.add_argument("--symprec", type=float, default=0.01)
     p_shry_count.add_argument("--angle-tolerance", type=float, default=5.0)
     p_shry_count.add_argument("--atol", type=float, default=1e-5)
     p_shry_count.add_argument("--symmetrize", action="store_true", default=False)
-    p_shry_count.add_argument("--out", default="count.json")
+    p_shry_count.add_argument("--out", type=_path_arg, default="count.json")
     p_shry_count.add_argument(
         "--strict", action=argparse.BooleanOptionalAction, default=True,
-        help="Strict audited workflow (default on). Use --no-strict to relax.")
+        help="Label the count manifest as strict (default on); count safety "
+             "checks are always applied.")
     p_shry_count.set_defaults(func=cmd_shry_count)
 
     p_shry_enum = shry_sub.add_parser("enum", help="Run strict SHRY enumeration")
-    p_shry_enum.add_argument("cif", help="SHRY-ready CIF")
+    p_shry_enum.add_argument("cif", type=_path_arg, help="SHRY-ready CIF")
     p_shry_enum.add_argument("--scaling-matrix", nargs="+", default=None,
                              help="3 diagonal values or 9 full matrix values (default: 1 1 1)")
     p_shry_enum.add_argument("--symprec", type=float, default=0.01)
     p_shry_enum.add_argument("--angle-tolerance", type=float, default=5.0)
     p_shry_enum.add_argument("--atol", type=float, default=1e-5)
-    p_shry_enum.add_argument("--expect-count", type=int, required=True)
-    p_shry_enum.add_argument("--out", required=True, help="Output workflow directory")
+    p_shry_enum.add_argument(
+        "--expect-count", type=int, default=None,
+        help="Expected unique configuration count (required in strict mode)")
+    p_shry_enum.add_argument(
+        "--out", type=_path_arg, required=True, help="Output workflow directory",
+    )
     p_shry_enum.add_argument("--remove-vacancy", default="X")
     p_shry_enum.add_argument("--target-formula", default=None)
     p_shry_enum.add_argument("--write-cif", action="store_true", default=False)
@@ -718,15 +752,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_enum.add_argument("--symmetrize", action="store_true", default=False)
     p_shry_enum.add_argument(
         "--strict", action=argparse.BooleanOptionalAction, default=True,
-        help="Strict audited workflow (default on). Use --no-strict to relax "
-             "the expect-count/mod-only gating.")
+        help="Strict audited workflow (default on). --no-strict permits a "
+             "missing expected count and records, rather than rejects, a "
+             "mod-only chemistry difference.")
     p_shry_enum.set_defaults(func=cmd_shry_enum)
 
     p_shry_verify = shry_sub.add_parser("verify", help="Verify SHRY outputs")
-    p_shry_verify.add_argument("output_dir")
-    p_shry_verify.add_argument("--check-count", action="store_true", default=False)
-    p_shry_verify.add_argument("--check-formula", action="store_true", default=False)
-    p_shry_verify.add_argument("--check-dedup", action="store_true", default=False)
+    p_shry_verify.add_argument("output_dir", type=_path_arg)
+    p_shry_verify.add_argument(
+        "--check-count", action=argparse.BooleanOptionalAction, default=True,
+        help="Verify generated count against the manifest (default on)")
+    p_shry_verify.add_argument(
+        "--check-formula", action=argparse.BooleanOptionalAction, default=True,
+        help="Verify ordered occupancy, formula, and vacancy removal (default on)")
+    p_shry_verify.add_argument(
+        "--check-dedup", action=argparse.BooleanOptionalAction, default=True,
+        help="Run conservative StructureMatcher deduplication (default on)")
     p_shry_verify.add_argument("--target-formula", default=None)
     p_shry_verify.add_argument("--vacancy-symbol", default="X")
     p_shry_verify.add_argument("--symprec-list", nargs="*", default=None)
@@ -735,7 +776,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_verify.set_defaults(func=cmd_shry_verify)
 
     p_shry_post = shry_sub.add_parser("postprocess", help="Post-process SHRY outputs")
-    p_shry_post.add_argument("output_dir")
+    p_shry_post.add_argument("output_dir", type=_path_arg)
     p_shry_post.add_argument("--shortest-distance", action="store_true", default=False)
     p_shry_post.add_argument("--pair", nargs=2, default=None,
                              help="Species pair for shortest-distance ranking, e.g. Li Li")
@@ -745,18 +786,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_shry_post.add_argument("--write-tblite", action="store_true", default=False)
     p_shry_post.add_argument("--charge", type=int, default=0)
     p_shry_post.add_argument("--uhf", type=int, default=0)
-    p_shry_post.add_argument("--write-cp2k", action="store_true", default=False)
-    p_shry_post.add_argument("--cp2k-template", default=None)
     p_shry_post.add_argument("--write-slurm", action="store_true", default=False)
-    p_shry_post.add_argument("--slurm-kind", choices=["tblite", "cp2k"], default="tblite")
     p_shry_post.set_defaults(func=cmd_shry_postprocess)
 
     # ewald
     p_ewald = sub.add_parser(
         "ewald",
-        help="Batch Ewald electrostatic energy ranking for CIF/POSCAR folders",
+        help="Rank comparable ordered structures by Ewald model energy",
     )
-    p_ewald.add_argument("paths", nargs="+",
+    p_ewald.add_argument("paths", nargs="+", type=_path_arg,
                          help="Input file(s) or directory root(s)")
     p_ewald.add_argument("--layout", choices=["flat", "nested"], default="flat",
                          help="Directory layout: flat files or one-level nested subdirs")
@@ -772,24 +810,24 @@ def build_parser() -> argparse.ArgumentParser:
                          help="Rank by energy per atom instead of total energy")
     p_ewald.add_argument("--jobs", type=int, default=1,
                          help="Parallel workers for structure scoring (0 = auto; 1 = serial)")
-    p_ewald.add_argument("--out", default=None,
+    p_ewald.add_argument("--out", type=_path_arg, default=None,
                          help="Write full ranking CSV to this path")
     p_ewald.add_argument("--group", action="store_true", default=False,
                          help="Copy ranked structures into selected/rest folders")
-    p_ewald.add_argument("--group-dir", default=None,
+    p_ewald.add_argument("--group-dir", type=_path_arg, default=None,
                          help="Grouping root directory (default: <input>_ewald)")
     p_ewald.add_argument("--selected-name", default="selected",
                          help="Folder name for the selected top-N structures")
     p_ewald.add_argument("--remaining-name", default="rest",
                          help="Folder name for the remaining structures")
     p_ewald.add_argument("--move", action="store_true", default=False,
-                         help="Move files instead of copying them when grouping")
+                         help="Move original files instead of copying when grouping")
     p_ewald.set_defaults(func=cmd_ewald)
 
     # build
     p_build = sub.add_parser(
         "build",
-        help="Build a CIF from refinement parameters (SG + cell + Wyckoff sites)",
+        help="Build a physical CIF from space group, cell, and atom sites",
     )
     p_build.add_argument("--sg", type=int, default=None,
                          help="Space group number (1-230)")
@@ -803,11 +841,11 @@ def build_parser() -> argparse.ArgumentParser:
                          help="Atom (fractional-coord mode): 'element x y z [occ]' "
                               "(repeatable) — give refinement fractional coords directly, "
                               "e.g. 'Li 0.2563 0.2718 0.1832 0.6875'. Wyckoff orbit auto-detected.")
-    p_build.add_argument("--spec", type=str, default=None,
+    p_build.add_argument("--spec", type=_path_arg, default=None,
                          help="JSON spec file (alternative to --sg/--cell/--atom)")
     p_build.add_argument("--format", type=str, default="cif",
                          help="Output format(s): cif,xyz (comma-separated, default: cif)")
-    p_build.add_argument("-o", "--output", type=str, default=None,
+    p_build.add_argument("-o", "--output", type=_path_arg, default=None,
                          help="Output base path (without extension)")
     p_build.set_defaults(func=cmd_build)
 
@@ -820,7 +858,12 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command is None:
-        # No subcommand: launch TUI
+        # Avoid entering an input loop in pipes, CI, redirected shells, or
+        # other non-interactive contexts. An actual terminal still gets the
+        # guided interface.
+        if not sys.stdin.isatty() or not sys.stdout.isatty():
+            parser.print_help()
+            return 0
         from xtalkit.tui import run_tui
         return run_tui()
     else:

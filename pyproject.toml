@@ -11,10 +11,14 @@ dependencies = [
 # `enumerate` subcommand only — keeps the core (mark/skeleton/info/fetch)
 # lightweight. Install with:  uv sync --extra enumerate
 [project.optional-dependencies]
-enumerate = ["pymatgen>=2024.5"]
+enumerate = ["pymatgen>=2024.5", "spglib>=2.5"]
 
 [project.scripts]
 xtalkit = "xtalkit.cli:main"
+
+[project.urls]
+Repository = "https://github.com/hydrogen1222/xtalkit"
+Documentation = "https://github.com/hydrogen1222/xtalkit/blob/master/README.zh-CN.md"
 
 [build-system]
 requires = ["setuptools>=61.0"]

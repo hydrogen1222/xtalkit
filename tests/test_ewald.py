@@ -1,12 +1,14 @@
 import csv
 from concurrent.futures import Future
 from pathlib import Path
-from types import SimpleNamespace
+
+import pytest
 
 from xtalkit.ewald import (
     EwaldRow,
     batch_ewald,
     group_rows,
+    compute_ewald_energy,
     iter_structure_entries,
     parse_charges,
     split_rows,
@@ -17,6 +19,38 @@ from xtalkit.ewald import (
 def test_parse_charges():
     charges = parse_charges(["Li:1", "Ge:4", "P:-5", "S:-2"])
     assert charges == {"Li": 1.0, "Ge": 4.0, "P": -5.0, "S": -2.0}
+
+
+@pytest.mark.parametrize("tokens", [
+    ["Li:1", "Li:2"],
+    ["Xx:1"],
+    ["Li:nan"],
+])
+def test_parse_charges_rejects_ambiguous_or_invalid_values(tokens):
+    with pytest.raises(ValueError):
+        parse_charges(tokens)
+
+
+def test_compute_ewald_requires_ordered_neutral_structure():
+    pytest.importorskip("pymatgen")
+    from pymatgen.core import Lattice, Structure
+
+    neutral = Structure(
+        Lattice.cubic(4), ["Li", "F"], [[0, 0, 0], [0.5, 0.5, 0.5]],
+    )
+    assert compute_ewald_energy(neutral, charges={"Li": 1, "F": -1}) < 0
+    with pytest.raises(ValueError, match="not charge-neutral"):
+        compute_ewald_energy(neutral, charges={"Li": 1, "F": 0})
+    with pytest.raises(ValueError, match="not both"):
+        compute_ewald_energy(
+            neutral, charges={"Li": 1, "F": -1}, guess=True,
+        )
+
+    disordered = Structure(
+        Lattice.cubic(4), [{"Li": 0.5, "Na": 0.5}], [[0, 0, 0]],
+    )
+    with pytest.raises(ValueError, match="fully ordered"):
+        compute_ewald_energy(disordered, charges={"Li": 1, "Na": 1})
 
 
 def test_iter_structure_entries_flat_and_nested(tmp_path):
@@ -70,6 +104,41 @@ def test_split_and_group_rows(tmp_path):
     assert (selected_dir / "src_a" / "1.cif").exists()
     assert (selected_dir / "src_b" / "1.cif").exists()
     assert (remaining_dir / "src_a" / "2.cif").exists()
+    with pytest.raises(FileExistsError, match="not empty"):
+        group_rows(selected, remaining, str(tmp_path / "ewald_out"))
+
+
+def test_group_rows_rejects_unsafe_output_names(tmp_path):
+    with pytest.raises(ValueError, match="safe directory"):
+        group_rows([], [], str(tmp_path), selected_name="../escape")
+
+
+def test_group_rows_move_preflights_every_source(tmp_path):
+    source = tmp_path / "source.cif"
+    source.write_text("keep me")
+    rows = [
+        EwaldRow(str(tmp_path), "source.cif", str(source), "A", 1, 1.0),
+        EwaldRow(str(tmp_path), "missing.cif", str(tmp_path / "missing.cif"),
+                 "B", 1, 2.0),
+    ]
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        group_rows(rows, [], str(tmp_path / "grouped"), move=True)
+    assert source.read_text() == "keep me"
+    assert not (tmp_path / "grouped").exists()
+
+
+def test_group_rows_rejects_destination_collisions_before_copy(tmp_path):
+    first = tmp_path / "first.cif"
+    second = tmp_path / "second.cif"
+    first.write_text("first")
+    second.write_text("second")
+    rows = [
+        EwaldRow(str(tmp_path), "same.cif", str(first), "A", 1, 1.0),
+        EwaldRow(str(tmp_path), "same.cif", str(second), "B", 1, 2.0),
+    ]
+    with pytest.raises(ValueError, match="multiple rows"):
+        group_rows(rows, [], str(tmp_path / "grouped"))
+    assert not (tmp_path / "grouped").exists()
 
 
 def test_write_csv(tmp_path):

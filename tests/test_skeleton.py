@@ -11,7 +11,7 @@ from xtalkit.skeleton import generate
 def test_generate_creates_cif():
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "SG216_skeleton")
-        result = generate(
+        generate(
             sg_number=216,
             wyckoff_letters=["4a", "4c"],
             cell_params=None,
@@ -53,20 +53,42 @@ def test_generate_contains_dummy_atoms_only():
         assert "WYCK_4a" in content
 
 
-def test_generate_all_wyckoffs():
-    """Should generate all 8 Wyckoff positions for SG 216."""
+def test_generate_writes_each_selected_position_once():
+    """Regression: dummies must not be present in both structure and overlay."""
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "SG216_skeleton")
         generate(
             sg_number=216,
-            wyckoff_letters=["4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h"],
+            wyckoff_letters=["4a", "4c"],
+            cell_params=None,
+            element_map=None,
+            formats=["cif"],
+            output_base=out,
+        )
+        block = gemmi.cif.read_file(out + ".cif").sole_block()
+        assert list(block.find_values("_atom_site_label")) == [
+            "WYCK_4a", "WYCK_4c",
+        ]
+
+
+def test_generate_all_wyckoffs():
+    """Should generate all 9 Wyckoff positions for SG 216."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "SG216_skeleton")
+        generate(
+            sg_number=216,
+            wyckoff_letters=[
+                "4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h", "96i",
+            ],
             cell_params=None,
             element_map=None,
             formats=["cif"],
             output_base=out,
         )
         content = open(out + ".cif").read()
-        for letter in ["4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h"]:
+        for letter in [
+            "4a", "4b", "4c", "4d", "16e", "24f", "24g", "48h", "96i",
+        ]:
             assert f"WYCK_{letter}" in content
 
 
@@ -100,6 +122,9 @@ def test_generate_multiple_formats():
         )
         assert os.path.exists(out + ".cif")
         assert os.path.exists(out + ".xyz")
+        lines = open(out + ".xyz").read().splitlines()
+        assert int(lines[0]) == 4  # SG 216, Wyckoff 4a full orbit
+        assert "symmetry-expanded" in lines[1]
 
 
 def test_generate_custom_element_map():
@@ -128,4 +153,25 @@ def test_generate_invalid_sg():
             element_map=None,
             formats=["cif"],
             output_base="out",
+        )
+
+
+def test_generate_rejects_invalid_element_cell_and_format(tmp_path):
+    base = str(tmp_path / "bad")
+    with pytest.raises(ValueError, match="Invalid dummy element"):
+        generate(216, ["4a"], None, {"4a": "NoSuch"}, ["cif"], base)
+    with pytest.raises(ValueError, match="cell lengths"):
+        generate(
+            216, ["4a"],
+            {"a": 0, "b": 5, "c": 5, "alpha": 90, "beta": 90, "gamma": 90},
+            None, ["cif"], base,
+        )
+    with pytest.raises(ValueError, match="unsupported output"):
+        generate(216, ["4a"], None, None, ["pdb"], base)
+    with pytest.raises(ValueError, match="unit-cell metric"):
+        generate(
+            216, ["4a"],
+            {"a": 5, "b": 6, "c": 5,
+             "alpha": 90, "beta": 90, "gamma": 90},
+            None, ["cif"], base,
         )
