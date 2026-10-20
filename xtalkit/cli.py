@@ -16,7 +16,7 @@ from xtalkit.builder import (
     AtomSite, FracAtom, find_wyckoff, free_params, build_structure,
     build_structure_frac, stoichiometry, stoichiometry_frac,
     format_formula, validate_cell, validate_atoms, validate_atoms_frac,
-    detect_wyckoff,
+    detect_wyckoff, eval_coord,
 )
 from xtalkit.exporter import write_structure_cif, write_structure_xyz
 
@@ -221,6 +221,105 @@ def _parse_atom_frac_raw(value: str) -> tuple[str, float, float, float, float]:
     return element, coords[0], coords[1], coords[2], occ
 
 
+_OVEROCCUPIED_HINT = (
+    " If the table values were rounded (e.g. 0.385 + 0.616), renormalize "
+    "the occupancies on that site so they sum to at most 1."
+)
+
+
+def _wyckoff_atom_as_frac(sg_number: int, atom: AtomSite) -> tuple:
+    """Convert a Wyckoff-mode site to an (element, x, y, z, occ) tuple."""
+    wp = find_wyckoff(sg_number, atom.wyckoff)
+    x, y, z = eval_coord(wp.coordinates, list(atom.free))
+    return atom.element, x, y, z, float(atom.occ)
+
+
+def _parse_atom_wyckoff(sg_number: int, raw: str) -> AtomSite:
+    """Parse one --atom value, splitting free values from an optional occ."""
+    element, wyckoff, numbers = _parse_atom_raw(raw)
+    wp = find_wyckoff(sg_number, wyckoff)
+    n_free = len(free_params(wp.coordinates))
+    if len(numbers) == n_free:
+        free, occ = numbers, 1.0
+    elif len(numbers) == n_free + 1:
+        free, occ = numbers[:-1], numbers[-1]
+    else:
+        raise ValueError(
+            f"--atom {raw!r}: {wyckoff} ({wp.coordinates!r}) "
+            f"expects {n_free} free value(s) plus optional occ, "
+            f"got {len(numbers)} number(s)."
+        )
+    return AtomSite(element, wyckoff, free, occ)
+
+
+def _spec_atom(entry: dict):
+    """Read one JSON spec atom: either {"xyz": [...]} or {"wyckoff": ...}."""
+    if "element" not in entry:
+        raise ValueError(f"spec atom {entry!r} has no 'element'")
+    occ = float(entry.get("occ", 1.0))
+    if "xyz" in entry:
+        if "wyckoff" in entry:
+            raise ValueError(
+                f"spec atom {entry!r}: give either 'xyz' or 'wyckoff', not both")
+        xyz = entry["xyz"]
+        if not isinstance(xyz, (list, tuple)) or len(xyz) != 3:
+            raise ValueError(f"spec atom {entry!r}: 'xyz' must be [x, y, z]")
+        if not 0.0 <= occ <= 1.0:
+            raise ValueError(f"spec atom {entry!r}: occ must be in [0, 1]")
+        return "frac", (entry["element"], float(xyz[0]), float(xyz[1]),
+                        float(xyz[2]), occ)
+    if "wyckoff" not in entry:
+        raise ValueError(f"spec atom {entry!r} needs 'xyz' or 'wyckoff'")
+    return "wyckoff", AtomSite(entry["element"], entry["wyckoff"],
+                               entry.get("free", []), occ)
+
+
+def _build_frac(sg_number: int, cell_params: dict, parsed: list[tuple]):
+    """Validate, report and build from (element, x, y, z, occ) tuples."""
+    # Drop occ==0 atoms (absent from the structure); the refinement table may
+    # list them (e.g. a split site fully occupied by the other species), so
+    # tolerate them with a note.
+    frac_atoms = []
+    for fa in parsed:
+        if fa[4] == 0.0:
+            print(f"[info] skipping {fa[0]} at "
+                  f"({fa[1]},{fa[2]},{fa[3]}) — occupancy 0",
+                  file=sys.stderr)
+        else:
+            frac_atoms.append(FracAtom(*fa))
+    if not frac_atoms:
+        raise ValueError("at least one atom with occ > 0 is required.")
+    occupancy_issues = validate_atoms_frac(sg_number, frac_atoms)
+    for w in validate_cell(sg_number, cell_params) + occupancy_issues:
+        print(f"[warn] {w}", file=sys.stderr)
+    if occupancy_issues:
+        print(f"[hint]{_OVEROCCUPIED_HINT}", file=sys.stderr)
+    # Report detected Wyckoff sites (helps catch input errors).
+    print(f"[info] SG #{sg_number} ({sg_name(sg_number)}), "
+          f"{crystal_system(sg_number)} — detected Wyckoff sites:")
+    for fa in frac_atoms:
+        label, mult = detect_wyckoff(sg_number, fa.x, fa.y, fa.z)
+        print(f"        {fa.element:<3} at ({fa.x:.4f},{fa.y:.4f},"
+              f"{fa.z:.4f}) occ={fa.occ:<5} -> {label} (mult {mult})")
+    structure = build_structure_frac(sg_number, cell_params, frac_atoms)
+    formula = format_formula(stoichiometry_frac(sg_number, frac_atoms))
+    return structure, formula
+
+
+def _build_wyckoff(sg_number: int, cell_params: dict, atoms: list[AtomSite]):
+    """Validate and build from Wyckoff-mode sites."""
+    if not atoms:
+        raise ValueError("No atoms specified.")
+    occupancy_issues = validate_atoms(sg_number, atoms)
+    for w in validate_cell(sg_number, cell_params) + occupancy_issues:
+        print(f"[warn] {w}", file=sys.stderr)
+    if occupancy_issues:
+        print(f"[hint]{_OVEROCCUPIED_HINT}", file=sys.stderr)
+    structure = build_structure(sg_number, cell_params, atoms)
+    formula = format_formula(stoichiometry(sg_number, atoms))
+    return structure, formula
+
+
 def cmd_build(args) -> int:
     """Run the 'build' subcommand: assemble a CIF from refinement parameters."""
     try:
@@ -234,20 +333,21 @@ def cmd_build(args) -> int:
                 spec = json.load(f)
             sg_number = int(spec["sg"])
             cell_params = spec["cell"]
-            atoms = [
-                AtomSite(
-                    a["element"], a["wyckoff"],
-                    a.get("free", []), float(a.get("occ", 1.0)),
-                )
-                for a in spec["atoms"]
-            ]
-            if not atoms:
+            entries = [_spec_atom(a) for a in spec["atoms"]]
+            if not entries:
                 raise ValueError("No atoms specified.")
-            for w in validate_cell(sg_number, cell_params) + \
-                    validate_atoms(sg_number, atoms):
-                print(f"[warn] {w}", file=sys.stderr)
-            structure = build_structure(sg_number, cell_params, atoms)
-            formula = format_formula(stoichiometry(sg_number, atoms))
+            if any(kind == "frac" for kind, _ in entries):
+                # Any fractional entry: put every site through the
+                # fractional path so Wyckoff detection is reported for all.
+                parsed = [
+                    value if kind == "frac"
+                    else _wyckoff_atom_as_frac(sg_number, value)
+                    for kind, value in entries
+                ]
+                structure, formula = _build_frac(sg_number, cell_params, parsed)
+            else:
+                atoms = [value for _, value in entries]
+                structure, formula = _build_wyckoff(sg_number, cell_params, atoms)
         else:
             if args.sg is None:
                 raise ValueError("--sg is required (or use --spec).")
@@ -258,59 +358,20 @@ def cmd_build(args) -> int:
 
             if args.atom_frac:
                 # Fractional-coordinate mode: element x y z [occ] per atom.
-                parsed = [_parse_atom_frac_raw(raw) for raw in args.atom_frac]
-                # Drop occ==0 atoms (absent from the structure); the refinement
-                # table may list them (e.g. a split site fully occupied by the
-                # other species), so tolerate them with a note.
-                frac_atoms = []
-                for fa in parsed:
-                    if fa[4] == 0.0:
-                        print(f"[info] skipping {fa[0]} at "
-                              f"({fa[1]},{fa[2]},{fa[3]}) — occupancy 0",
-                              file=sys.stderr)
-                    else:
-                        frac_atoms.append(FracAtom(*fa))
-                if not frac_atoms:
-                    raise ValueError("at least one --atom-frac with occ > 0 is required.")
-                for w in validate_cell(sg_number, cell_params) + \
-                        validate_atoms_frac(sg_number, frac_atoms):
-                    print(f"[warn] {w}", file=sys.stderr)
-                # Report detected Wyckoff sites (helps catch input errors).
-                print(f"[info] SG #{sg_number} ({sg_name(sg_number)}), "
-                      f"{crystal_system(sg_number)} — detected Wyckoff sites:")
-                for fa in frac_atoms:
-                    label, mult = detect_wyckoff(sg_number, fa.x, fa.y, fa.z)
-                    print(f"        {fa.element:<3} at ({fa.x:.4f},{fa.y:.4f},"
-                          f"{fa.z:.4f}) occ={fa.occ:<5} -> {label} (mult {mult})")
-                structure = build_structure_frac(sg_number, cell_params, frac_atoms)
-                formula = format_formula(stoichiometry_frac(sg_number, frac_atoms))
+                # Any --atom rows given alongside are converted, not dropped.
+                parsed = [
+                    _wyckoff_atom_as_frac(sg_number,
+                                          _parse_atom_wyckoff(sg_number, raw))
+                    for raw in (args.atom or [])
+                ]
+                parsed += [_parse_atom_frac_raw(raw) for raw in args.atom_frac]
+                structure, formula = _build_frac(sg_number, cell_params, parsed)
             else:
                 if not args.atom:
                     raise ValueError(
                         "at least one --atom or --atom-frac is required.")
-                atoms = []
-                for raw in args.atom:
-                    element, wyckoff, numbers = _parse_atom_raw(raw)
-                    wp = find_wyckoff(sg_number, wyckoff)
-                    n_free = len(free_params(wp.coordinates))
-                    if len(numbers) == n_free:
-                        free, occ = numbers, 1.0
-                    elif len(numbers) == n_free + 1:
-                        free, occ = numbers[:-1], numbers[-1]
-                    else:
-                        raise ValueError(
-                            f"--atom {raw!r}: {wyckoff} ({wp.coordinates!r}) "
-                            f"expects {n_free} free value(s) plus optional occ, "
-                            f"got {len(numbers)} number(s)."
-                        )
-                    atoms.append(AtomSite(element, wyckoff, free, occ))
-                if not atoms:
-                    raise ValueError("No atoms specified.")
-                for w in validate_cell(sg_number, cell_params) + \
-                        validate_atoms(sg_number, atoms):
-                    print(f"[warn] {w}", file=sys.stderr)
-                structure = build_structure(sg_number, cell_params, atoms)
-                formula = format_formula(stoichiometry(sg_number, atoms))
+                atoms = [_parse_atom_wyckoff(sg_number, raw) for raw in args.atom]
+                structure, formula = _build_wyckoff(sg_number, cell_params, atoms)
 
         print(f"[OK] SG #{sg_number} ({sg_name(sg_number)}), "
               f"crystal system: {crystal_system(sg_number)}, formula: {formula}")
@@ -840,9 +901,12 @@ Project and English manual: https://github.com/hydrogen1222/xtalkit""",
                          dest="atom_frac",
                          help="Atom (fractional-coord mode): 'element x y z [occ]' "
                               "(repeatable) — give refinement fractional coords directly, "
-                              "e.g. 'Li 0.2563 0.2718 0.1832 0.6875'. Wyckoff orbit auto-detected.")
+                              "e.g. 'Li 0.2563 0.2718 0.1832 0.6875'. Wyckoff orbit auto-detected; "
+                              "may be combined with --atom.")
     p_build.add_argument("--spec", type=_path_arg, default=None,
-                         help="JSON spec file (alternative to --sg/--cell/--atom)")
+                         help="JSON spec file (alternative to --sg/--cell/--atom/--atom-frac); "
+                              "each atom is {\"element\", \"xyz\": [x,y,z], \"occ\"} or "
+                              "{\"element\", \"wyckoff\", \"free\": [...], \"occ\"}")
     p_build.add_argument("--format", type=str, default="cif",
                          help="Output format(s): cif,xyz (comma-separated, default: cif)")
     p_build.add_argument("-o", "--output", type=_path_arg, default=None,

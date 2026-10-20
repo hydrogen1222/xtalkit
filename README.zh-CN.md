@@ -1,21 +1,33 @@
-# xtalkit：晶体 Wyckoff 与占位无序工具箱
+# xtalkit
 
 [English README](README.md) · [SHRY 专题手册](docs/user/shry-enumeration.zh-CN.md)
 
-xtalkit 用来处理几类容易出错、又经常需要重复操作的晶体学任务：
+**一句话：把论文里的精修表变成 CIF，再把部分占据的 CIF 变成一批可以拿去算的有序结构。**
 
-- 查询空间群及 Wyckoff 位置；
-- 在现有 CIF 中标出 Wyckoff 位置，或生成纯 Wyckoff 骨架；
-- 根据精修表中的空间群、晶胞和原子位置生成 CIF；
-- 将部分占据结构枚举成有序构型；
-- 按 Ewald 静电模型对一批可比结构排序。
+```text
+精修表 ──build──▶ 无序 CIF ──enumerate / shry──▶ 有序结构 ──ewald──▶ 挑出低能构型 ──▶ DFT
+```
 
-它不是结构精修程序，也不会替你决定氧化态、电子自旋、合理超胞或 DFT
-参数。涉及这些物理选择时，程序会要求你明确给出信息，或直接拒绝继续。
+顺带还有几个看 Wyckoff 位置的小工具。它不做精修、不做弛豫，也不替你决定氧化态和超胞大小；
+遇到这类物理选择时，它会让你自己给，或者直接报错，不会悄悄猜一个。
 
-## 先从这里开始
+## 命令一览
 
-在仓库目录中安装核心功能：
+| 我想… | 命令 |
+|---|---|
+| 用精修数据建一个 CIF | `build` |
+| 把部分占据结构枚举成有序结构（中小体系） | `enumerate` |
+| 同上，但组合数很大，需要先计数再生成 | `shry` |
+| 按静电能给一批有序结构排序 | `ewald` |
+| 查一个空间群有哪些 Wyckoff 位置 | `info` |
+| 在已有 CIF 上标出某些 Wyckoff 位置（只看不算） | `mark` |
+| 不需要真实结构，只画出空间群的位置骨架 | `skeleton` |
+| 检查内置的 230 个空间群数据是否完整 | `fetch` |
+
+任何命令加 `--help` 都能看到完整参数，例如 `uv run xtalkit build --help`。
+直接运行 `uv run xtalkit`（不带子命令）会进入交互式界面，适合记不住参数的时候。
+
+## 安装
 
 ```bash
 git clone https://github.com/hydrogen1222/xtalkit.git
@@ -24,405 +36,239 @@ uv sync
 uv run xtalkit --version
 ```
 
-用仓库自带的小文件走一遍真实流程：
+这样就能用 `build`、`info`、`mark`、`skeleton`、`fetch`。
+`enumerate`、`shry`、`ewald` 需要额外组件，见后文[可选组件](#可选组件)。
 
-```bash
-# 看懂 216 号空间群有哪些 Wyckoff 位置
-uv run xtalkit info --sg 216
+---
 
-# 在测试 CIF 中标出 4a 和 4c；结果写到 quickstart_marked.cif
-uv run xtalkit mark tests/fixtures/simple.cif \
-  --sg 216 --wyckoff 4a,4c -o quickstart_marked
+## 主线：从精修数据建模
+
+下面以 Li₆PS₅Cl（argyrodite，F-43m，216 号）为例，这类结构里既有半占据的 Li，也有 Cl/S 混占位。
+
+### 第 1 步：把精修表抄成 JSON
+
+推荐写成 JSON 文件，而不是一长串命令行参数：好改、好复查，也能放进课题目录留档。
+仓库里有一个可以直接复制的模板：[examples/argyrodite_template.json](examples/argyrodite_template.json)。
+
+```json
+{
+  "sg": 216,
+  "cell": {"a": 9.86, "b": 9.86, "c": 9.86, "alpha": 90, "beta": 90, "gamma": 90},
+  "atoms": [
+    {"element": "Li", "xyz": [0.182, 0.182, 0.022], "occ": 0.5},
+    {"element": "P",  "xyz": [0.5,   0.5,   0.5]},
+    {"element": "S",  "xyz": [0.62,  0.62,  0.62]},
+    {"element": "Cl", "xyz": [0,     0,     0],    "occ": 0.5},
+    {"element": "S",  "xyz": [0,     0,     0],    "occ": 0.5},
+    {"element": "S",  "xyz": [0.75,  0.75,  0.75], "occ": 0.5},
+    {"element": "Cl", "xyz": [0.75,  0.75,  0.75], "occ": 0.5}
+  ]
+}
 ```
 
-`quickstart_marked.cif` 可以用 VESTA 打开。它带有
-`visualization_only` 标记，只用于观察位置，不能直接拿去算能量或做定量成分分析。
+> 上面的数值只是示意，用之前请换成你所引用论文的精修值。
 
-不想记参数时，直接运行：
+精修表和 JSON 字段的对应关系：
 
-```bash
-uv run xtalkit
-```
+| 精修表里的列 | JSON 里写成 | 说明 |
+|---|---|---|
+| 空间群 | `"sg"` | 只写编号。注意论文用的 setting（原点、轴的选取）要和标准 setting 一致 |
+| a, b, c, α, β, γ | `"cell"` | 六个都要写，立方晶系也一样 |
+| 原子 / 元素 | `"element"` | 写元素符号，例如 `Li`。不要写 `Li1`、`Li+` |
+| x, y, z | `"xyz"` | 直接抄分数坐标即可，不需要换算成标准代表点，程序会自己识别属于哪个 Wyckoff 位置 |
+| Occ / SOF | `"occ"` | 0–1 之间，省略时默认为 1 |
+| Wyckoff | 不用写 | 程序会自动识别并打印出来，供你和论文核对 |
+| Uiso / Biso | 不用写 | 不会写进 CIF |
 
-在交互式终端中，这会打开终端界面。重定向输出或在 CI 中运行时则显示帮助，
-不会等待输入。界面覆盖空间群查询、标记、建模、骨架、enumlib
-枚举和 Ewald 排序。SHRY 需要逐阶段检查计数与清单，因此只提供命令行流程。
+**混占位**：同一个位置写两行、坐标相同，例如上面的 4a 位就是 `Cl 0.5` 加 `S 0.5`。
+同一位置上所有原子的占据之和不能超过 1。
 
-## 我该用哪个命令？
+如果论文只给了 Wyckoff 标签和自由参数，也可以这样写：
+`{"element": "S", "wyckoff": "16e", "free": [0.62]}`。两种写法可以在同一个文件里混用。
 
-| 你要做的事 | 命令 | 典型输入 | 主要输出 |
-|---|---|---|---|
-| 查询一个空间群 | `info` | 空间群号 | Wyckoff 表 |
-| 在 CIF 上显示某些位置 | `mark` | CIF、空间群号、位置标签 | 可视化 CIF/XYZ |
-| 只看空间群的位置骨架 | `skeleton` | 空间群号、晶胞 | 可视化 CIF/XYZ |
-| 从精修参数建立物理结构 | `build` | 空间群、晶胞、原子位点 | 物理 CIF/XYZ |
-| 枚举中小型占位无序 | `enumerate` | 部分占据 CIF | 有序 CIF/XYZ 集合 |
-| 枚举较大的占位无序 | `shry` | 部分占据 CIF | 分阶段清单与有序结构 |
-| 比较一批有序结构的静电能 | `ewald` | CIF/POSCAR 文件夹、氧化态 | 排名 CSV |
-| 检查内置数据库 | `fetch` | 无 | 230 个空间群完整性结果 |
-
-每个命令都有简短而完整的参数说明：
+### 第 2 步：运行
 
 ```bash
-uv run xtalkit --help
-uv run xtalkit build --help
-uv run xtalkit shry enum --help
+uv run xtalkit build --spec examples/argyrodite_template.json -o LPSC
 ```
 
-## 按需安装
-
-核心安装只包含 gemmi 和 Rich，足够使用 `info`、`mark`、`skeleton`、
-`build`、`fetch` 和终端界面。
-
-### enumlib 与 Ewald
-
-`enumerate` 和 `ewald` 需要当前版 pymatgen/spglib；`enumerate` 还需要
-Fortran enumlib：
-
-```bash
-uv sync --extra enumerate
-bash scripts/build_enumlib.sh
-```
-
-编译前需要 `gfortran`、`make` 和 `git`。Debian/Ubuntu 可运行：
-
-```bash
-sudo apt install gfortran make git
-```
-
-构建脚本默认单进程，避免在共享计算节点上抢占 CPU。它把二进制装到
-`~/.local/share/xtalkit/bin/`，xtalkit 会自动发现，无需修改 `PATH`。
-当前默认固定到已审计提交：
+输出大致如下：
 
 ```text
-67217859c1cfe6e1d8cfe25b76a1d14a28c6030e
+[info] SG #216 (F-43m), cubic — detected Wyckoff sites:
+        Li  at (0.1820,0.1820,0.0220) occ=0.5   -> 48h (mult 48)
+        P   at (0.5000,0.5000,0.5000) occ=1.0   -> 4b (mult 4)
+        S   at (0.6200,0.6200,0.6200) occ=1.0   -> 16e (mult 16)
+        Cl  at (0.0000,0.0000,0.0000) occ=0.5   -> 4a (mult 4)
+        ...
+[OK] SG #216 (F-43m), crystal system: cubic, formula: Li6PS5Cl
+     Saved to: LPSC.cif
 ```
 
-检查实际安装版本并跑一个小测试：
+### 第 3 步：检查（这一步别跳过）
+
+1. **Wyckoff 是否和论文一致。** 如果识别出的位置和论文不同，或者显示 `?`，
+   多半是坐标抄错了，或者论文用的是非标准 setting。
+2. **化学式是否正确。** `formula` 是按"多重度 × 占据"算出来的。
+   如果你预期 Li₆PS₅Cl，结果却出现小数或比例不对，就回头检查 occ。
+   程序**不检查电中性**，这一点要靠你自己。
+   化学式里元素的顺序与 JSON 中各行首次出现的顺序一致，想要 `Li6PS5Cl` 就把 Li 写在第一行。
+3. 用 VESTA 打开 `LPSC.cif`，看一眼是否合理。
+
+只想临时试一下的话，也可以不写 JSON，直接在命令行里给：
 
 ```bash
-cat ~/.local/share/xtalkit/bin/enumlib-commit.txt
-uv run xtalkit enumerate tests/fixtures/disordered_binary.cif \
-  --max-cell-size 2 --output-dir enum_smoke
-# 应得到 3 个 Au/Cu 有序 CIF
+uv run xtalkit build --sg 216 --cell "9.86 9.86 9.86 90 90 90" \
+  --atom-frac "P 0.5 0.5 0.5" \
+  --atom-frac "Cl 0 0 0 0.5" --atom-frac "S 0 0 0 0.5" \
+  -o test
+# 格式：--atom-frac "元素 x y z [占据]"；另有 --atom "元素 Wyckoff [自由参数...] [占据]"，两者可以混用
 ```
 
-只有在你明确要换源码或增加编译并发时，才设置
-`ENUMLIB_REF=<提交或标签>`、`XTALKIT_BUILD_JOBS=<正整数>`。
+### build 常见报错
 
-### SHRY
+| 报错里出现 | 原因和处理 |
+|---|---|
+| `total occupancy ... exceeds 1.0` | 同一位置占据之和大于 1。精修值四舍五入（如 0.385 + 0.616）就会触发，手动归一化即可 |
+| `unit cell is inconsistent` | 晶胞和晶系不匹配，比如立方晶系却 a ≠ c，或者角度不是 90° |
+| `Invalid Wyckoff label` | 只在使用 `wyckoff` 写法时出现，标签要写全，例如 `16e`，而不是 `e` |
+| `Unknown element` | 元素符号写成了 `Li1`、`li`、`Li+` 等形式 |
+| 识别出的位置显示 `?` | 坐标对不上任何 Wyckoff 位置。检查是否抄错，或者空间群 / setting 是否用错 |
 
-SHRY 1.1.8 依赖旧版 pymatgen，不能装进 xtalkit 的环境。用 Python 3.11
-单独安装：
+---
+
+## 接下来：把无序结构变成有序结构
+
+`build` 得到的是平均结构（带分数占据），DFT 不能直接算。需要选一个超胞，把分数占据"实例化"成整数个原子。
+
+**体系小、组合数不大时，用 `enumerate`**（需要 enumlib）：
+
+```bash
+# 先用最小范围试水
+uv run xtalkit enumerate LPSC.cif \
+  --min-cell-size 1 --max-cell-size 1 \
+  --timeout 10 --max-structures 20 --output-dir LPSC_enum
+```
+
+- `--min/max-cell-size` 是相对**原胞**的体积倍数，不是沿三个轴分别放大的倍数。
+- 如果在当前超胞下占据数凑不成整数，程序会在运行前直接拒绝，并给出最接近的可行占据。
+  不要用 `--skip-preflight` 强行绕过：输入有误时 enumlib 可能耗尽内存。
+
+**组合数很大时，用 `shry`**，按 `prepare → count → enum → verify` 分步进行，每一步都先看结果再继续：
+
+```bash
+uv run xtalkit shry prepare LPSC.cif --out ready.cif \
+  --parent-spacegroup 216 --target-formula Li6PS5Cl --scaling-matrix 1 1 1
+uv run xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
+# 看 count.json 里的 count_only_result，确认数量能接受后：
+uv run xtalkit shry enum ready.cif --scaling-matrix 1 1 1 --expect-count <数量> \
+  --target-formula Li6PS5Cl --write-cif --write-poscar --out SHRY_run
+uv run xtalkit shry verify SHRY_run --target-formula Li6PS5Cl
+```
+
+完整说明（包括可选的 postprocess）见 [SHRY 专题手册](docs/user/shry-enumeration.zh-CN.md)。
+
+> **argyrodite 特别注意**：48h 的 Li 位成对出现，同一对的两个位置相距不到 1 Å，
+> 物理上不可能同时有 Li。枚举工具并不知道这一点，会生成很多这种"两个位置都被占"的构型。
+> 枚举之后最好按最短 Li–Li 距离过滤一遍，再进入下一步。
+
+## 最后：用 Ewald 能挑出低能构型
+
+```bash
+uv run xtalkit ewald LPSC_enum/ \
+  --charges Li:1 P:5 S:-2 Cl:-1 \
+  --top-n 20 --group --group-dir ewald_results
+```
+
+- 结果按静电能排序，完整排名写进 CSV；`--group` 会把前 N 个**复制**到 `selected/`（只有加 `--move` 才会移动原文件）。
+- 只有成分相同、原子数相同的结构才能放在一起排；必须电中性。
+- Ewald 能只是初筛手段，不能当作 DFT 能量。
+
+---
+
+## 其他小工具
+
+```bash
+uv run xtalkit info --sg 216                                  # 列出 Wyckoff 位置
+uv run xtalkit mark input.cif --sg 216 --wyckoff 4a,48h -o m  # 在 CIF 上标出位置
+uv run xtalkit skeleton --sg 216 --wyckoff all \
+  --cell "9.86 9.86 9.86 90 90 90" -o skel                    # 画位置骨架
+uv run xtalkit fetch                                          # 自检内置数据库
+```
+
+`mark` 和 `skeleton` 的输出带有 `visualization_only` 标记，**只用于观察**，不能拿去做计算。
+`mark` 会核对 `--sg` 和 CIF 里声明的空间群是否一致；不一致时请先查清 setting，不要为了让命令通过而改编号。
+
+## 可选组件
+
+### enumlib（`enumerate` 需要）和 pymatgen（`ewald` 需要）
+
+```bash
+sudo apt install gfortran make git      # 编译依赖
+uv sync --extra enumerate
+bash scripts/build_enumlib.sh           # 安装到 ~/.local/share/xtalkit/bin/，无需改 PATH
+```
+
+自测：
+
+```bash
+uv run xtalkit enumerate tests/fixtures/disordered_binary.cif \
+  --max-cell-size 2 --output-dir enum_smoke     # 应得到 3 个有序 CIF
+```
+
+构建脚本默认固定到已审计的 enumlib 提交（`67217859c1cf…`），默认单进程编译。
+确有需要时，可以用 `ENUMLIB_REF=<提交>` 换源码版本，用 `XTALKIT_BUILD_JOBS=<N>` 增加编译并发。
+
+### SHRY（`shry` 需要）
+
+SHRY 1.1.8 依赖旧版 pymatgen，**必须单独安装**，不要用 `uv pip install shry` 装进本项目：
 
 ```bash
 uv python install 3.11
 uv tool install --python 3.11 'shry==1.1.8'
 shry --help
-uv tool list
+# 若集群上找不到 shry：export XTALKIT_SHRY_CMD="$(command -v shry)"
 ```
-
-通常 `shry` 会直接进入 `PATH`。若集群环境找不到它，再设置：
-
-```bash
-export XTALKIT_SHRY_CMD="$(command -v shry)"
-```
-
-不要执行 `uv pip install shry`：它会与 xtalkit 的新 pymatgen 发生版本冲突。
-严格的对称性和去重检查仍需在 xtalkit 环境运行一次
-`uv sync --extra enumerate`，但不要求编译 enumlib。
 
 ### tblite（可选）
 
-xtalkit 只生成 tblite 作业文件；真正执行周期 xTB 单点需要外部
-[tblite](https://tblite.readthedocs.io/en/stable/installation.html)。推荐放在
-独立的 conda-forge 前缀：
+xtalkit 只负责生成 tblite 作业目录，不自带可执行文件。推荐装在独立的 conda-forge 前缀里
+（[安装说明](https://tblite.readthedocs.io/en/stable/installation.html)）：
 
 ```bash
-# 尚无 micromamba 时，先按官方说明安装：
-# https://mamba.readthedocs.io/en/stable/installation/micromamba-installation.html
 MAMBA_ROOT_PREFIX="$HOME/.local/share/micromamba" \
-  micromamba create --yes \
-  --prefix "$HOME/.local/share/xtalkit/tblite-0.7.0" \
+  micromamba create --yes --prefix "$HOME/.local/share/xtalkit/tblite-0.7.0" \
   --channel conda-forge --strict-channel-priority 'tblite=0.7.0'
-mkdir -p "$HOME/.local/bin"
-ln -sfn "$HOME/.local/share/xtalkit/tblite-0.7.0/bin/tblite" \
-  "$HOME/.local/bin/tblite"
-tblite --version
+ln -sfn "$HOME/.local/share/xtalkit/tblite-0.7.0/bin/tblite" "$HOME/.local/bin/tblite"
 ```
 
-确保 `~/.local/bin` 在 `PATH` 中。执行作业前必须按实际体系检查总电荷和
-未成对电子数，不能默认认为 `--charge 0 --spin 0` 总是正确。
+提交作业前要按实际体系确认总电荷和自旋，不要默认 `--charge 0 --spin 0` 总是对的。
 
-## 常用任务
+## 输出文件
 
-### 1. 查询空间群
+| 命令 | 输出 |
+|---|---|
+| `build` | 物理 CIF（带对称操作、占据和化学式），可选 XYZ |
+| `enumerate` | 默认写到 `<输入名>_enum/`，每个文件是一种有序构型 |
+| `shry enum` | `clean_cif/` 是去掉空位后的结构；`manifest.json` 记录本次运行；`raw_shry/` 是原始结果 |
+| `ewald` | 排名 CSV；加 `--group` 时另有 `selected/` 和 `rest/` |
+| `mark`、`skeleton` | 只用于可视化的 CIF/XYZ |
 
-```bash
-uv run xtalkit info --sg 225
-```
-
-输出包括 Hermann–Mauguin 符号、晶系、默认示意晶胞以及每个 Wyckoff
-位置的多重度、位点对称性和代表坐标。默认晶胞只用于画骨架，不是任何
-真实材料的实验晶格常数。
-
-### 2. 在现有 CIF 中标记 Wyckoff 位置
-
-```bash
-uv run xtalkit mark input.cif \
-  --sg 216 \
-  --wyckoff 4a,16e,48h \
-  --mode overlay \
-  --format cif \
-  -o input_marked
-```
-
-`overlay` 保留原子并加入虚拟原子；`replace` 只替换匹配位置上的元素与
-标签，保留原坐标和占据率。两种输出都是可视化文件，不是新的物理模型。
-
-常用选项：
-
-- `--wyckoff all`：标出该空间群的全部位置；
-- `--tol 0.01`：Wyckoff 约束残差容限，分数坐标单位；
-- `--map 4a:Xe,16e:Kr`：指定用于显示的虚拟元素；
-- `--format cif,xyz`：同时写 CIF 和 XYZ；
-- `--offset`：纯显示偏移。非零时原子会离开精确 Wyckoff 位置。
-
-程序会检查 `--sg` 是否与 CIF 声明的空间群一致。若不一致，请先查清 CIF
-采用的 setting，而不是为了让命令通过而随意改空间群号。
-
-### 3. 生成 Wyckoff 骨架
-
-```bash
-uv run xtalkit skeleton \
-  --sg 216 --wyckoff all \
-  --cell "9.86 9.86 9.86 90 90 90" \
-  -o SG216_skeleton
-```
-
-骨架只含代表不同位置的虚拟原子，用于教学、选位和 VESTA 对照。若省略
-`--cell`，程序使用符合晶系的示意晶胞；不要把它解释为材料参数。
-
-### 4. 从精修参数建立 CIF
-
-如果精修表给出 Wyckoff 标签和自由参数，用 `--atom`。下面生成 NaCl：
-
-```bash
-uv run xtalkit build \
-  --sg 225 \
-  --cell "5.64 5.64 5.64 90 90 90" \
-  --atom "Na 4a" \
-  --atom "Cl 4b" \
-  -o NaCl
-```
-
-例如 `16e` 的坐标模板是 `(x,x,x)`，则 `"Li 16e 0.30"` 中的 `0.30`
-是自由参数；若还要给占据率，写成 `"Li 16e 0.30 0.6875"`。
-
-如果论文或精修表直接给分数坐标，优先使用 `--atom-frac`：
-
-```bash
-uv run xtalkit build \
-  --sg 137 \
-  --cell "8.69407 8.69407 12.5994 90 90 90" \
-  --atom-frac "Li 0.2563 0.2718 0.1832 0.6875" \
-  --atom-frac "P 0 0 0.5 1" \
-  -o refinement_model
-```
-
-程序会报告识别到的 Wyckoff 位置，便于发现坐标、setting 或空间群抄错。
-同一位置的不同元素可用多条原子记录表示部分占据；它们的占据率之和不能
-超过 1。占据率为 0 的 `--atom-frac` 行会明确跳过。
-
-重复建模时可使用 JSON：
-
-```json
-{
-  "sg": 225,
-  "cell": {
-    "a": 5.64, "b": 5.64, "c": 5.64,
-    "alpha": 90, "beta": 90, "gamma": 90
-  },
-  "atoms": [
-    {"element": "Na", "wyckoff": "4a"},
-    {"element": "Cl", "wyckoff": "4b"}
-  ]
-}
-```
-
-```bash
-uv run xtalkit build --spec nacl.json -o NaCl
-```
-
-`--spec` 与 `--sg`、`--cell`、`--atom`、`--atom-frac` 互斥。
-
-### 5. 用 enumlib 枚举占位无序
-
-先用仓库小体系确认安装：
-
-```bash
-uv run xtalkit enumerate tests/fixtures/disordered_binary.cif \
-  --min-cell-size 1 --max-cell-size 2 \
-  --output-dir AuCu_enum
-```
-
-重要概念：
-
-- `min/max-cell-size` 是相对原胞的体积倍数范围，不是沿三个轴分别放大；
-- xtalkit 会先转原胞，再调用 enumlib；
-- `--max-structures` 只限制 enumlib 搜索完成后写多少文件，不能缩短
-  `enum.x` 的搜索；
-- `--jobs` 只并行生成和解析结果，`enum.x` 本身仍是单线程；
-- 默认 `jobs=1`、分批写盘，内存占用最稳妥。
-
-对新体系建议先用最小范围：
-
-```bash
-uv run xtalkit enumerate disordered.cif \
-  --min-cell-size 1 --max-cell-size 1 \
-  --timeout 10 --max-structures 20 \
-  --output-dir trial_enum
-```
-
-若占据率在给定超胞范围内无法变成整数原子数，程序会在启动 enumlib 前
-拒绝运行并给出最接近的可行占据率。不要轻易使用 `--skip-preflight`；错误
-输入可能让 enumlib 消耗极大内存。
-
-### 6. 用 SHRY 枚举较大体系
-
-SHRY 工作流刻意分成五步：
-
-```text
-prepare → count → enum → verify → postprocess（可选）
-```
-
-先准备输入和检查成分：
-
-```bash
-uv run xtalkit shry prepare input.cif \
-  --out ready.cif \
-  --parent-spacegroup 216 \
-  --target-formula Li6PS5Cl \
-  --scaling-matrix 1 1 1
-```
-
-只计数，不生成：
-
-```bash
-uv run xtalkit shry count ready.cif \
-  --scaling-matrix 1 1 1 --out count.json
-```
-
-确认 `count.json` 中的 `count_only_result` 合理后，再把它填入生成命令：
-
-```bash
-uv run xtalkit shry enum ready.cif \
-  --scaling-matrix 1 1 1 \
-  --expect-count <COUNT> \
-  --target-formula Li6PS5Cl \
-  --write-cif --write-poscar \
-  --out SHRY_run
-
-uv run xtalkit shry verify SHRY_run \
-  --target-formula Li6PS5Cl
-```
-
-F 心或 I 心的大常规晶胞可能产生天文数量的组合。必须理解原胞、对称操作
-和目标化学式后再运行。完整说明、输出目录和失败恢复方法见
-[SHRY 专题手册](docs/user/shry-enumeration.zh-CN.md)。
-
-### 7. Ewald 排序
-
-Ewald 能只适用于已经有明确氧化态、完全有序且电中性的周期结构。下面按
-总静电能从低到高排列同成分、同原子数的一批结构：
-
-```bash
-uv run xtalkit ewald ordered_cifs/ \
-  --charges Li:1 P:5 S:-2 Cl:-1 \
-  --sort asc \
-  --out ewald_results/ranking.csv
-```
-
-筛选前 20 个并复制到分组目录：
-
-```bash
-uv run xtalkit ewald ordered_cifs/ \
-  --charges Li:1 P:5 S:-2 Cl:-1 \
-  --top-n 20 --group --group-dir ewald_results
-```
-
-默认是复制。只有明确使用 `--move` 时才移动原文件。`--guess` 可让 pymatgen
-猜氧化态，但论文计算应检查猜测结果；不要把 Ewald 模型能当成弛豫后的
-DFT 总能。不同成分不能放在同一次排名中；只有同成分的可公度晶胞才适合
-用 `--per-atom` 比较。
-
-## 输出文件怎么读
-
-- `mark`、`skeleton`：带 `visualization_only` 审计标记的可视化文件；
-- `build`：含空间群操作、占据率和晶胞化学式的物理 CIF；
-- `enumerate`：默认写入 `<输入名>_enum/`；每个文件是一种有序构型；
-- `shry enum`：`input/` 保存输入与环境，`raw_shry/` 保存原始结果，
-  `clean_cif/` 保存去除空位后的 CIF，`manifest.json` 记录本次运行；
-- `ewald`：完整排名写入 CSV；使用 `--group` 时另建 `selected/` 与 `rest/`。
-
-默认输出可能覆盖同名的单个 CIF/XYZ。重要任务请总是显式给 `-o` 或新的
-输出目录。SHRY 枚举目录必须是新目录或空目录，防止不同批次混在一起。
+同名文件会被覆盖，重要任务请显式指定 `-o` 或输出目录。`shry enum` 的输出目录必须是新目录或空目录。
 
 ## 常见问题
 
-### `VIRTUAL_ENV=... does not match .../.venv`
+- **`VIRTUAL_ENV=... does not match`**：当前 shell 激活了别的虚拟环境，先运行 `deactivate`，再用 `uv run`。
+- **找不到 `enum.x`**：重新运行 `bash scripts/build_enumlib.sh`。
+- **`non-integer stoichiometry`**：在当前超胞大小下，占据数凑不成整数个原子。加大 `--max-cell-size`，或者回头核对占据。
+- **空间群对不上**：核对 CIF 里的 H-M 符号、编号、setting 和对称操作是否自洽。程序不会替你猜。
+- **SHRY 数量巨大**：回到 `shry count`，检查是否误用了 F/I 心的常规胞、缩放矩阵是否设对。
+- **Ewald 报不电中性**：检查氧化态和化学式。程序不会替你补背景电荷。
 
-当前 shell 激活了另一个虚拟环境。通常先运行 `deactivate`，再使用
-`uv run ...`。如果你确实要使用已激活环境，需明确使用 uv 的 `--active`，
-不要忽略环境混用带来的依赖差异。
-
-### 找不到 `enum.x` 或 `makestr.x`
-
-重新运行 `bash scripts/build_enumlib.sh`。无需把安装目录加入 `PATH`；xtalkit
-会从 `~/.local/share/xtalkit/bin/` 自动加载。可检查：
-
-```bash
-ls -l ~/.local/share/xtalkit/bin/enum.x \
-      ~/.local/share/xtalkit/bin/makestr.x
-```
-
-### `non-integer stoichiometry`
-
-部分占据乘以该 Wyckoff 轨道的位点数和超胞倍数后，不是整数。扩大
-`--max-cell-size`，或根据原始精修与化学计量修正占据率。不要只为绕过检查
-而使用 `--skip-preflight`。
-
-### 空间群不一致
-
-确认 CIF 中的 Hermann–Mauguin 符号、International Tables 编号、setting
-和对称操作是否彼此一致。程序拒绝猜测，因为错误空间群会改变 Wyckoff
-轨道、化学式和枚举数。
-
-### SHRY 数量太大或长时间不结束
-
-先停止生成计划，回到 `shry count`。检查是否误用了 F/I 心常规胞、是否
-忘记设置正确缩放矩阵，以及部分占据是否对应目标化学式。不要直接删除
-失败目录；先查看 `manifest.json` 和 `input/shry_mod_only.cif`。
-
-### Ewald 报不电中性
-
-检查每种元素的氧化态以及结构化学式。程序不会添加均匀补偿背景，也不会
-替你修改电荷以得到一个数值。
-
-### TUI 输错了怎么办
-
-关键数值会要求重新输入，不会静默改成危险默认值。当前工作流若无需继续，
-可按 `Ctrl+C` 退出；已经写出的文件不会自动删除。
-
-## 开发与验证
+## 开发
 
 ```bash
 uv sync --extra enumerate
 uv run pytest
 uvx ruff check xtalkit tests
-uv build
 ```
-
-项目要求所有 230 个空间群均可读取；涉及枚举、对称性、成分、空位、去重
-和 Ewald 中性的行为都有回归测试。真实 SHRY、enumlib 或 tblite 可执行文件
-存在时，相应集成测试会自动运行；不存在时会明确显示为 skipped。

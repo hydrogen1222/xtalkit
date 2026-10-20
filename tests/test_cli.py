@@ -241,3 +241,71 @@ def test_cli_build_atom_frac_skips_zero_occupancy():
         )
         assert result.returncode == 0, result.stderr
         assert "skipping" in result.stderr
+
+
+# Li6PS5Cl-like argyrodite (F-43m) with Cl/S mixing on 4a and 4d and
+# half-occupied Li on 48h: Li24 P4 S20 Cl4 per cell -> Li6PS5Cl.
+_ARGYRODITE_SPEC = {
+    "sg": 216,
+    "cell": {"a": 9.86, "b": 9.86, "c": 9.86,
+             "alpha": 90, "beta": 90, "gamma": 90},
+    "atoms": [
+        {"element": "Li", "xyz": [0.182, 0.182, 0.022], "occ": 0.5},
+        {"element": "P", "xyz": [0.5, 0.5, 0.5]},
+        {"element": "S", "wyckoff": "16e", "free": [0.62]},
+        {"element": "Cl", "xyz": [0, 0, 0], "occ": 0.5},
+        {"element": "S", "xyz": [0, 0, 0], "occ": 0.5},
+        {"element": "S", "xyz": [0.75, 0.75, 0.75], "occ": 0.5},
+        {"element": "Cl", "xyz": [0.75, 0.75, 0.75], "occ": 0.5},
+    ],
+}
+
+
+def test_cli_build_spec_with_fractional_coords(tmp_path):
+    """A JSON spec may give fractional 'xyz' and mix it with Wyckoff rows."""
+    import json
+    spec = tmp_path / "lpsc.json"
+    spec.write_text(json.dumps(_ARGYRODITE_SPEC))
+    out = str(tmp_path / "lpsc")
+    result = run_xtalkit("build", "--spec", str(spec), "-o", out)
+    assert result.returncode == 0, result.stderr
+    assert "Li6PS5Cl" in result.stdout
+    assert "48h" in result.stdout and "16e" in result.stdout
+    assert os.path.exists(out + ".cif")
+
+
+def test_cli_build_spec_rejects_xyz_and_wyckoff_together(tmp_path):
+    import json
+    spec = tmp_path / "bad.json"
+    spec.write_text(json.dumps({
+        "sg": 225,
+        "cell": {"a": 5.64, "b": 5.64, "c": 5.64,
+                 "alpha": 90, "beta": 90, "gamma": 90},
+        "atoms": [{"element": "Na", "wyckoff": "4a", "xyz": [0, 0, 0]}],
+    }))
+    result = run_xtalkit("build", "--spec", str(spec))
+    assert result.returncode != 0
+    assert "not both" in result.stderr
+
+
+def test_cli_build_mixes_atom_and_atom_frac():
+    """--atom rows are kept (not silently dropped) next to --atom-frac."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "NaCl")
+        result = run_xtalkit(
+            "build", "--sg", "225", "--cell", "5.64 5.64 5.64 90 90 90",
+            "--atom", "Na 4a", "--atom-frac", "Cl 0.5 0.5 0.5",
+            "-o", out,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "NaCl" in result.stdout
+        assert "4a" in result.stdout and "4b" in result.stdout
+
+
+def test_cli_build_overoccupied_site_hints_at_rounding():
+    result = run_xtalkit(
+        "build", "--sg", "225", "--cell", "4 4 4 90 90 90",
+        "--atom-frac", "Cl 0 0 0 0.616", "--atom-frac", "S 0 0 0 0.385",
+    )
+    assert result.returncode != 0
+    assert "renormalize" in result.stderr
