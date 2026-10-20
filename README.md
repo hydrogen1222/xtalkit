@@ -1,23 +1,34 @@
-# xtalkit: crystal Wyckoff and occupational-disorder tools
+# xtalkit
 
-[中文手册](README.zh-CN.md) · [Detailed SHRY guide](docs/user/shry-enumeration.md)
+[中文说明](README.zh-CN.md) · [SHRY guide](docs/user/shry-enumeration.md)
 
-xtalkit handles a small set of recurring crystallographic tasks:
+**In one line: turn a refinement table into a CIF, then turn a partially occupied CIF into a set of ordered structures you can actually compute.**
 
-- inspect space groups and Wyckoff positions;
-- mark positions in an existing CIF or draw a Wyckoff skeleton;
-- build a CIF from refinement tables;
-- enumerate ordered configurations from partial occupancies;
-- rank comparable ordered structures with an Ewald electrostatic model.
+```text
+refinement table ──build──▶ disordered CIF ──enumerate / shry──▶ ordered structures ──ewald──▶ low-energy picks ──▶ DFT
+```
 
-It is not a refinement program, a structure relaxer, or a substitute for
-physical choices such as oxidation states, spin, supercell size, and DFT
-settings. When those choices matter, xtalkit asks for them or stops with an
-error.
+There are also a few small helpers for looking at Wyckoff positions. xtalkit does not refine,
+relax, or choose oxidation states and supercells for you; when a physical choice is needed it
+asks for it or stops with an error instead of guessing.
 
-## Start here
+## Commands at a glance
 
-Install the core application from the repository:
+| I want to… | Command |
+|---|---|
+| Build a CIF from refinement data | `build` |
+| Enumerate ordered structures from partial occupancy (small/medium) | `enumerate` |
+| Same, but the count is huge, so count first, then generate | `shry` |
+| Rank a set of ordered structures by electrostatic energy | `ewald` |
+| List the Wyckoff positions of a space group | `info` |
+| Highlight Wyckoff positions in an existing CIF (viewing only) | `mark` |
+| Draw a space group's positions without a real structure | `skeleton` |
+| Check the bundled 230-space-group data | `fetch` |
+
+Every command has `--help`, for example `uv run xtalkit build --help`.
+Running `uv run xtalkit` with no subcommand opens an interactive interface.
+
+## Install
 
 ```bash
 git clone https://github.com/hydrogen1222/xtalkit.git
@@ -26,364 +37,222 @@ uv sync
 uv run xtalkit --version
 ```
 
-Try a complete operation with a bundled test CIF:
+That is enough for `build`, `info`, `mark`, `skeleton`, and `fetch`.
+`enumerate`, `shry`, and `ewald` need extra components; see [Optional components](#optional-components).
 
-```bash
-uv run xtalkit info --sg 216
-uv run xtalkit mark tests/fixtures/simple.cif \
-  --sg 216 --wyckoff 4a,4c -o quickstart_marked
+---
+
+## Main workflow: model from refinement data
+
+The example is Li₆PS₅Cl (argyrodite, F-43m, No. 216), which has half-occupied Li and mixed Cl/S sites.
+
+### Step 1: copy the refinement table into JSON
+
+A JSON file is easier to edit, review, and keep with a project than a long command line.
+A ready-to-copy template is in [examples/argyrodite_template.json](examples/argyrodite_template.json).
+
+```json
+{
+  "sg": 216,
+  "cell": {"a": 9.86, "b": 9.86, "c": 9.86, "alpha": 90, "beta": 90, "gamma": 90},
+  "atoms": [
+    {"element": "Li", "xyz": [0.182, 0.182, 0.022], "occ": 0.5},
+    {"element": "P",  "xyz": [0.5,   0.5,   0.5]},
+    {"element": "S",  "xyz": [0.62,  0.62,  0.62]},
+    {"element": "Cl", "xyz": [0,     0,     0],    "occ": 0.5},
+    {"element": "S",  "xyz": [0,     0,     0],    "occ": 0.5},
+    {"element": "S",  "xyz": [0.75,  0.75,  0.75], "occ": 0.5},
+    {"element": "Cl", "xyz": [0.75,  0.75,  0.75], "occ": 0.5}
+  ]
+}
 ```
 
-Open `quickstart_marked.cif` in VESTA. Marked and skeleton files carry a
-`visualization_only` tag: use them to inspect sites, not as physical structures
-for energy or composition calculations.
+> The numbers are illustrative. Replace them with the refined values from the paper you cite.
 
-Run without a subcommand for the terminal interface:
-
-```bash
-uv run xtalkit
-```
-
-In an interactive terminal this opens the guided interface. With redirected
-I/O or in CI, it prints help instead of waiting for input. The interface covers
-the common space-group, marking, building, skeleton, enumlib, and Ewald tasks.
-SHRY remains a command-line workflow because its count and manifest should be
-reviewed between stages.
-
-## Choose a command
-
-| Goal | Command | Result |
+| Refinement table column | JSON | Notes |
 |---|---|---|
-| Inspect a space group | `info` | Wyckoff table |
-| Show selected sites in a CIF | `mark` | visualization CIF/XYZ |
-| Draw positions without a real structure | `skeleton` | visualization CIF/XYZ |
-| Build a structure from refinement data | `build` | physical CIF/XYZ |
-| Enumerate small or medium disorder | `enumerate` | ordered structures via enumlib |
-| Count and enumerate larger disorder | `shry` | staged SHRY run and manifests |
-| Rank ordered structures electrostatically | `ewald` | ranking CSV and optional groups |
-| Check the bundled database | `fetch` | 230-space-group integrity result |
+| Space group | `"sg"` | Number only. The paper's setting (origin, axes) must be the standard one |
+| a, b, c, α, β, γ | `"cell"` | All six, even for cubic |
+| Atom / element | `"element"` | Element symbol such as `Li`, not `Li1` or `Li+` |
+| x, y, z | `"xyz"` | Copy as printed; any representative works and the Wyckoff orbit is detected |
+| Occ / SOF | `"occ"` | 0–1, default 1 |
+| Wyckoff | not needed | Detected and printed so you can compare with the paper |
+| Uiso / Biso | not needed | Not written to the CIF |
 
-The CLI help is the option reference:
+**Mixed sites**: write two rows with the same coordinates (Cl 0.5 + S 0.5 on 4a above).
+The occupancies on one site must not sum above 1.
 
-```bash
-uv run xtalkit --help
-uv run xtalkit build --help
-uv run xtalkit shry enum --help
-```
+If the paper gives a Wyckoff label and free parameters instead, write
+`{"element": "S", "wyckoff": "16e", "free": [0.62]}`. Both forms can be mixed in one file.
 
-## Install only what you need
-
-The core environment contains gemmi and Rich. It supports `info`, `mark`,
-`skeleton`, `build`, `fetch`, and the terminal interface.
-
-### enumlib and Ewald
-
-Ewald scoring needs pymatgen/spglib. Enumeration additionally needs the
-Fortran enumlib executables:
+### Step 2: run
 
 ```bash
-uv sync --extra enumerate
-bash scripts/build_enumlib.sh
+uv run xtalkit build --spec examples/argyrodite_template.json -o LPSC
 ```
 
-The build requires `gfortran`, `make`, and `git`. On Debian or Ubuntu:
+```text
+[info] SG #216 (F-43m), cubic — detected Wyckoff sites:
+        Li  at (0.1820,0.1820,0.0220) occ=0.5   -> 48h (mult 48)
+        P   at (0.5000,0.5000,0.5000) occ=1.0   -> 4b (mult 4)
+        S   at (0.6200,0.6200,0.6200) occ=1.0   -> 16e (mult 16)
+        ...
+[OK] SG #216 (F-43m), crystal system: cubic, formula: Li6PS5Cl
+     Saved to: LPSC.cif
+```
+
+### Step 3: check (do not skip)
+
+1. **Wyckoff labels match the paper.** A different label or `?` usually means a typo or a non-standard setting.
+2. **The formula is right.** It is multiplicity × occupancy. Charge neutrality is **not** checked.
+   Elements appear in the order of their first row, so list Li first to get `Li6PS5Cl`.
+3. Open `LPSC.cif` in VESTA.
+
+For a quick try without a JSON file:
+
+```bash
+uv run xtalkit build --sg 216 --cell "9.86 9.86 9.86 90 90 90" \
+  --atom-frac "P 0.5 0.5 0.5" \
+  --atom-frac "Cl 0 0 0 0.5" --atom-frac "S 0 0 0 0.5" \
+  -o test
+# --atom-frac "element x y z [occ]"; --atom "element wyckoff [free...] [occ]"; both can be combined
+```
+
+### Common build errors
+
+| Message contains | Cause and fix |
+|---|---|
+| `total occupancy ... exceeds 1.0` | Site occupancies sum above 1, often from rounding (0.385 + 0.616). Renormalize |
+| `unit cell is inconsistent` | Cell does not fit the crystal system (e.g. cubic with a ≠ c) |
+| `Invalid Wyckoff label` | Wyckoff form only: use the full label such as `16e`, not `e` |
+| `Unknown element` | Symbols like `Li1`, `li`, `Li+` |
+| A site detected as `?` | The coordinates match no Wyckoff position: check for typos or a wrong space group/setting |
+
+---
+
+## Next: from disorder to ordered structures
+
+`build` gives the average structure with fractional occupancy. DFT needs a supercell in which every site is either occupied or empty.
+
+**Small or medium disorder: `enumerate`** (needs enumlib):
+
+```bash
+uv run xtalkit enumerate LPSC.cif \
+  --min-cell-size 1 --max-cell-size 1 \
+  --timeout 10 --max-structures 20 --output-dir LPSC_enum
+```
+
+- `--min/max-cell-size` are volume multiples of the **primitive** cell, not per-axis factors.
+- If occupancies cannot become integer atom counts at that size, xtalkit refuses before starting
+  enumlib and suggests the nearest feasible occupancy. Avoid `--skip-preflight`: bad input can make enumlib exhaust memory.
+
+**Large counts: `shry`**, in reviewed stages `prepare → count → enum → verify`:
+
+```bash
+uv run xtalkit shry prepare LPSC.cif --out ready.cif \
+  --parent-spacegroup 216 --target-formula Li6PS5Cl --scaling-matrix 1 1 1
+uv run xtalkit shry count ready.cif --scaling-matrix 1 1 1 --out count.json
+# read count_only_result in count.json, then:
+uv run xtalkit shry enum ready.cif --scaling-matrix 1 1 1 --expect-count <COUNT> \
+  --target-formula Li6PS5Cl --write-cif --write-poscar --out SHRY_run
+uv run xtalkit shry verify SHRY_run --target-formula Li6PS5Cl
+```
+
+The optional postprocess stage and recovery steps are in the [SHRY guide](docs/user/shry-enumeration.md).
+
+> **Argyrodite caveat**: 48h Li sites come in pairs less than 1 Å apart, which cannot both hold Li.
+> The enumerators do not know this and will produce such configurations. Filter by the shortest
+> Li–Li distance after enumeration.
+
+## Finally: rank by Ewald energy
+
+```bash
+uv run xtalkit ewald LPSC_enum/ \
+  --charges Li:1 P:5 S:-2 Cl:-1 \
+  --top-n 20 --group --group-dir ewald_results
+```
+
+- The full ranking goes to a CSV; `--group` **copies** the top N into `selected/` (`--move` moves instead).
+- Only rank structures with the same composition and atom count; they must be charge neutral.
+- Ewald energy is a screen, not a DFT energy.
+
+---
+
+## Other helpers
+
+```bash
+uv run xtalkit info --sg 216                                  # Wyckoff table
+uv run xtalkit mark input.cif --sg 216 --wyckoff 4a,48h -o m  # highlight sites in a CIF
+uv run xtalkit skeleton --sg 216 --wyckoff all \
+  --cell "9.86 9.86 9.86 90 90 90" -o skel                    # draw positions
+uv run xtalkit fetch                                          # self-check the database
+```
+
+`mark` and `skeleton` outputs carry a `visualization_only` tag and are **not** for calculations.
+`mark` checks `--sg` against the space group declared in the CIF; if they differ, find out
+which setting the CIF uses instead of changing the number until it passes.
+
+## Optional components
+
+### enumlib (for `enumerate`) and pymatgen (for `ewald`)
 
 ```bash
 sudo apt install gfortran make git
-```
-
-The script uses one compiler process by default and installs into
-`~/.local/share/xtalkit/bin/`; xtalkit discovers that directory without a PATH
-change. Its default source revision is pinned to the audited enumlib commit:
-
-```text
-67217859c1cfe6e1d8cfe25b76a1d14a28c6030e
-```
-
-Verify the installation with a small real enumeration:
-
-```bash
-cat ~/.local/share/xtalkit/bin/enumlib-commit.txt
+uv sync --extra enumerate
+bash scripts/build_enumlib.sh           # installs to ~/.local/share/xtalkit/bin/, no PATH change
 uv run xtalkit enumerate tests/fixtures/disordered_binary.cif \
-  --max-cell-size 2 --output-dir enum_smoke
-# Expected: three ordered Au/Cu CIFs
+  --max-cell-size 2 --output-dir enum_smoke     # expect three ordered CIFs
 ```
 
-Advanced users may deliberately override the source or build concurrency with
-`ENUMLIB_REF=<commit-or-tag>` and `XTALKIT_BUILD_JOBS=<positive-integer>`.
+The script pins the audited enumlib commit (`67217859c1cf…`) and compiles with one job.
+Override deliberately with `ENUMLIB_REF=<commit>` and `XTALKIT_BUILD_JOBS=<N>`.
 
-### SHRY
+### SHRY (for `shry`)
 
-SHRY 1.1.8 pins an older pymatgen, so keep it outside the xtalkit environment:
+SHRY 1.1.8 pins an older pymatgen, so install it **separately**, never with `uv pip install shry`:
 
 ```bash
 uv python install 3.11
 uv tool install --python 3.11 'shry==1.1.8'
 shry --help
-uv tool list
+# if not found on a cluster: export XTALKIT_SHRY_CMD="$(command -v shry)"
 ```
-
-Do not use `uv pip install shry` in this project. If the isolated executable is
-not already discoverable, set:
-
-```bash
-export XTALKIT_SHRY_CMD="$(command -v shry)"
-```
-
-The strict in-process symmetry and duplicate checks still need
-`uv sync --extra enumerate`; they do not require compiled enumlib.
 
 ### tblite (optional)
 
-xtalkit writes tblite job folders but does not bundle the executable. The
-official binary distribution is available through
-[conda-forge](https://tblite.readthedocs.io/en/stable/installation.html). An
-isolated micromamba prefix avoids mixing it with either Python environment:
+xtalkit writes tblite job folders but does not bundle the executable. Install it in an isolated
+conda-forge prefix ([installation](https://tblite.readthedocs.io/en/stable/installation.html)):
 
 ```bash
-# Install micromamba first if needed:
-# https://mamba.readthedocs.io/en/stable/installation/micromamba-installation.html
 MAMBA_ROOT_PREFIX="$HOME/.local/share/micromamba" \
-  micromamba create --yes \
-  --prefix "$HOME/.local/share/xtalkit/tblite-0.7.0" \
+  micromamba create --yes --prefix "$HOME/.local/share/xtalkit/tblite-0.7.0" \
   --channel conda-forge --strict-channel-priority 'tblite=0.7.0'
-mkdir -p "$HOME/.local/bin"
-ln -sfn "$HOME/.local/share/xtalkit/tblite-0.7.0/bin/tblite" \
-  "$HOME/.local/bin/tblite"
-tblite --version
+ln -sfn "$HOME/.local/share/xtalkit/tblite-0.7.0/bin/tblite" "$HOME/.local/bin/tblite"
 ```
 
-Put `~/.local/bin` on `PATH`. Before running a generated job, set charge and
-unpaired-electron count for the actual system; neutral singlet defaults are not
-universally valid.
+Check total charge and spin for your system; `--charge 0 --spin 0` is not always right.
 
-## Common workflows
+## Output files
 
-### Inspect a space group
+| Command | Output |
+|---|---|
+| `build` | Physical CIF with symmetry operations, occupancy and formula; optional XYZ |
+| `enumerate` | `<input>_enum/` by default, one ordered configuration per file |
+| `shry enum` | `clean_cif/` (vacancies removed), `manifest.json`, `raw_shry/` |
+| `ewald` | Ranking CSV; with `--group`, also `selected/` and `rest/` |
+| `mark`, `skeleton` | Visualization-only CIF/XYZ |
 
-```bash
-uv run xtalkit info --sg 225
-```
-
-The default cell in this table is only a crystal-system-compatible drawing
-cell. It is not an experimental lattice for a material.
-
-### Mark positions in a CIF
-
-```bash
-uv run xtalkit mark input.cif \
-  --sg 216 --wyckoff 4a,16e,48h \
-  --mode overlay --format cif -o input_marked
-```
-
-`overlay` keeps the real atoms and adds visual markers. `replace` changes the
-element and label of matched atoms while retaining their refined coordinates
-and occupancies. Both modes are for visualization.
-
-Useful options:
-
-- `--wyckoff all` selects every position in the group;
-- `--tol 0.01` controls the fractional-coordinate constraint residual;
-- `--map 4a:Xe,16e:Kr` chooses marker elements;
-- `--format cif,xyz` writes both formats;
-- nonzero `--offset` is a visual displacement away from the exact site.
-
-The requested `--sg` must agree with the group declared by the CIF. Resolve a
-setting mismatch instead of changing the number merely to bypass the check.
-
-### Draw a Wyckoff skeleton
-
-```bash
-uv run xtalkit skeleton \
-  --sg 216 --wyckoff all \
-  --cell "9.86 9.86 9.86 90 90 90" \
-  -o SG216_skeleton
-```
-
-A skeleton contains marker species only. If `--cell` is omitted, xtalkit uses
-a drawing cell compatible with the crystal system.
-
-### Build a CIF from refinement data
-
-Use Wyckoff labels and free coordinates when the table supplies them:
-
-```bash
-uv run xtalkit build \
-  --sg 225 \
-  --cell "5.64 5.64 5.64 90 90 90" \
-  --atom "Na 4a" --atom "Cl 4b" \
-  -o NaCl
-```
-
-For a `16e` template `(x,x,x)`, `"Li 16e 0.30"` supplies `x`; use
-`"Li 16e 0.30 0.6875"` to append an occupancy.
-
-When a refinement table gives fractional coordinates directly, prefer
-`--atom-frac`:
-
-```bash
-uv run xtalkit build \
-  --sg 137 \
-  --cell "8.69407 8.69407 12.5994 90 90 90" \
-  --atom-frac "Li 0.2563 0.2718 0.1832 0.6875" \
-  --atom-frac "P 0 0 0.5 1" \
-  -o refinement_model
-```
-
-The detected Wyckoff labels are printed so that coordinate or setting errors
-are visible. Multiple species may share one disordered site, but their
-occupancies must not sum above one.
-
-For repeatable jobs, use a JSON spec:
-
-```json
-{
-  "sg": 225,
-  "cell": {
-    "a": 5.64, "b": 5.64, "c": 5.64,
-    "alpha": 90, "beta": 90, "gamma": 90
-  },
-  "atoms": [
-    {"element": "Na", "wyckoff": "4a"},
-    {"element": "Cl", "wyckoff": "4b"}
-  ]
-}
-```
-
-```bash
-uv run xtalkit build --spec nacl.json -o NaCl
-```
-
-`--spec` is an alternative to all of `--sg`, `--cell`, `--atom`, and
-`--atom-frac`.
-
-### Enumerate disorder with enumlib
-
-```bash
-uv run xtalkit enumerate tests/fixtures/disordered_binary.cif \
-  --min-cell-size 1 --max-cell-size 2 \
-  --output-dir AuCu_enum
-```
-
-Cell size is a volume multiplier relative to the primitive cell, not a repeat
-count along each axis. xtalkit converts to a primitive structure before calling
-enumlib.
-
-Start unfamiliar systems conservatively:
-
-```bash
-uv run xtalkit enumerate disordered.cif \
-  --min-cell-size 1 --max-cell-size 1 \
-  --timeout 10 --max-structures 20 \
-  --output-dir trial_enum
-```
-
-`--max-structures` limits output generation after `enum.x` has completed; it
-does not cap the enumlib search. `--jobs` parallelizes only result generation.
-The default of one worker and batched output has the lowest memory risk.
-
-Before launching enumlib, xtalkit checks whether occupancies can become integer
-atom counts in the requested cell-size range. Treat `--skip-preflight` as a
-dangerous expert escape hatch: invalid inputs can make enumlib consume extreme
-amounts of memory.
-
-### Enumerate larger disorder with SHRY
-
-The SHRY workflow deliberately has review points:
-
-```text
-prepare → count → enum → verify → optional postprocess
-```
-
-```bash
-uv run xtalkit shry prepare input.cif \
-  --out ready.cif --parent-spacegroup 216 \
-  --target-formula Li6PS5Cl --scaling-matrix 1 1 1
-
-uv run xtalkit shry count ready.cif \
-  --scaling-matrix 1 1 1 --out count.json
-
-# Read count_only_result from count.json before continuing.
-uv run xtalkit shry enum ready.cif \
-  --scaling-matrix 1 1 1 --expect-count <COUNT> \
-  --target-formula Li6PS5Cl --write-cif --write-poscar \
-  --out SHRY_run
-
-uv run xtalkit shry verify SHRY_run --target-formula Li6PS5Cl
-```
-
-Large F- or I-centred conventional cells can create astronomical candidate
-counts. Read the [detailed SHRY guide](docs/user/shry-enumeration.md) before a
-production run; it covers primitive cells, manifests, failure recovery,
-degeneracy, and tblite post-processing.
-
-### Rank structures with Ewald energy
-
-Ewald scoring requires fully ordered, charge-neutral periodic structures with
-known oxidation states:
-
-```bash
-uv run xtalkit ewald ordered_cifs/ \
-  --charges Li:1 P:5 S:-2 Cl:-1 \
-  --sort asc --out ewald_results/ranking.csv
-```
-
-Copy the lowest 20 into a selected group:
-
-```bash
-uv run xtalkit ewald ordered_cifs/ \
-  --charges Li:1 P:5 S:-2 Cl:-1 \
-  --top-n 20 --group --group-dir ewald_results
-```
-
-Grouping copies by default; `--move` removes originals after transfer. A
-single ranking must contain one composition. Total energies additionally need
-the same atom count. Use `--per-atom` only for commensurate cells of that same
-composition. Ewald model energies are not relaxed DFT total energies.
-
-## Output and recovery
-
-- `mark` and `skeleton` write visualization-only files;
-- `build` writes physical CIFs with symmetry, occupancy, and unit-cell formula;
-- `enumerate` writes one ordered structure per file under `<input>_enum/` by
-  default;
-- `shry enum` keeps copied inputs, raw output, cleaned CIFs, and a run manifest;
-- `ewald` writes the complete ranking to CSV and optionally copies/moves files.
-
-Single CIF/XYZ outputs may overwrite a same-named file. Give important runs an
-explicit `-o` or a fresh directory. SHRY output directories must be new or
-empty so that separate runs cannot be mixed.
+Files with the same name are overwritten; pass `-o` or a new output directory for important runs.
+A `shry enum` output directory must be new or empty.
 
 ## Troubleshooting
 
-`VIRTUAL_ENV=... does not match .../.venv`
-: Deactivate the unrelated environment, then use `uv run`. Use uv's `--active`
-  only when targeting the already-active environment intentionally.
-
-`enum.x` or `makestr.x` not found
-: Re-run `bash scripts/build_enumlib.sh`. xtalkit discovers its user-local
-  install automatically.
-
-`non-integer stoichiometry`
-: The occupancy, orbit multiplicity, and requested cell size cannot produce
-  integer atom counts. Increase `--max-cell-size` or correct the occupancy from
-  the source data; do not bypass the guard merely to make the command run.
-
-Space-group mismatch
-: Check the CIF symbol, International Tables number, setting, and symmetry
-  operations. A wrong group changes orbits, formulas, and enumeration counts.
-
-SHRY count is unexpectedly huge
-: Return to the count stage. Check for an F/I conventional cell, the scaling
-  matrix, and the target formula before generation.
-
-Ewald reports a net charge
-: Correct the oxidation states or structure composition. xtalkit does not add a
-  compensating background charge.
-
-The terminal interface re-prompts invalid critical numbers rather than silently
-falling back to an unsafe default. Press `Ctrl+C` to leave a workflow; already
-written files are not deleted.
+- **`VIRTUAL_ENV=... does not match`**: another environment is active; run `deactivate`, then `uv run`.
+- **`enum.x` not found**: rerun `bash scripts/build_enumlib.sh`.
+- **`non-integer stoichiometry`**: occupancies do not give whole atoms at that cell size; raise `--max-cell-size` or check the occupancies.
+- **Space group mismatch**: check that the CIF's symbol, number, setting and operations agree. xtalkit will not guess.
+- **SHRY count is huge**: go back to `shry count`; check for an F/I-centred conventional cell or a wrong scaling matrix.
+- **Ewald says not neutral**: check oxidation states and the formula. No compensating background is added.
 
 ## Development
 
@@ -391,9 +260,4 @@ written files are not deleted.
 uv sync --extra enumerate
 uv run pytest
 uvx ruff check xtalkit tests
-uv build
 ```
-
-Tests cover all 230 space groups and the crystallographic validation paths.
-When real SHRY, enumlib, or tblite executables are available, their integration
-smoke tests run automatically; otherwise those tests are explicitly skipped.
